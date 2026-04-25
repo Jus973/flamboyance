@@ -87,6 +87,8 @@ async def run_agent(
             page = await context.new_page()
             page.set_default_timeout(timeout_ms)
 
+            # ── Initial navigation with slow_load detection ──────────
+            nav_start = time.monotonic()
             try:
                 await page.goto(url, wait_until="domcontentloaded")
             except Exception as exc:
@@ -96,8 +98,14 @@ async def run_agent(
                 result.elapsed_seconds = time.monotonic() - start
                 return result
 
+            load_ms = (time.monotonic() - nav_start) * 1000
+            slow_evt = detector.record_slow_load(url, load_ms)
+            if slow_evt:
+                log.info("event: %s", slow_evt.description)
+
             visited.append(url)
             detector.record_navigation(url)
+            detector.touch()
 
             actions_taken = 0
             gave_up = False
@@ -114,8 +122,16 @@ async def run_agent(
 
                 await asyncio.sleep(persona.click_hesitation_ms / 1000.0)
 
+                # ── Long-dwell detection ────────────────────────────
+                dwell_s = time.time() - detector.last_action_time
+                dwell_evt = detector.record_long_dwell(page.url, dwell_s)
+                if dwell_evt:
+                    log.info("event: %s", dwell_evt.description)
+
                 clickables = await _find_clickables(page, persona)
                 if not clickables:
+                    dead_evt = detector.record_dead_end(page.url)
+                    log.info("event: %s", dead_evt.description)
                     break
 
                 target = random.choice(clickables)
@@ -129,6 +145,7 @@ async def run_agent(
                     actions_taken += 1
                     continue
 
+                detector.touch()
                 evt = detector.record_click(
                     selector, is_interactive=is_interactive
                 )

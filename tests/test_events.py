@@ -87,3 +87,85 @@ class TestUnmetGoal:
         d.record_navigation("http://a.com")
         d.check_unmet_goal("test", reached=False, timed_out=True)
         assert len(d.all_events()) == 2
+
+
+class TestSlowLoad:
+    def test_no_event_below_threshold(self) -> None:
+        d = EventDetector()
+        evt = d.record_slow_load("http://example.com", 2000.0)
+        assert evt is None
+        assert len(d.all_events()) == 0
+
+    def test_no_event_at_threshold(self) -> None:
+        d = EventDetector()
+        evt = d.record_slow_load("http://example.com", 3000.0)
+        assert evt is None
+
+    def test_detects_slow_load(self) -> None:
+        d = EventDetector()
+        evt = d.record_slow_load("http://example.com/slow", 5000.0)
+        assert evt is not None
+        assert evt.kind == "slow_load"
+        assert "5000" in evt.description
+        assert evt.url == "http://example.com/slow"
+        assert evt.details["load_time_ms"] == 5000.0
+
+    def test_very_slow_load(self) -> None:
+        d = EventDetector()
+        evt = d.record_slow_load("http://example.com/stress", 10000.0)
+        assert evt is not None
+        assert evt.kind == "slow_load"
+
+
+class TestDeadEnd:
+    def test_emits_dead_end(self) -> None:
+        d = EventDetector()
+        evt = d.record_dead_end("http://example.com/dead")
+        assert evt is not None
+        assert evt.kind == "dead_end"
+        assert "no clickable" in evt.description
+        assert evt.url == "http://example.com/dead"
+
+    def test_multiple_dead_ends_accumulate(self) -> None:
+        d = EventDetector()
+        d.record_dead_end("http://a.com")
+        d.record_dead_end("http://b.com")
+        assert len(d.all_events()) == 2
+
+
+class TestLongDwell:
+    def test_no_event_below_threshold(self) -> None:
+        d = EventDetector()
+        evt = d.record_long_dwell("http://example.com", 5.0)
+        assert evt is None
+        assert len(d.all_events()) == 0
+
+    def test_no_event_at_threshold(self) -> None:
+        d = EventDetector()
+        evt = d.record_long_dwell("http://example.com", 10.0)
+        assert evt is None
+
+    def test_detects_long_dwell(self) -> None:
+        d = EventDetector()
+        evt = d.record_long_dwell("http://example.com/form", 15.0)
+        assert evt is not None
+        assert evt.kind == "long_dwell"
+        assert "15.0" in evt.description
+        assert evt.url == "http://example.com/form"
+        assert evt.details["dwell_seconds"] == 15.0
+
+    def test_touch_resets_timer(self) -> None:
+        d = EventDetector()
+        old_time = d.last_action_time
+        with patch("agents.events.time.time", return_value=old_time + 5):
+            d.touch()
+        assert d.last_action_time == old_time + 5
+
+    def test_long_dwell_resets_timer_after_firing(self) -> None:
+        d = EventDetector()
+        evt = d.record_long_dwell("http://example.com", 15.0)
+        assert evt is not None
+        # After firing, the timer should be reset so the next check
+        # does not immediately re-fire (prevents duplicate flooding).
+        dwell_since_reset = time.time() - d.last_action_time
+        assert dwell_since_reset < 1.0
