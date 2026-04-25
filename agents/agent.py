@@ -201,7 +201,10 @@ async def run_agent(
             # ── Rage decoy detection on initial page ───────────────────
             decoys = await _find_rage_decoys(page)
             for decoy in decoys:
-                decoy_evt = detector.record_rage_decoy(url, decoy["selector"], decoy["reason"])
+                decoy_evt = detector.record_rage_decoy(
+                    url, decoy["selector"], decoy["reason"],
+                    x=decoy.get("x"), y=decoy.get("y")
+                )
                 log.info("event: %s", decoy_evt.description)
 
             actions_taken = 0
@@ -334,7 +337,8 @@ async def run_agent(
                     decoys = await _find_rage_decoys(page)
                     for decoy in decoys:
                         decoy_evt = detector.record_rage_decoy(
-                            current_url, decoy["selector"], decoy["reason"]
+                            current_url, decoy["selector"], decoy["reason"],
+                            x=decoy.get("x"), y=decoy.get("y")
                         )
                         log.info("event: %s", decoy_evt.description)
 
@@ -378,6 +382,7 @@ async def run_agent(
             "url": e.url,
             "timestamp": e.timestamp,
             "severity": e.severity.value,
+            **e.details,  # Include details like selector, coordinates, etc.
         }
         for e in detector.all_events()
     ]
@@ -659,9 +664,16 @@ async def _find_rage_decoys(page: object) -> list[dict[str, str]]:
                         if (firstClass) selector = `${tag}.${firstClass}`;
                     }
 
+                    // Get bounding box for annotation
+                    const rect = el.getBoundingClientRect();
+                    const x = Math.round(rect.left + rect.width / 2);
+                    const y = Math.round(rect.top + rect.height / 2);
+
                     results.push({
                         selector: selector,
-                        reason: reasons.join(', ')
+                        reason: reasons.join(', '),
+                        x: x,
+                        y: y
                     });
                 }
 

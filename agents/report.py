@@ -65,8 +65,8 @@ def _save_screenshot(
         image_data = base64.b64decode(screenshot_b64)
         filepath.write_bytes(image_data)
 
-        # Return relative path from results dir
-        return str(filepath.relative_to(Path(results_dir).parent))
+        # Return relative path from results dir (report is saved inside results_dir)
+        return str(filepath.relative_to(Path(results_dir)))
     except Exception as e:
         log.warning("Failed to save screenshot: %s", e)
         return None

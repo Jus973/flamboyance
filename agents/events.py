@@ -173,7 +173,7 @@ class EventDetector:
         self.last_action_time = time.time()
 
     def record_rage_decoy(
-        self, url: str, selector: str, reason: str
+        self, url: str, selector: str, reason: str, x: int | None = None, y: int | None = None
     ) -> FrustrationEvent:
         """Emit a *rage_decoy* event for elements that look clickable but aren't.
 
@@ -182,13 +182,19 @@ class EventDetector:
             selector: CSS selector or description of the decoy element.
             reason: Why the element appears clickable (e.g., "cursor:pointer",
                     "button-like styling", "hover effect").
+            x: X coordinate of element center (for screenshot annotation).
+            y: Y coordinate of element center (for screenshot annotation).
         """
+        details: dict[str, object] = {"selector": selector, "reason": reason}
+        if x is not None and y is not None:
+            details["x"] = x
+            details["y"] = y
         evt = FrustrationEvent(
             kind="rage_decoy",
             timestamp=time.time(),
             description=f"Rage decoy: element '{selector}' looks clickable ({reason}) but is not interactive",
             url=url,
-            details={"selector": selector, "reason": reason},
+            details=details,
         )
         self.events.append(evt)
         return evt
