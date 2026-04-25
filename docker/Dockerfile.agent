@@ -11,7 +11,6 @@ WORKDIR /app
 
 # setuptools needs package sources on disk before editable install.
 COPY pyproject.toml ./
-COPY orchestrator/ orchestrator/
 COPY agents/ agents/
 COPY mcp/ mcp/
 
