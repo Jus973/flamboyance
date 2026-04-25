@@ -17,9 +17,9 @@ LLM_BASE_URL: str = os.environ.get("FLAMBOYANCE_LLM_BASE_URL", "https://api.groq
 LLM_MODEL: str = os.environ.get("FLAMBOYANCE_LLM_MODEL", "meta-llama/llama-4-scout-17b-16e-instruct")
 
 MAX_LLM_CALLS_PER_SESSION: int = int(os.environ.get("FLAMBOYANCE_MAX_LLM_CALLS", "30"))
-LLM_RETRY_ATTEMPTS: int = 2
-LLM_RETRY_DELAY_S: float = 1.0
+LLM_RETRY_ATTEMPTS: int = int(os.environ.get("FLAMBOYANCE_LLM_RETRY_ATTEMPTS", "3"))
+LLM_RETRY_DELAY_S: float = float(os.environ.get("FLAMBOYANCE_LLM_RETRY_DELAY", "2.0"))
 
 # Minimum delay between LLM requests to avoid rate limiting (seconds)
-# Groq free tier: ~30 requests/min, so 2s delay is safe
-LLM_REQUEST_DELAY_S: float = float(os.environ.get("FLAMBOYANCE_LLM_REQUEST_DELAY", "2.0"))
+# Groq free tier: ~30 requests/min, so 3s delay is conservative
+LLM_REQUEST_DELAY_S: float = float(os.environ.get("FLAMBOYANCE_LLM_REQUEST_DELAY", "3.0"))

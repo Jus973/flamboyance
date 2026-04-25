@@ -10,7 +10,6 @@ import asyncio
 import json
 import logging
 import re
-import time
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
@@ -23,6 +22,7 @@ from .config import (
     LLM_RETRY_DELAY_S,
 )
 from .persona import Persona
+from .rate_limiter import GlobalRateLimiter
 
 log = logging.getLogger(__name__)
 
@@ -71,7 +71,6 @@ class LLMDriver:
         self._client: Any = None
         self.total_tokens_used: int = 0
         self.call_count: int = 0
-        self._last_request_time: float = 0.0
 
     def _get_client(self) -> Any:
         """Lazily initialize the OpenAI client."""
@@ -200,18 +199,12 @@ Respond with ONLY a JSON object in this exact format:
             },
         ]
 
-        # Rate limiting: ensure minimum delay between requests
-        now = time.monotonic()
-        time_since_last = now - self._last_request_time
-        if time_since_last < LLM_REQUEST_DELAY_S:
-            wait_time = LLM_REQUEST_DELAY_S - time_since_last
-            log.debug("Rate limiting: waiting %.2fs before next LLM request", wait_time)
-            await asyncio.sleep(wait_time)
-
         last_error: Exception | None = None
         for attempt in range(LLM_RETRY_ATTEMPTS + 1):
             try:
-                self._last_request_time = time.monotonic()
+                # Global rate limiting: ensure minimum delay between requests across all drivers
+                await GlobalRateLimiter.acquire(LLM_REQUEST_DELAY_S)
+
                 response = await client.chat.completions.create(
                     model=self.model,
                     messages=messages,
@@ -228,14 +221,16 @@ Respond with ONLY a JSON object in this exact format:
 
             except Exception as e:
                 last_error = e
+                retry_delay = self._get_retry_delay(e, attempt)
                 log.warning(
-                    "LLM API call failed (attempt %d/%d): %s",
+                    "LLM API call failed (attempt %d/%d): %s, retrying in %.1fs",
                     attempt + 1,
                     LLM_RETRY_ATTEMPTS + 1,
                     e,
+                    retry_delay,
                 )
                 if attempt < LLM_RETRY_ATTEMPTS:
-                    await asyncio.sleep(LLM_RETRY_DELAY_S * (2**attempt))
+                    await asyncio.sleep(retry_delay)
 
         log.error("LLM API failed after retries: %s", last_error)
         return ActionDecision(
@@ -243,6 +238,42 @@ Respond with ONLY a JSON object in this exact format:
             target=f"LLM API error: {last_error}",
             reasoning="Could not get response from LLM",
         )
+
+    def _get_retry_delay(self, error: Exception, attempt: int) -> float:
+        """Calculate retry delay, respecting Retry-After for rate limit errors.
+
+        For 429 rate limit errors, parses the retry delay from the error message
+        (Groq returns "try again in X seconds" format). Falls back to exponential
+        backoff for other errors.
+        """
+        try:
+            from openai import RateLimitError
+        except ImportError:
+            RateLimitError = type(None)  # type: ignore
+
+        if isinstance(error, RateLimitError):
+            retry_after = self._parse_retry_after(str(error))
+            if retry_after is not None:
+                log.info("Rate limited (429), waiting %.1fs as requested by API", retry_after)
+                return retry_after
+
+        return LLM_RETRY_DELAY_S * (2**attempt)
+
+    def _parse_retry_after(self, error_message: str) -> float | None:
+        """Extract retry delay from rate limit error message.
+
+        Groq API returns messages like: "try again in 7.123s" or "try again in 7 seconds"
+        """
+        patterns = [
+            r"try again in (\d+(?:\.\d+)?)\s*s(?:econds?)?",
+            r"retry.after[:\s]+(\d+(?:\.\d+)?)",
+            r"wait (\d+(?:\.\d+)?)\s*s(?:econds?)?",
+        ]
+        for pattern in patterns:
+            match = re.search(pattern, error_message, re.IGNORECASE)
+            if match:
+                return float(match.group(1)) + 0.5  # Add buffer
+        return None
 
     def _parse_response(self, raw_content: str) -> ActionDecision:
         """Parse LLM response into ActionDecision."""
