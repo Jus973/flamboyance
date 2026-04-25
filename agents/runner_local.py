@@ -73,6 +73,7 @@ async def run_local(
     llm_mode: bool = False,
     max_llm_calls: int | None = None,
     parallel: bool = False,
+    batch_size: int | None = None,
 ) -> RunState:
     """Run agents sequentially and return the completed RunState.
 
@@ -86,6 +87,7 @@ async def run_local(
         llm_mode: If True, use LLM vision model for navigation decisions.
         max_llm_calls: Maximum LLM API calls per agent session.
         parallel: If True, run heuristic agents in parallel for speed.
+        batch_size: If set, run agents in batches of this size (parallel within batch).
     """
     available = dict(DEFAULT_PERSONAS)
     if personas_file:
@@ -104,7 +106,39 @@ async def run_local(
     state = RunState(run_id=rid, url=url, personas=personas, status="running", llm_mode=llm_mode)
     _runs[rid] = state
 
-    if parallel and not llm_mode:
+    if batch_size and batch_size > 1:
+        # Run agents in batches (parallel within each batch)
+        log.info("running %d agents in batches of %d", len(personas), batch_size)
+        for i in range(0, len(personas), batch_size):
+            if state.stopped:
+                break
+            batch = personas[i:i + batch_size]
+            batch_num = i // batch_size + 1
+            total_batches = (len(personas) + batch_size - 1) // batch_size
+            log.info("=== Batch %d/%d: %s ===", batch_num, total_batches, [p.name for p in batch])
+
+            tasks = [
+                run_agent(
+                    url, persona, timeout_s=timeout_s, headless=headless,
+                    llm_mode=llm_mode, max_llm_calls=max_llm_calls
+                )
+                for persona in batch
+            ]
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            for persona, result in zip(batch, results, strict=True):
+                if isinstance(result, Exception):
+                    log.error("agent %s failed: %s", persona.name, result)
+                    state.results.append(AgentResult(
+                        persona=persona.name, status="error", error=str(result)
+                    ))
+                else:
+                    state.results.append(result)
+                    log.info(
+                        "agent %s finished: status=%s events=%d%s",
+                        persona.name, result.status, len(result.frustration_events),
+                        f" llm_calls={result.llm_calls}" if llm_mode else "",
+                    )
+    elif parallel and not llm_mode:
         # Run heuristic agents in parallel for speed
         log.info("running %d agents in parallel (heuristic mode)", len(personas))
         tasks = [
@@ -212,7 +246,7 @@ async def run_full(
     return heuristic_state, llm_state
 
 
-def save_report(state: RunState, output_dir: str | Path = "reports") -> Path:
+def save_report(state: RunState, output_dir: str | Path = "results") -> Path:
     """Generate and save a Markdown report to disk."""
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -250,12 +284,16 @@ def main() -> None:
     parser.add_argument("--timeout", type=float, default=60.0)
     parser.add_argument("--headless", action="store_true", default=True)
     parser.add_argument("--no-headless", dest="headless", action="store_false")
-    parser.add_argument("--output", default="reports", help="Output directory")
+    parser.add_argument("--output", default="results", help="Output directory")
     parser.add_argument("--llm", action="store_true", help="Use LLM vision model for navigation")
     parser.add_argument("--max-llm-calls", type=int, default=None, help="Max LLM API calls per agent")
     parser.add_argument(
         "--parallel", action="store_true",
         help="Run heuristic agents in parallel for speed"
+    )
+    parser.add_argument(
+        "--batch-size", type=int, default=None,
+        help="Run agents in parallel batches of N (e.g., --batch-size 3)"
     )
     parser.add_argument(
         "--full", action="store_true",
@@ -309,6 +347,7 @@ def main() -> None:
                 llm_mode=args.llm,
                 max_llm_calls=args.max_llm_calls,
                 parallel=args.parallel,
+                batch_size=args.batch_size,
             )
         )
 

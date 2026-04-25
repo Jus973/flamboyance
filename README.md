@@ -33,19 +33,68 @@ cd flamboyance
 python3 -m pip install -e .
 ```
 
-## Local runner (sequential)
+## CLI Reference
+
+### Runner (Multiple Personas)
 
 ```bash
-python -m agents.runner_local --url http://localhost:3000
+# Basic: run all personas sequentially
+python -m agents.runner_local --url http://localhost:5173
+
+# Watch browser (non-headless)
+python -m agents.runner_local --url http://localhost:5173 --no-headless
+
+# Run specific personas
+python -m agents.runner_local --url http://localhost:5173 --personas frustrated_exec power_user
+
+# Parallel execution (heuristic mode only)
+python -m agents.runner_local --url http://localhost:5173 --parallel
+
+# Batched execution (3 agents at a time, works with LLM too)
+python -m agents.runner_local --url http://localhost:5173 --batch-size 3
+
+# LLM vision mode (intelligent navigation)
+python -m agents.runner_local --url http://localhost:5173 --llm
+
+# Full test: heuristic + LLM modes for all personas
+python -m agents.runner_local --url http://localhost:5173 --full
+
+# Combined: all agents, batches of 3, browser visible, LLM mode, save to results/
+python -m agents.runner_local --url http://localhost:5173 --llm --batch-size 3 --no-headless --output results
 ```
 
-## Single agent (one persona)
+### Runner Flags
+
+| Flag | Description |
+|------|-------------|
+| `--url URL` | Target URL (required) |
+| `--personas NAME...` | Specific personas to run (default: all) |
+| `--personas-file FILE` | JSON file with custom personas |
+| `--timeout N` | Per-agent timeout in seconds (default: 60) |
+| `--no-headless` | Show browser window |
+| `--output DIR` | Save reports to directory (default: `results/`) |
+| `--llm` | Use LLM vision model for navigation |
+| `--max-llm-calls N` | Max LLM calls per agent (default: 30) |
+| `--parallel` | Run all heuristic agents in parallel |
+| `--batch-size N` | Run agents in parallel batches of N |
+| `--full` | Run both heuristic and LLM modes |
+
+### Single Agent
 
 ```bash
-python -m agents.agent --url http://localhost:3000 --persona frustrated_exec
+# Quick test with one persona
+python -m agents.agent --url http://localhost:5173 --persona frustrated_exec
+
+# With browser visible
+python -m agents.agent --url http://localhost:5173 --persona frustrated_exec --no-headless
+
+# With LLM vision
+python -m agents.agent --url http://localhost:5173 --persona frustrated_exec --llm
 ```
 
-## MCP server
+> **Note:** Single agent outputs JSON to stdout. Use `runner_local` to save reports to files.
+
+### MCP Server
 
 ```bash
 python -m mcp.server              # stdio (e.g. Cascade)

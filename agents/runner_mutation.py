@@ -621,7 +621,7 @@ def main() -> None:
     parser.add_argument("--no-headless", dest="headless", action="store_false")
     parser.add_argument("--llm", action="store_true", help="Use LLM vision model for navigation")
     parser.add_argument("--max-llm-calls", type=int, default=None, help="Max LLM API calls per agent")
-    parser.add_argument("--output", default="reports", help="Output directory")
+    parser.add_argument("--output", default="results", help="Output directory")
     parser.add_argument("--json", action="store_true", help="Output JSON instead of Markdown")
     args = parser.parse_args()
 

@@ -417,7 +417,10 @@ async def _execute_llm_action(page: object, decision: ActionDecision) -> str:
 async def _find_clickables(
     page: object, persona: Persona
 ) -> list[dict[str, object]]:
-    """Discover clickable elements on the page, respecting persona limitations."""
+    """Discover clickable elements on the page, respecting persona limitations.
+
+    Returns empty list if page context is destroyed (e.g., during navigation).
+    """
     # Import types inline to keep the function signature simple when playwright
     # is not installed.
     from playwright.async_api import Page
@@ -426,45 +429,60 @@ async def _find_clickables(
 
     elements: list[dict[str, object]] = []
 
-    locator = page.locator(
-        "a, button, input[type='submit'], input[type='button'], "
-        "[role='button'], [role='link'], [role='menuitem'], [role='tab']"
-    )
-    count = await locator.count()
+    try:
+        locator = page.locator(
+            "a, button, input[type='submit'], input[type='button'], "
+            "[role='button'], [role='link'], [role='menuitem'], [role='tab']"
+        )
+        count = await locator.count()
 
-    for i in range(min(count, 30)):
-        el = locator.nth(i)
-        try:
-            if not await el.is_visible():
-                continue
-        except Exception:
-            continue
-
-        tag = await el.evaluate("el => el.tagName.toLowerCase()")
-        role = await el.evaluate("el => el.getAttribute('role') || ''")
-        interactive = tag in INTERACTIVE_TAGS or role in INTERACTIVE_ROLES
-
-        if persona.skips_hidden_menus:
-            aria_expanded = await el.evaluate(
-                "el => el.getAttribute('aria-expanded')"
-            )
-            if aria_expanded == "false":
+        for i in range(min(count, 30)):
+            el = locator.nth(i)
+            try:
+                if not await el.is_visible():
+                    continue
+            except Exception:
                 continue
 
-        selector = f"{tag}:nth-of-type({i + 1})"
-        text = ""
-        try:
-            text = (await el.inner_text())[:40].strip()
-            if text:
-                selector = f"{tag}:has-text('{text}')"
-        except Exception:
-            pass
+            try:
+                tag = await el.evaluate("el => el.tagName.toLowerCase()")
+                role = await el.evaluate("el => el.getAttribute('role') || ''")
+            except Exception:
+                continue
 
-        # Personas who prefer visible text skip icon-only / unlabeled controls.
-        if persona.prefers_visible_text and not text:
-            continue
+            interactive = tag in INTERACTIVE_TAGS or role in INTERACTIVE_ROLES
 
-        elements.append({"selector": selector, "interactive": interactive})
+            if persona.skips_hidden_menus:
+                try:
+                    aria_expanded = await el.evaluate(
+                        "el => el.getAttribute('aria-expanded')"
+                    )
+                    if aria_expanded == "false":
+                        continue
+                except Exception:
+                    continue
+
+            selector = f"{tag}:nth-of-type({i + 1})"
+            text = ""
+            try:
+                text = (await el.inner_text())[:40].strip()
+                if text:
+                    selector = f"{tag}:has-text('{text}')"
+            except Exception:
+                pass
+
+            # Personas who prefer visible text skip icon-only / unlabeled controls.
+            if persona.prefers_visible_text and not text:
+                continue
+
+            elements.append({"selector": selector, "interactive": interactive})
+
+    except Exception as e:
+        # Page context destroyed during navigation - this is expected
+        if "context was destroyed" in str(e) or "navigation" in str(e).lower():
+            log.debug("Skipping clickables check - page navigating")
+            return []
+        raise
 
     return elements
 
@@ -473,12 +491,14 @@ async def _find_broken_images(page: object) -> list[dict[str, str]]:
     """Find images that failed to load on the page.
 
     Detects images with src attributes that have naturalWidth of 0 (failed to load).
+    Returns empty list if page context is destroyed (e.g., during navigation).
     """
     from playwright.async_api import Page
 
     assert isinstance(page, Page)
 
-    broken = await page.evaluate("""
+    try:
+        broken = await page.evaluate("""
         () => {
             const results = [];
             const images = document.querySelectorAll('img[src]');
@@ -510,6 +530,12 @@ async def _find_broken_images(page: object) -> list[dict[str, str]]:
             return results;
         }
     """)
+    except Exception as e:
+        # Page context destroyed during navigation - this is expected
+        if "context was destroyed" in str(e) or "navigation" in str(e).lower():
+            log.debug("Skipping broken image check - page navigating")
+            return []
+        raise
 
     return broken
 
@@ -519,12 +545,14 @@ async def _find_rage_decoys(page: object) -> list[dict[str, str]]:
 
     Detects elements with visual affordances (cursor:pointer, button-like styling,
     box shadows, transforms, hover effects) that are not semantic interactive elements.
+    Returns empty list if page context is destroyed (e.g., during navigation).
     """
     from playwright.async_api import Page
 
     assert isinstance(page, Page)
 
-    candidates = await page.evaluate("""
+    try:
+        candidates = await page.evaluate("""
         () => {
             const results = [];
             const interactiveTags = new Set(['a', 'button', 'input', 'select', 'textarea']);
@@ -617,6 +645,12 @@ async def _find_rage_decoys(page: object) -> list[dict[str, str]]:
             return results;
         }
     """)
+    except Exception as e:
+        # Page context destroyed during navigation - this is expected
+        if "context was destroyed" in str(e) or "navigation" in str(e).lower():
+            log.debug("Skipping rage decoy check - page navigating")
+            return []
+        raise
 
     return candidates
 
