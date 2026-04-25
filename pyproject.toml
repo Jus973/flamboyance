@@ -21,7 +21,7 @@ dependencies = [
 dev = ["pytest>=7", "pytest-asyncio>=0.23"]
 
 [tool.setuptools.packages.find]
-include = ["agents*", "mcp*"]
+include = ["agents*", "mcp*", "llm*"]
 exclude = ["tests*"]
 
 [tool.pytest.ini_options]

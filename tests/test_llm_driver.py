@@ -41,23 +41,16 @@ class TestActionDecision:
 
 
 class TestLLMDriverInit:
-    def test_init_with_api_key(self):
-        driver = LLMDriver(api_key="test-key", base_url="https://api.test.com")
-        assert driver.api_key == "test-key"
-        assert driver.base_url == "https://api.test.com"
+    def test_init_no_api_key_required(self):
+        """LLMDriver no longer requires API key (uses local Ollama by default)."""
+        driver = LLMDriver()
         assert driver.call_count == 0
         assert driver.total_tokens_used == 0
-
-    def test_init_without_api_key_raises(self):
-        with patch.dict("os.environ", {}, clear=True):
-            with patch("agents.llm_driver.LLM_API_KEY", None):
-                with pytest.raises(ValueError, match="LLM API key required"):
-                    LLMDriver(api_key=None)
 
 
 class TestBuildSystemPrompt:
     def test_frustrated_exec_prompt(self):
-        driver = LLMDriver(api_key="test-key")
+        driver = LLMDriver()
         prompt = driver._build_system_prompt(FRUSTRATED_EXEC)
         
         assert "frustrated_exec" in prompt
@@ -65,7 +58,7 @@ class TestBuildSystemPrompt:
         assert "impatient" in prompt.lower()
 
     def test_power_user_prompt(self):
-        driver = LLMDriver(api_key="test-key")
+        driver = LLMDriver()
         prompt = driver._build_system_prompt(POWER_USER)
         
         assert "power_user" in prompt
@@ -80,7 +73,7 @@ class TestBuildSystemPrompt:
             goal="test goal",
             prefers_visible_text=True,
         )
-        driver = LLMDriver(api_key="test-key")
+        driver = LLMDriver()
         prompt = driver._build_system_prompt(persona)
         
         assert "labeled" in prompt.lower()
@@ -88,12 +81,12 @@ class TestBuildSystemPrompt:
 
 class TestBuildHistoryContext:
     def test_empty_history(self):
-        driver = LLMDriver(api_key="test-key")
+        driver = LLMDriver()
         context = driver._build_history_context([])
         assert "first action" in context.lower()
 
     def test_with_history(self):
-        driver = LLMDriver(api_key="test-key")
+        driver = LLMDriver()
         history = [
             ActionHistoryEntry(
                 action="click",
@@ -118,7 +111,7 @@ class TestBuildHistoryContext:
 
 class TestParseResponse:
     def test_parse_click_response(self):
-        driver = LLMDriver(api_key="test-key")
+        driver = LLMDriver()
         raw = '{"action": "click", "target": [150, 300], "reasoning": "clicking login"}'
         
         decision = driver._parse_response(raw)
@@ -128,7 +121,7 @@ class TestParseResponse:
         assert decision.reasoning == "clicking login"
 
     def test_parse_type_response(self):
-        driver = LLMDriver(api_key="test-key")
+        driver = LLMDriver()
         raw = '{"action": "type", "target": "hello", "reasoning": "typing text"}'
         
         decision = driver._parse_response(raw)
@@ -137,7 +130,7 @@ class TestParseResponse:
         assert decision.target == "hello"
 
     def test_parse_done_response(self):
-        driver = LLMDriver(api_key="test-key")
+        driver = LLMDriver()
         raw = '{"action": "done", "target": null, "reasoning": "goal complete"}'
         
         decision = driver._parse_response(raw)
@@ -146,7 +139,7 @@ class TestParseResponse:
         assert decision.target is None
 
     def test_parse_give_up_response(self):
-        driver = LLMDriver(api_key="test-key")
+        driver = LLMDriver()
         raw = '{"action": "give_up", "target": "stuck on login", "reasoning": "cannot proceed"}'
         
         decision = driver._parse_response(raw)
@@ -155,7 +148,7 @@ class TestParseResponse:
         assert decision.target == "stuck on login"
 
     def test_parse_with_surrounding_text(self):
-        driver = LLMDriver(api_key="test-key")
+        driver = LLMDriver()
         raw = 'Here is my decision:\n{"action": "scroll", "target": "down", "reasoning": "looking for more"}\nThat should work.'
         
         decision = driver._parse_response(raw)
@@ -164,7 +157,7 @@ class TestParseResponse:
         assert decision.target == "down"
 
     def test_parse_invalid_json(self):
-        driver = LLMDriver(api_key="test-key")
+        driver = LLMDriver()
         raw = "This is not valid JSON at all"
         
         decision = driver._parse_response(raw)
@@ -173,7 +166,7 @@ class TestParseResponse:
         assert "Invalid" in decision.target or "parse" in decision.reasoning.lower()
 
     def test_parse_unknown_action(self):
-        driver = LLMDriver(api_key="test-key")
+        driver = LLMDriver()
         raw = '{"action": "dance", "target": null, "reasoning": "party time"}'
         
         decision = driver._parse_response(raw)
@@ -185,22 +178,11 @@ class TestDecideAction:
     @pytest.mark.asyncio
     async def test_decide_action_success(self):
         LLMDriver.clear_cache()
-        driver = LLMDriver(api_key="test-key")
+        driver = LLMDriver()
         
-        mock_response = MagicMock()
-        mock_response.choices = [
-            MagicMock(
-                message=MagicMock(
-                    content='{"action": "click", "target": [100, 200], "reasoning": "clicking button"}'
-                )
-            )
-        ]
-        mock_response.usage = MagicMock(total_tokens=150)
-        
-        mock_client = AsyncMock()
-        mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
-        
-        with patch.object(driver, "_get_client", return_value=mock_client):
+        with patch("llm.router.call_ollama", new_callable=AsyncMock) as mock_ollama:
+            mock_ollama.return_value = '{"action": "click", "target": [100, 200], "reasoning": "clicking button"}'
+            
             decision = await driver.decide_action(
                 screenshot_b64="fake_base64_data",
                 persona=FRUSTRATED_EXEC,
@@ -211,36 +193,51 @@ class TestDecideAction:
         assert decision.action_type == "click"
         assert decision.target == (100, 200)
         assert driver.call_count == 1
-        assert driver.total_tokens_used == 150
 
     @pytest.mark.asyncio
-    async def test_decide_action_api_error_retries(self):
+    async def test_decide_action_uses_router_for_vision(self):
+        """Vision-based decisions should go through the router to Ollama."""
         LLMDriver.clear_cache()
-        driver = LLMDriver(api_key="test-key")
+        driver = LLMDriver()
         
-        mock_client = AsyncMock()
-        mock_client.chat.completions.create = AsyncMock(
-            side_effect=Exception("API Error")
-        )
+        with patch("llm.call_llm", new_callable=AsyncMock) as mock_call_llm:
+            mock_call_llm.return_value = '{"action": "scroll", "target": "down", "reasoning": "looking for more"}'
+            
+            decision = await driver.decide_action(
+                screenshot_b64="fake_base64_data",
+                persona=FRUSTRATED_EXEC,
+                history=[],
+                current_url="http://example.com",
+            )
         
-        with patch.object(driver, "_get_client", return_value=mock_client):
-            with patch("agents.llm_driver.LLM_RETRY_ATTEMPTS", 1):
-                with patch("agents.llm_driver.LLM_RETRY_DELAY_S", 0.01):
-                    decision = await driver.decide_action(
-                        screenshot_b64="fake_base64_data",
-                        persona=FRUSTRATED_EXEC,
-                        history=[],
-                    )
+        assert decision.action_type == "scroll"
+        mock_call_llm.assert_called_once()
+        call_kwargs = mock_call_llm.call_args[1]
+        assert call_kwargs["task_type"] == "decision"
+        assert call_kwargs["image_b64"] == "fake_base64_data"
+
+    @pytest.mark.asyncio
+    async def test_decide_action_error_gives_up(self):
+        LLMDriver.clear_cache()
+        driver = LLMDriver()
+        
+        with patch("llm.call_llm", new_callable=AsyncMock) as mock_call_llm:
+            mock_call_llm.side_effect = Exception("Connection failed")
+            
+            decision = await driver.decide_action(
+                screenshot_b64="fake_base64_data",
+                persona=FRUSTRATED_EXEC,
+                history=[],
+            )
         
         assert decision.action_type == "give_up"
-        assert "API error" in str(decision.target)
-        assert mock_client.chat.completions.create.call_count == 2
+        assert "LLM error" in str(decision.target)
 
 
 class TestGetUsageStats:
     def test_initial_stats(self):
         LLMDriver.clear_cache()
-        driver = LLMDriver(api_key="test-key")
+        driver = LLMDriver()
         stats = driver.get_usage_stats()
         
         assert stats["call_count"] == 0
@@ -251,44 +248,29 @@ class TestGetUsageStats:
     @pytest.mark.asyncio
     async def test_stats_after_calls(self):
         LLMDriver.clear_cache()
-        driver = LLMDriver(api_key="test-key")
+        driver = LLMDriver()
         
-        mock_response = MagicMock()
-        mock_response.choices = [
-            MagicMock(message=MagicMock(content='{"action": "done", "target": null, "reasoning": "done"}'))
-        ]
-        mock_response.usage = MagicMock(total_tokens=100)
-        
-        mock_client = AsyncMock()
-        mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
-        
-        with patch.object(driver, "_get_client", return_value=mock_client):
+        with patch("llm.call_llm", new_callable=AsyncMock) as mock_call_llm:
+            mock_call_llm.return_value = '{"action": "done", "target": null, "reasoning": "done"}'
+            
             await driver.decide_action("fake1", FRUSTRATED_EXEC, [])
             await driver.decide_action("fake2", FRUSTRATED_EXEC, [])
         
         stats = driver.get_usage_stats()
         assert stats["call_count"] == 2
-        assert stats["total_tokens"] == 200
 
     @pytest.mark.asyncio
     async def test_cache_hit(self):
         LLMDriver.clear_cache()
-        driver = LLMDriver(api_key="test-key")
+        driver = LLMDriver()
         
-        mock_response = MagicMock()
-        mock_response.choices = [
-            MagicMock(message=MagicMock(content='{"action": "click", "target": [100, 200], "reasoning": "test"}'))
-        ]
-        mock_response.usage = MagicMock(total_tokens=100)
-        
-        mock_client = AsyncMock()
-        mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
-        
-        with patch.object(driver, "_get_client", return_value=mock_client):
+        with patch("llm.call_llm", new_callable=AsyncMock) as mock_call_llm:
+            mock_call_llm.return_value = '{"action": "click", "target": [100, 200], "reasoning": "test"}'
+            
             await driver.decide_action("same_screenshot", FRUSTRATED_EXEC, [], "http://test.com")
             await driver.decide_action("same_screenshot", FRUSTRATED_EXEC, [], "http://test.com")
         
         stats = driver.get_usage_stats()
         assert stats["call_count"] == 1
         assert stats["cache_hits"] == 1
-        assert mock_client.chat.completions.create.call_count == 1
+        assert mock_call_llm.call_count == 1

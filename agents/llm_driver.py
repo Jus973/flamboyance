@@ -1,31 +1,20 @@
 """LLM-driven decision engine for vision-based web navigation.
 
-Uses an OpenAI-compatible vision model to analyze screenshots and decide
-which action to take next based on the persona's goal.
+Uses the LLM router to analyze screenshots and decide which action to take
+next based on the persona's goal. Supports local Ollama and cloud Groq.
 """
 
 from __future__ import annotations
 
-import asyncio
 import hashlib
 import json
 import logging
 import re
-from dataclasses import dataclass, field
-from typing import Any, ClassVar, Literal
+from dataclasses import dataclass
+from typing import ClassVar, Literal
 
-from .config import (
-    LLM_API_KEY,
-    LLM_BASE_URL,
-    LLM_IMAGE_DETAIL,
-    LLM_MAX_TOKENS,
-    LLM_MODEL,
-    LLM_REQUEST_DELAY_S,
-    LLM_RETRY_ATTEMPTS,
-    LLM_RETRY_DELAY_S,
-)
+from .config import LLM_MAX_TOKENS
 from .persona import Persona
-from .rate_limiter import GlobalRateLimiter
 
 log = logging.getLogger(__name__)
 
@@ -53,28 +42,21 @@ class ActionHistoryEntry:
 
 
 class LLMDriver:
-    """Vision-based LLM driver for web navigation decisions."""
+    """Vision-based LLM driver for web navigation decisions.
+
+    Uses the hybrid LLM router which routes vision-based decisions to local
+    Ollama by default, with optional Groq fallback for text-only decisions.
+    """
 
     _response_cache: ClassVar[dict[str, "ActionDecision"]] = {}
     _cache_hits: ClassVar[int] = 0
 
-    def __init__(
-        self,
-        api_key: str | None = None,
-        base_url: str | None = None,
-        model: str | None = None,
-    ):
-        self.api_key = api_key or LLM_API_KEY
-        self.base_url = base_url or LLM_BASE_URL
-        self.model = model or LLM_MODEL
+    def __init__(self):
+        """Initialize the LLM driver.
 
-        if not self.api_key:
-            raise ValueError(
-                "LLM API key required. Set FLAMBOYANCE_LLM_API_KEY environment variable "
-                "or pass api_key parameter."
-            )
-
-        self._client: Any = None
+        No API key required for Ollama-based vision decisions.
+        Groq API key is only needed for text-based decision fallback.
+        """
         self.total_tokens_used: int = 0
         self.call_count: int = 0
 
@@ -89,22 +71,6 @@ class LLMDriver:
         """Clear the response cache (useful for testing)."""
         cls._response_cache.clear()
         cls._cache_hits = 0
-
-    def _get_client(self) -> Any:
-        """Lazily initialize the OpenAI client."""
-        if self._client is None:
-            try:
-                from openai import AsyncOpenAI
-            except ImportError:
-                raise ImportError(
-                    "openai package required for LLM mode. "
-                    "Install with: pip install openai"
-                )
-            self._client = AsyncOpenAI(
-                api_key=self.api_key,
-                base_url=self.base_url,
-            )
-        return self._client
 
     def _build_system_prompt(self, persona: Persona) -> str:
         """Convert persona traits into compact LLM system instructions."""
@@ -164,6 +130,8 @@ Respond with JSON only: {{"action":"...", "target":..., "reasoning":"brief expla
     ) -> ActionDecision:
         """Analyze screenshot and decide next action.
 
+        Uses the hybrid LLM router which routes vision decisions to local Ollama.
+
         Args:
             screenshot_b64: Base64-encoded PNG screenshot
             persona: Persona controlling behavior
@@ -179,108 +147,39 @@ Respond with JSON only: {{"action":"...", "target":..., "reasoning":"brief expla
             log.debug("Cache hit for %s (total hits: %d)", cache_key, self._cache_hits)
             return self._response_cache[cache_key]
 
-        client = self._get_client()
+        from llm import call_llm
 
         system_prompt = self._build_system_prompt(persona)
         history_context = self._build_history_context(history)
         user_content = f"URL: {current_url}\n{history_context}\nDecide next action:"
 
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": user_content},
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:image/png;base64,{screenshot_b64}",
-                            "detail": LLM_IMAGE_DETAIL,
-                        },
-                    },
-                ],
-            },
-        ]
-
-        last_error: Exception | None = None
-        for attempt in range(LLM_RETRY_ATTEMPTS + 1):
-            try:
-                await GlobalRateLimiter.acquire(LLM_REQUEST_DELAY_S)
-
-                response = await client.chat.completions.create(
-                    model=self.model,
-                    messages=messages,
-                    max_tokens=LLM_MAX_TOKENS,
-                    temperature=0.3,
-                )
-
-                self.call_count += 1
-                if response.usage:
-                    self.total_tokens_used += response.usage.total_tokens
-
-                raw_content = response.choices[0].message.content or ""
-                decision = self._parse_response(raw_content)
-
-                if decision.action_type not in ("give_up",):
-                    self._response_cache[cache_key] = decision
-
-                return decision
-
-            except Exception as e:
-                last_error = e
-                retry_delay = self._get_retry_delay(e, attempt)
-                log.warning(
-                    "LLM API call failed (attempt %d/%d): %s, retrying in %.1fs",
-                    attempt + 1,
-                    LLM_RETRY_ATTEMPTS + 1,
-                    e,
-                    retry_delay,
-                )
-                if attempt < LLM_RETRY_ATTEMPTS:
-                    await asyncio.sleep(retry_delay)
-
-        log.error("LLM API failed after retries: %s", last_error)
-        return ActionDecision(
-            action_type="give_up",
-            target=f"LLM API error: {last_error}",
-            reasoning="Could not get response from LLM",
-        )
-
-    def _get_retry_delay(self, error: Exception, attempt: int) -> float:
-        """Calculate retry delay, respecting Retry-After for rate limit errors.
-
-        For 429 rate limit errors, parses the retry delay from the error message
-        (Groq returns "try again in X seconds" format). Falls back to exponential
-        backoff for other errors.
-        """
         try:
-            from openai import RateLimitError
-        except ImportError:
-            RateLimitError = type(None)  # type: ignore
+            raw_content = await call_llm(
+                task_type="decision",
+                prompt=user_content,
+                max_tokens=LLM_MAX_TOKENS,
+                image_b64=screenshot_b64,
+                system_prompt=system_prompt,
+                temperature=0.3,
+            )
 
-        if isinstance(error, RateLimitError):
-            retry_after = self._parse_retry_after(str(error))
-            if retry_after is not None:
-                log.info("Rate limited (429), waiting %.1fs as requested by API", retry_after)
-                return retry_after
+            self.call_count += 1
+            self.total_tokens_used += len(raw_content) // 4
 
-        return LLM_RETRY_DELAY_S * (2**attempt)
+            decision = self._parse_response(raw_content)
 
-    def _parse_retry_after(self, error_message: str) -> float | None:
-        """Extract retry delay from rate limit error message.
+            if decision.action_type not in ("give_up",):
+                self._response_cache[cache_key] = decision
 
-        Groq API returns messages like: "try again in 7.123s" or "try again in 7 seconds"
-        """
-        patterns = [
-            r"try again in (\d+(?:\.\d+)?)\s*s(?:econds?)?",
-            r"retry.after[:\s]+(\d+(?:\.\d+)?)",
-            r"wait (\d+(?:\.\d+)?)\s*s(?:econds?)?",
-        ]
-        for pattern in patterns:
-            match = re.search(pattern, error_message, re.IGNORECASE)
-            if match:
-                return float(match.group(1)) + 0.5  # Add buffer
-        return None
+            return decision
+
+        except Exception as e:
+            log.error("LLM call failed: %s", e)
+            return ActionDecision(
+                action_type="give_up",
+                target=f"LLM error: {e}",
+                reasoning="Could not get response from LLM",
+            )
 
     def _parse_response(self, raw_content: str) -> ActionDecision:
         """Parse LLM response into ActionDecision."""
