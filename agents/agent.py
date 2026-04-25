@@ -207,6 +207,9 @@ async def run_agent(
                 )
                 log.info("event: %s", decoy_evt.description)
 
+            # ── Run expanded page-level checks ─────────────────────────
+            await _run_page_checks(page, detector, persona, url)
+
             actions_taken = 0
             goal_complete = False
 
@@ -277,6 +280,17 @@ async def run_agent(
                             detector.record_broken_image(current_url, img["src"], img["selector"])
                             log.info("event: Broken image - %s", img["src"][:60])
 
+                        # Run expanded page-level checks on new page
+                        await _run_page_checks(page, detector, persona, current_url)
+
+                        # Check for cart/form abandonment
+                        abandon_evt = detector.check_cart_abandonment(current_url)
+                        if abandon_evt:
+                            log.info("event: %s", abandon_evt.description)
+                        form_evt = detector.check_form_abandonment(current_url)
+                        if form_evt:
+                            log.info("event: %s", form_evt.description)
+
                     actions_taken += 1
                     continue
 
@@ -341,6 +355,17 @@ async def run_agent(
                             x=decoy.get("x"), y=decoy.get("y")
                         )
                         log.info("event: %s", decoy_evt.description)
+
+                    # Run expanded page-level checks on new page
+                    await _run_page_checks(page, detector, persona, current_url)
+
+                    # Check for cart/form abandonment
+                    abandon_evt = detector.check_cart_abandonment(current_url)
+                    if abandon_evt:
+                        log.info("event: %s", abandon_evt.description)
+                    form_evt = detector.check_form_abandonment(current_url)
+                    if form_evt:
+                        log.info("event: %s", form_evt.description)
 
                 actions_taken += 1
 
@@ -571,6 +596,453 @@ async def _find_broken_images(page: object) -> list[dict[str, str]]:
     return broken
 
 
+async def _find_accessibility_issues(page: object, min_contrast: float = 4.5) -> list[dict[str, object]]:
+    """Find accessibility issues on the page.
+
+    Detects:
+    - Images without alt text
+    - Elements with poor contrast (if detectable via computed styles)
+    - Potential keyboard traps (elements with tabindex but no visible focus)
+
+    Returns empty list if page context is destroyed.
+    """
+    from playwright.async_api import Page
+
+    assert isinstance(page, Page)
+
+    try:
+        issues = await page.evaluate("""
+        () => {
+            const results = [];
+
+            // Check for images without alt text
+            const images = document.querySelectorAll('img');
+            for (const img of images) {
+                if (!img.alt && !img.getAttribute('aria-label') && !img.getAttribute('aria-labelledby')) {
+                    // Skip tiny images (tracking pixels)
+                    if (img.width < 10 && img.height < 10) continue;
+
+                    let selector = 'img';
+                    if (img.id) selector = `#${img.id}`;
+                    else if (img.src) selector = `img[src*="${img.src.slice(-30)}"]`;
+
+                    results.push({
+                        issue_type: 'missing_alt',
+                        selector: selector,
+                        details: { src: img.src?.slice(0, 100) }
+                    });
+                }
+                if (results.length >= 5) break;
+            }
+
+            // Check for buttons/links without accessible names
+            const interactives = document.querySelectorAll('button, a, [role="button"], [role="link"]');
+            for (const el of interactives) {
+                const text = (el.innerText || '').trim();
+                const ariaLabel = el.getAttribute('aria-label');
+                const ariaLabelledBy = el.getAttribute('aria-labelledby');
+                const title = el.getAttribute('title');
+
+                if (!text && !ariaLabel && !ariaLabelledBy && !title) {
+                    let selector = el.tagName.toLowerCase();
+                    if (el.id) selector = `#${el.id}`;
+                    else if (el.className && typeof el.className === 'string') {
+                        const firstClass = el.className.split(' ')[0];
+                        if (firstClass) selector = `${el.tagName.toLowerCase()}.${firstClass}`;
+                    }
+
+                    results.push({
+                        issue_type: 'missing_accessible_name',
+                        selector: selector,
+                        details: {}
+                    });
+                }
+                if (results.length >= 10) break;
+            }
+
+            // Check for form inputs without labels
+            const inputs = document.querySelectorAll('input:not([type="hidden"]):not([type="submit"]):not([type="button"]), textarea, select');
+            for (const input of inputs) {
+                const id = input.id;
+                const ariaLabel = input.getAttribute('aria-label');
+                const ariaLabelledBy = input.getAttribute('aria-labelledby');
+                const placeholder = input.getAttribute('placeholder');
+
+                let hasLabel = false;
+                if (id) {
+                    hasLabel = !!document.querySelector(`label[for="${id}"]`);
+                }
+                if (!hasLabel) {
+                    hasLabel = !!input.closest('label');
+                }
+
+                if (!hasLabel && !ariaLabel && !ariaLabelledBy) {
+                    let selector = input.tagName.toLowerCase();
+                    if (id) selector = `#${id}`;
+                    else if (input.name) selector = `${input.tagName.toLowerCase()}[name="${input.name}"]`;
+
+                    results.push({
+                        issue_type: 'missing_label',
+                        selector: selector,
+                        details: { placeholder: placeholder || '' }
+                    });
+                }
+                if (results.length >= 15) break;
+            }
+
+            return results;
+        }
+    """)
+    except Exception as e:
+        if "context was destroyed" in str(e) or "navigation" in str(e).lower():
+            log.debug("Skipping accessibility check - page navigating")
+            return []
+        raise
+
+    return issues
+
+
+async def _find_mobile_issues(page: object, viewport: tuple[int, int], min_tap_target: int = 44) -> list[dict[str, object]]:
+    """Find mobile UX issues on the page.
+
+    Detects:
+    - Tap targets smaller than minimum size
+    - Horizontal scroll (content wider than viewport)
+    - Text too small for mobile
+
+    Returns empty list if page context is destroyed.
+    """
+    from playwright.async_api import Page
+
+    assert isinstance(page, Page)
+    viewport_width = viewport[0]
+
+    try:
+        issues = await page.evaluate("""
+        (args) => {
+            const { viewportWidth, minTapTarget } = args;
+            const results = [];
+
+            // Check for horizontal scroll
+            if (document.documentElement.scrollWidth > viewportWidth + 10) {
+                results.push({
+                    issue_type: 'horizontal_scroll',
+                    selector: 'body',
+                    details: {
+                        content_width: document.documentElement.scrollWidth,
+                        viewport_width: viewportWidth
+                    }
+                });
+            }
+
+            // Check tap target sizes
+            const tappables = document.querySelectorAll('a, button, input, select, textarea, [role="button"], [role="link"]');
+            for (const el of tappables) {
+                if (!el.offsetParent) continue; // Skip hidden elements
+
+                const rect = el.getBoundingClientRect();
+                const width = rect.width;
+                const height = rect.height;
+
+                if ((width < minTapTarget || height < minTapTarget) && width > 0 && height > 0) {
+                    let selector = el.tagName.toLowerCase();
+                    const text = (el.innerText || '').trim().slice(0, 20);
+                    if (text) {
+                        selector = `${el.tagName.toLowerCase()}:has-text('${text.replace(/'/g, "\\'")}')`;
+                    } else if (el.id) {
+                        selector = `#${el.id}`;
+                    }
+
+                    results.push({
+                        issue_type: 'small_tap_target',
+                        selector: selector,
+                        details: {
+                            width: Math.round(width),
+                            height: Math.round(height),
+                            min_required: minTapTarget
+                        },
+                        x: Math.round(rect.left + width / 2),
+                        y: Math.round(rect.top + height / 2)
+                    });
+                }
+                if (results.length >= 10) break;
+            }
+
+            return results;
+        }
+    """, {"viewportWidth": viewport_width, "minTapTarget": min_tap_target})
+    except Exception as e:
+        if "context was destroyed" in str(e) or "navigation" in str(e).lower():
+            log.debug("Skipping mobile check - page navigating")
+            return []
+        raise
+
+    return issues
+
+
+async def _find_error_messages(page: object) -> list[dict[str, str]]:
+    """Find visible error messages on the page.
+
+    Detects elements with error styling or ARIA invalid state.
+    Returns empty list if page context is destroyed.
+    """
+    from playwright.async_api import Page
+
+    assert isinstance(page, Page)
+
+    try:
+        errors = await page.evaluate("""
+        () => {
+            const results = [];
+
+            // Check for elements with error classes or aria-invalid
+            const errorSelectors = [
+                '[aria-invalid="true"]',
+                '.error',
+                '.error-message',
+                '.field-error',
+                '.validation-error',
+                '.has-error',
+                '.is-invalid',
+                '[class*="error"]',
+                '[class*="invalid"]'
+            ];
+
+            for (const selector of errorSelectors) {
+                try {
+                    const elements = document.querySelectorAll(selector);
+                    for (const el of elements) {
+                        if (!el.offsetParent) continue; // Skip hidden
+
+                        const text = (el.innerText || el.textContent || '').trim();
+                        if (!text && !el.matches('[aria-invalid]')) continue;
+
+                        let elSelector = el.tagName.toLowerCase();
+                        if (el.id) elSelector = `#${el.id}`;
+                        else if (el.className && typeof el.className === 'string') {
+                            const firstClass = el.className.split(' ')[0];
+                            if (firstClass) elSelector = `${el.tagName.toLowerCase()}.${firstClass}`;
+                        }
+
+                        results.push({
+                            selector: elSelector,
+                            message: text.slice(0, 200)
+                        });
+
+                        if (results.length >= 10) return results;
+                    }
+                } catch (e) {
+                    // Invalid selector, skip
+                }
+            }
+
+            return results;
+        }
+    """)
+    except Exception as e:
+        if "context was destroyed" in str(e) or "navigation" in str(e).lower():
+            log.debug("Skipping error message check - page navigating")
+            return []
+        raise
+
+    return errors
+
+
+async def _find_modal_overlays(page: object) -> list[dict[str, str]]:
+    """Find intrusive modal overlays on the page.
+
+    Detects modals, popups, and overlays that may frustrate users.
+    Returns empty list if page context is destroyed.
+    """
+    from playwright.async_api import Page
+
+    assert isinstance(page, Page)
+
+    try:
+        modals = await page.evaluate("""
+        () => {
+            const results = [];
+
+            // Common modal selectors
+            const modalSelectors = [
+                '[role="dialog"]',
+                '[role="alertdialog"]',
+                '.modal',
+                '.popup',
+                '.overlay',
+                '[class*="modal"]',
+                '[class*="popup"]',
+                '[class*="overlay"]',
+                '[class*="lightbox"]'
+            ];
+
+            for (const selector of modalSelectors) {
+                try {
+                    const elements = document.querySelectorAll(selector);
+                    for (const el of elements) {
+                        if (!el.offsetParent) continue; // Skip hidden
+
+                        const style = window.getComputedStyle(el);
+                        // Check if it's actually overlaying content
+                        if (style.position !== 'fixed' && style.position !== 'absolute') continue;
+                        if (style.zIndex && parseInt(style.zIndex) < 100) continue;
+
+                        // Check for close button
+                        const hasCloseButton = !!el.querySelector('[aria-label*="close"], [aria-label*="Close"], .close, [class*="close"], button:has-text("×"), button:has-text("X")');
+
+                        let elSelector = el.tagName.toLowerCase();
+                        if (el.id) elSelector = `#${el.id}`;
+                        else if (el.className && typeof el.className === 'string') {
+                            const firstClass = el.className.split(' ')[0];
+                            if (firstClass) elSelector = `${el.tagName.toLowerCase()}.${firstClass}`;
+                        }
+
+                        const modalType = hasCloseButton ? 'dismissible_modal' : 'intrusive_modal';
+
+                        results.push({
+                            selector: elSelector,
+                            modal_type: modalType,
+                            has_close_button: hasCloseButton
+                        });
+
+                        if (results.length >= 5) return results;
+                    }
+                } catch (e) {
+                    // Invalid selector, skip
+                }
+            }
+
+            return results;
+        }
+    """)
+    except Exception as e:
+        if "context was destroyed" in str(e) or "navigation" in str(e).lower():
+            log.debug("Skipping modal check - page navigating")
+            return []
+        raise
+
+    return modals
+
+
+async def _find_copy_paste_blocks(page: object) -> list[dict[str, str]]:
+    """Find elements that block text selection/copy.
+
+    Detects user-select: none on content elements.
+    Returns empty list if page context is destroyed.
+    """
+    from playwright.async_api import Page
+
+    assert isinstance(page, Page)
+
+    try:
+        blocks = await page.evaluate("""
+        () => {
+            const results = [];
+
+            // Check content elements for user-select: none
+            const contentElements = document.querySelectorAll('p, article, section, div, span, li, td, th');
+
+            for (const el of contentElements) {
+                const style = window.getComputedStyle(el);
+                if (style.userSelect === 'none' || style.webkitUserSelect === 'none') {
+                    // Skip if it's a button or interactive element
+                    if (el.closest('button, a, input, select, textarea')) continue;
+
+                    // Only flag if it has meaningful text content
+                    const text = (el.innerText || '').trim();
+                    if (text.length < 20) continue;
+
+                    let selector = el.tagName.toLowerCase();
+                    if (el.id) selector = `#${el.id}`;
+                    else if (el.className && typeof el.className === 'string') {
+                        const firstClass = el.className.split(' ')[0];
+                        if (firstClass) selector = `${el.tagName.toLowerCase()}.${firstClass}`;
+                    }
+
+                    results.push({
+                        selector: selector,
+                        text_preview: text.slice(0, 50)
+                    });
+
+                    if (results.length >= 5) return results;
+                }
+            }
+
+            return results;
+        }
+    """)
+    except Exception as e:
+        if "context was destroyed" in str(e) or "navigation" in str(e).lower():
+            log.debug("Skipping copy/paste check - page navigating")
+            return []
+        raise
+
+    return blocks
+
+
+async def _find_infinite_scroll_issues(page: object) -> list[dict[str, object]]:
+    """Find infinite scroll issues on the page.
+
+    Detects pages where footer is unreachable or scroll position may be lost.
+    Returns empty list if page context is destroyed.
+    """
+    from playwright.async_api import Page
+
+    assert isinstance(page, Page)
+
+    try:
+        issues = await page.evaluate("""
+        () => {
+            const results = [];
+
+            // Check if page has infinite scroll indicators
+            const infiniteScrollIndicators = [
+                '[data-infinite-scroll]',
+                '.infinite-scroll',
+                '[class*="infinite"]',
+                '[class*="lazy-load"]'
+            ];
+
+            let hasInfiniteScroll = false;
+            for (const selector of infiniteScrollIndicators) {
+                if (document.querySelector(selector)) {
+                    hasInfiniteScroll = true;
+                    break;
+                }
+            }
+
+            // Check if footer exists and is reachable
+            const footer = document.querySelector('footer, [role="contentinfo"], .footer');
+            if (footer && hasInfiniteScroll) {
+                const rect = footer.getBoundingClientRect();
+                const viewportHeight = window.innerHeight;
+                const docHeight = document.documentElement.scrollHeight;
+
+                // If footer is way below viewport and page has infinite scroll
+                if (rect.top > viewportHeight * 3) {
+                    results.push({
+                        issue_type: 'footer_unreachable',
+                        details: {
+                            footer_position: Math.round(rect.top),
+                            viewport_height: viewportHeight,
+                            doc_height: docHeight
+                        }
+                    });
+                }
+            }
+
+            return results;
+        }
+    """)
+    except Exception as e:
+        if "context was destroyed" in str(e) or "navigation" in str(e).lower():
+            log.debug("Skipping infinite scroll check - page navigating")
+            return []
+        raise
+
+    return issues
+
+
 async def _find_rage_decoys(page: object) -> list[dict[str, str]]:
     """Find elements that look clickable but are not actual buttons or links.
 
@@ -691,6 +1163,82 @@ async def _find_rage_decoys(page: object) -> list[dict[str, str]]:
         raise
 
     return candidates
+
+
+async def _run_page_checks(
+    page: object,
+    detector: EventDetector,
+    persona: Persona,
+    url: str,
+) -> None:
+    """Run all page-level friction detection checks.
+
+    This consolidates the various detection functions and records events
+    based on persona preferences.
+    """
+    weights = persona.get_detection_weights()
+
+    # Check for error messages (prioritized for form_filler, anxious_newbie)
+    if weights.get("error_message_visible", 1.0) >= 1.0:
+        errors = await _find_error_messages(page)
+        for err in errors:
+            detector.record_error_message(url, err.get("message", ""), err.get("selector", ""))
+            log.info("event: Error message - %s", err.get("message", "")[:60])
+
+    # Check for modal frustration (prioritized for casual_browser, frustrated_exec)
+    if weights.get("modal_frustration", 1.0) >= 1.0:
+        modals = await _find_modal_overlays(page)
+        for modal in modals:
+            if modal.get("modal_type") == "intrusive_modal":
+                detector.record_modal_frustration(url, modal.get("modal_type", ""), modal.get("selector", ""))
+                log.info("event: Modal frustration - %s", modal.get("modal_type", ""))
+
+    # Check for accessibility issues (prioritized for accessibility_user)
+    if weights.get("accessibility_failure", 1.0) >= 1.0:
+        a11y_issues = await _find_accessibility_issues(page)
+        for issue in a11y_issues:
+            detector.record_accessibility_failure(
+                url,
+                issue.get("issue_type", "unknown"),
+                issue.get("selector", ""),
+                issue.get("details"),
+            )
+            log.info("event: Accessibility issue - %s", issue.get("issue_type", ""))
+
+    # Check for mobile issues (prioritized for mobile_commuter, only on mobile viewport)
+    is_mobile = persona.viewport[0] < 768
+    if is_mobile and weights.get("mobile_tap_target", 1.0) >= 1.0:
+        mobile_issues = await _find_mobile_issues(
+            page,
+            persona.viewport,
+            detector.thresholds.tap_target_min_px,
+        )
+        for issue in mobile_issues:
+            detector.record_mobile_issue(
+                url,
+                issue.get("issue_type", "unknown"),
+                issue.get("selector", ""),
+                issue.get("details"),
+            )
+            log.info("event: Mobile issue - %s", issue.get("issue_type", ""))
+
+    # Check for copy/paste blocks (prioritized for power_user, accessibility_user)
+    if weights.get("copy_paste_failure", 1.0) >= 1.0:
+        blocks = await _find_copy_paste_blocks(page)
+        for block in blocks:
+            detector.record_copy_paste_failure(url, block.get("selector", ""))
+            log.info("event: Copy/paste blocked - %s", block.get("selector", ""))
+
+    # Check for infinite scroll issues (prioritized for methodical_tester, casual_browser)
+    if weights.get("infinite_scroll_trap", 1.0) >= 1.0:
+        scroll_issues = await _find_infinite_scroll_issues(page)
+        for issue in scroll_issues:
+            detector.record_infinite_scroll_trap(url, issue.get("issue_type", "unknown"))
+            log.info("event: Infinite scroll issue - %s", issue.get("issue_type", ""))
+
+    # Track cart visits for cart_abandonment detection
+    if detector._is_cart_url(url):
+        detector.record_cart_visit()
 
 
 def main() -> None:

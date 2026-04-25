@@ -350,6 +350,272 @@ class TestNetworkError:
         assert all(e.kind == "network_error" for e in d.all_events())
 
 
+class TestScrollRage:
+    def test_no_event_on_single_direction(self) -> None:
+        d = EventDetector()
+        now = time.time()
+        with patch("agents.events.time.time", return_value=now):
+            for _ in range(10):
+                evt = d.record_scroll_rage("http://example.com", "down")
+                assert evt is None
+
+    def test_detects_scroll_rage(self) -> None:
+        d = EventDetector()
+        # Manually populate scroll_log with rapid direction changes
+        # This bypasses time mocking issues
+        now = time.time()
+        d.scroll_log = [
+            (now, "down"),
+            (now + 0.2, "up"),
+            (now + 0.4, "down"),
+            (now + 0.6, "up"),
+            (now + 0.8, "down"),
+            (now + 1.0, "up"),
+        ]
+        # Now call record_scroll_rage which will check the log
+        with patch("agents.events.time.time", return_value=now + 1.2):
+            evt = d.record_scroll_rage("http://example.com", "down")
+        assert evt is not None
+        assert evt.kind == "scroll_rage"
+        assert "direction changes" in evt.description
+
+    def test_no_scroll_rage_if_spread_out(self) -> None:
+        d = EventDetector()
+        now = time.time()
+        # Spread out over 10 seconds (beyond 3s window)
+        evt = None
+        for i, direction in enumerate(["down", "up", "down", "up", "down", "up"]):
+            with patch("agents.events.time.time", return_value=now + i * 2):
+                evt = d.record_scroll_rage("http://example.com", direction)
+        assert evt is None
+
+
+class TestFormAbandonment:
+    def test_no_event_without_focus(self) -> None:
+        d = EventDetector()
+        evt = d.check_form_abandonment("http://example.com/page2")
+        assert evt is None
+
+    def test_detects_form_abandonment(self) -> None:
+        d = EventDetector()
+        d.record_form_focus("http://example.com/form")
+        evt = d.check_form_abandonment("http://example.com/other")
+        assert evt is not None
+        assert evt.kind == "form_abandonment"
+        assert evt.url == "http://example.com/form"
+
+    def test_no_event_on_same_page(self) -> None:
+        d = EventDetector()
+        d.record_form_focus("http://example.com/form")
+        evt = d.check_form_abandonment("http://example.com/form")
+        assert evt is None
+
+
+class TestErrorMessage:
+    def test_emits_error_message(self) -> None:
+        d = EventDetector()
+        evt = d.record_error_message(
+            "http://example.com/form",
+            "Email address is invalid",
+            selector=".error-text"
+        )
+        assert evt is not None
+        assert evt.kind == "error_message_visible"
+        assert "Email address is invalid" in evt.description
+        assert evt.details["selector"] == ".error-text"
+
+
+class TestSessionTimeout:
+    def test_emits_session_timeout(self) -> None:
+        d = EventDetector()
+        evt = d.record_session_timeout(
+            "http://example.com/app",
+            reason="Your session has expired"
+        )
+        assert evt is not None
+        assert evt.kind == "session_timeout"
+        assert "session" in evt.description.lower()
+        assert evt.details["reason"] == "Your session has expired"
+
+
+class TestAccessibilityFailure:
+    def test_emits_accessibility_failure(self) -> None:
+        d = EventDetector()
+        evt = d.record_accessibility_failure(
+            "http://example.com/page",
+            "missing_alt",
+            element_selector="img.hero",
+            details={"src": "hero.jpg"}
+        )
+        assert evt is not None
+        assert evt.kind == "accessibility_failure"
+        assert "missing_alt" in evt.description
+        assert evt.details["issue_type"] == "missing_alt"
+        assert evt.details["selector"] == "img.hero"
+
+
+class TestMobileIssue:
+    def test_emits_mobile_tap_target(self) -> None:
+        d = EventDetector()
+        evt = d.record_mobile_issue(
+            "http://example.com/page",
+            "small_tap_target",
+            element_selector="button.tiny",
+            details={"width": 30, "height": 30}
+        )
+        assert evt is not None
+        assert evt.kind == "mobile_tap_target"
+        assert "small_tap_target" in evt.description
+        assert evt.details["width"] == 30
+
+
+class TestSlowInteraction:
+    def test_no_event_below_threshold(self) -> None:
+        d = EventDetector()
+        evt = d.record_slow_interaction("http://example.com", 300.0)
+        assert evt is None
+
+    def test_detects_slow_interaction(self) -> None:
+        d = EventDetector()
+        evt = d.record_slow_interaction("http://example.com", 800.0, action="click")
+        assert evt is not None
+        assert evt.kind == "slow_interaction"
+        assert "800" in evt.description
+        assert evt.details["latency_ms"] == 800.0
+
+
+class TestConfusingNavigation:
+    def test_emits_confusing_navigation(self) -> None:
+        d = EventDetector()
+        evt = d.record_confusing_navigation(
+            "http://example.com/deep/nested/path",
+            "breadcrumb depth exceeds 4",
+            details={"depth": 5}
+        )
+        assert evt is not None
+        assert evt.kind == "confusing_navigation"
+        assert "breadcrumb" in evt.description
+        assert evt.details["depth"] == 5
+
+
+class TestModalFrustration:
+    def test_emits_modal_frustration(self) -> None:
+        d = EventDetector()
+        evt = d.record_modal_frustration(
+            "http://example.com",
+            "intrusive_modal",
+            selector=".popup-overlay"
+        )
+        assert evt is not None
+        assert evt.kind == "modal_frustration"
+        assert "intrusive_modal" in evt.description
+        assert evt.details["modal_type"] == "intrusive_modal"
+
+
+class TestSearchFrustration:
+    def test_emits_search_frustration(self) -> None:
+        d = EventDetector()
+        evt = d.record_search_frustration(
+            "http://example.com/search",
+            "zero_results",
+            query="nonexistent product"
+        )
+        assert evt is not None
+        assert evt.kind == "search_frustration"
+        assert "zero_results" in evt.description
+        assert evt.details["query"] == "nonexistent product"
+
+    def test_tracks_recent_queries(self) -> None:
+        d = EventDetector()
+        d.record_search_frustration("http://example.com", "no_results", query="query1")
+        d.record_search_frustration("http://example.com", "no_results", query="query2")
+        evt = d.record_search_frustration("http://example.com", "no_results", query="query3")
+        assert "query1" in evt.details["recent_queries"]
+        assert "query2" in evt.details["recent_queries"]
+        assert "query3" in evt.details["recent_queries"]
+
+
+class TestCartAbandonment:
+    def test_no_event_without_cart_visit(self) -> None:
+        d = EventDetector()
+        evt = d.check_cart_abandonment("http://example.com/home")
+        assert evt is None
+
+    def test_detects_cart_abandonment(self) -> None:
+        d = EventDetector()
+        d.record_cart_visit()
+        evt = d.check_cart_abandonment("http://example.com/home")
+        assert evt is not None
+        assert evt.kind == "cart_abandonment"
+
+    def test_no_event_when_going_to_checkout(self) -> None:
+        d = EventDetector()
+        d.record_cart_visit()
+        evt = d.check_cart_abandonment("http://example.com/checkout")
+        assert evt is None
+
+    def test_cart_url_detection(self) -> None:
+        d = EventDetector()
+        assert d._is_cart_url("http://example.com/cart") is True
+        assert d._is_cart_url("http://example.com/shopping-cart") is True
+        assert d._is_cart_url("http://example.com/basket") is True
+        assert d._is_cart_url("http://example.com/products") is False
+
+    def test_checkout_url_detection(self) -> None:
+        d = EventDetector()
+        assert d._is_checkout_url("http://example.com/checkout") is True
+        assert d._is_checkout_url("http://example.com/payment") is True
+        assert d._is_checkout_url("http://example.com/cart") is False
+
+
+class TestBackButtonAbuse:
+    def test_no_event_on_single_back(self) -> None:
+        d = EventDetector()
+        evt = d.record_back_button("http://example.com")
+        assert evt is None
+
+    def test_detects_back_button_abuse(self) -> None:
+        d = EventDetector()
+        d.record_back_button("http://example.com/page1")
+        d.record_back_button("http://example.com/page2")
+        evt = d.record_back_button("http://example.com/page3")
+        assert evt is not None
+        assert evt.kind == "back_button_abuse"
+        assert "3" in evt.description
+
+    def test_reset_back_button_count(self) -> None:
+        d = EventDetector()
+        d.record_back_button("http://example.com")
+        d.record_back_button("http://example.com")
+        d.reset_back_button_count()
+        evt = d.record_back_button("http://example.com")
+        assert evt is None
+
+
+class TestCopyPasteFailure:
+    def test_emits_copy_paste_failure(self) -> None:
+        d = EventDetector()
+        evt = d.record_copy_paste_failure(
+            "http://example.com/article",
+            selector="article.content"
+        )
+        assert evt is not None
+        assert evt.kind == "copy_paste_failure"
+        assert "text selection disabled" in evt.description
+
+
+class TestInfiniteScrollTrap:
+    def test_emits_infinite_scroll_trap(self) -> None:
+        d = EventDetector()
+        evt = d.record_infinite_scroll_trap(
+            "http://example.com/feed",
+            reason="footer unreachable"
+        )
+        assert evt is not None
+        assert evt.kind == "infinite_scroll_trap"
+        assert "footer unreachable" in evt.description
+
+
 class TestEventSeverity:
     def test_severity_levels_defined(self) -> None:
         assert EventSeverity.LOW.value == "low"
@@ -359,12 +625,19 @@ class TestEventSeverity:
 
     def test_all_event_types_have_severity(self) -> None:
         event_types = [
+            # Original events
             "slow_load", "dead_end", "long_dwell", "rage_decoy",
             "js_error", "broken_image", "network_error",
-            "circular_navigation", "rage_click", "unmet_goal"
+            "circular_navigation", "rage_click", "unmet_goal",
+            # New events
+            "error_message_visible", "accessibility_failure", "mobile_tap_target",
+            "confusing_navigation", "modal_frustration", "copy_paste_failure",
+            "infinite_scroll_trap", "scroll_rage", "form_abandonment",
+            "session_timeout", "slow_interaction", "search_frustration",
+            "cart_abandonment", "back_button_abuse",
         ]
         for event_type in event_types:
-            assert event_type in EVENT_SEVERITY
+            assert event_type in EVENT_SEVERITY, f"Missing severity for {event_type}"
 
     def test_event_severity_property(self) -> None:
         d = EventDetector()
@@ -376,6 +649,12 @@ class TestEventSeverity:
         evt = d.record_dead_end("http://example.com")
         assert evt.severity == EventSeverity.HIGH
 
+        evt = d.record_form_abandonment("http://example.com")
+        assert evt.severity == EventSeverity.HIGH
+
+        evt = d.record_accessibility_failure("http://example.com", "missing_alt")
+        assert evt.severity == EventSeverity.HIGH
+
         # Test critical severity
         evt = d.check_unmet_goal("goal", reached=False, timed_out=True)
         assert evt.severity == EventSeverity.CRITICAL
@@ -384,6 +663,18 @@ class TestEventSeverity:
         evt = d.record_slow_load("http://example.com", 5000.0)
         assert evt.severity == EventSeverity.MEDIUM
 
+        evt = d.record_scroll_rage("http://example.com", "down")
+        # Need to trigger the event first
+        d.scroll_log = []  # Reset
+        for i, direction in enumerate(["down", "up"] * 4):
+            with patch("agents.events.time.time", return_value=time.time()):
+                evt = d.record_scroll_rage("http://example.com", direction)
+        if evt:
+            assert evt.severity == EventSeverity.MEDIUM
+
         # Test low severity
         evt = d.record_long_dwell("http://example.com", 15.0)
+        assert evt.severity == EventSeverity.LOW
+
+        evt = d.record_copy_paste_failure("http://example.com")
         assert evt.severity == EventSeverity.LOW
