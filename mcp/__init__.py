@@ -1,0 +1,1 @@
+"""Flamboyance MCP server package."""

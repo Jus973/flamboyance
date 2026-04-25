@@ -8,3 +8,7 @@ build/
 dist/
 .flamboyance/
 examples/_run_*/
+reports/
+node_modules/
+extension/out/
+*.vsix

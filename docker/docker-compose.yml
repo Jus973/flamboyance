@@ -1,0 +1,37 @@
+version: "3.9"
+
+x-agent-common: &agent-common
+  build:
+    context: ..
+    dockerfile: docker/Dockerfile.agent
+  network_mode: host
+  environment:
+    - PYTHONUNBUFFERED=1
+
+services:
+  agent-frustrated-exec:
+    <<: *agent-common
+    command: ["--url", "${TARGET_URL:-http://host.docker.internal:3000}", "--persona", "frustrated_exec", "--timeout", "${TIMEOUT:-60}"]
+
+  agent-non-tech-senior:
+    <<: *agent-common
+    command: ["--url", "${TARGET_URL:-http://host.docker.internal:3000}", "--persona", "non_tech_senior", "--timeout", "${TIMEOUT:-60}"]
+
+  agent-power-user:
+    <<: *agent-common
+    command: ["--url", "${TARGET_URL:-http://host.docker.internal:3000}", "--persona", "power_user", "--timeout", "${TIMEOUT:-60}"]
+
+  agent-frustrated-exec-2:
+    <<: *agent-common
+    command: ["--url", "${TARGET_URL:-http://host.docker.internal:3000}", "--persona", "frustrated_exec", "--timeout", "${TIMEOUT:-60}"]
+
+  agent-non-tech-senior-2:
+    <<: *agent-common
+    command: ["--url", "${TARGET_URL:-http://host.docker.internal:3000}", "--persona", "non_tech_senior", "--timeout", "${TIMEOUT:-60}"]
+
+  mcp-server:
+    <<: *agent-common
+    command: []
+    entrypoint: ["python", "-m", "mcp.server", "--http", "--port", "8765"]
+    ports:
+      - "8765:8765"
