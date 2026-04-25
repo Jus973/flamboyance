@@ -59,6 +59,8 @@ class Persona:
     # Persona-specific focus for differentiated LLM behavior
     focus_areas: tuple[str, ...] = field(default_factory=tuple)
     frustration_triggers: tuple[str, ...] = field(default_factory=tuple)
+    # Detection weights: friction_type -> weight multiplier (1.0 = normal, 2.0 = prioritized)
+    detection_weights: tuple[tuple[str, float], ...] = field(default_factory=tuple)
 
     def __post_init__(self) -> None:
         if not 0.0 <= self.patience <= 1.0:
@@ -119,6 +121,24 @@ class Persona:
     def gives_up_early(self) -> bool:
         return self.patience < 0.4
 
+    def get_detection_weights(self) -> dict[str, float]:
+        """Get detection weights as a dict for easy lookup."""
+        return dict(self.detection_weights)
+
+    def get_weighted_severity(self, event_kind: str, base_severity: float) -> float:
+        """Apply persona-specific weight to an event's severity score.
+
+        Args:
+            event_kind: The type of friction event.
+            base_severity: The base severity score (0-1).
+
+        Returns:
+            Weighted severity score.
+        """
+        weights = self.get_detection_weights()
+        multiplier = weights.get(event_kind, 1.0)
+        return min(base_severity * multiplier, 1.0)
+
     def to_dict(self) -> dict[str, Any]:
         result: dict[str, Any] = {
             "name": self.name,
@@ -132,6 +152,7 @@ class Persona:
             "prefers_visible_text": self.prefers_visible_text,
             "focus_areas": list(self.focus_areas),
             "frustration_triggers": list(self.frustration_triggers),
+            "detection_weights": dict(self.detection_weights),
             "derived": {
                 "page_load_timeout_ms": self.page_load_timeout_ms,
                 "click_hesitation_ms": self.click_hesitation_ms,
@@ -151,6 +172,12 @@ class Persona:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Persona:
         viewport = data.get("viewport", [1280, 720])
+        # Handle detection_weights as dict or list of tuples
+        weights_data = data.get("detection_weights", {})
+        if isinstance(weights_data, dict):
+            detection_weights = tuple(weights_data.items())
+        else:
+            detection_weights = tuple(tuple(w) for w in weights_data)
         return cls(
             name=data["name"],
             patience=data["patience"],
@@ -166,6 +193,7 @@ class Persona:
             rage_click_threshold=data.get("rage_click_threshold"),
             focus_areas=tuple(data.get("focus_areas", [])),
             frustration_triggers=tuple(data.get("frustration_triggers", [])),
+            detection_weights=detection_weights,
         )
 
     def to_llm_prompt(self) -> str:
@@ -203,6 +231,12 @@ class Persona:
         if self.frustration_triggers:
             lines.append(f"Gets frustrated by: {', '.join(self.frustration_triggers)}")
 
+        if self.detection_weights:
+            weights = self.get_detection_weights()
+            prioritized = [k for k, v in weights.items() if v > 1.0]
+            if prioritized:
+                lines.append(f"Prioritizes detecting: {', '.join(prioritized)}")
+
         if self.prefers_visible_text:
             lines.append("Preference: Only uses clearly labeled, visible elements")
 
@@ -224,8 +258,15 @@ FRUSTRATED_EXEC = Persona(
     goal="Complete a purchase flow quickly",
     tags=("executive", "impatient"),
     early_exit_fraction=0.3,
+    max_actions=15,
     focus_areas=("speed", "checkout", "forms"),
     frustration_triggers=("slow loading", "unnecessary steps", "loading spinners", "required fields"),
+    detection_weights=(
+        ("slow_interaction", 2.0),
+        ("session_timeout", 1.5),
+        ("slow_load", 1.5),
+        ("modal_frustration", 1.5),
+    ),
 )
 
 NON_TECH_SENIOR = Persona(
@@ -236,6 +277,11 @@ NON_TECH_SENIOR = Persona(
     tags=("senior", "low-tech"),
     focus_areas=("labels", "text size", "navigation"),
     frustration_triggers=("small text", "confusing labels", "icon-only buttons", "jargon"),
+    detection_weights=(
+        ("confusing_navigation", 2.0),
+        ("scroll_rage", 1.5),
+        ("back_button_abuse", 1.5),
+    ),
 )
 
 POWER_USER = Persona(
@@ -246,6 +292,10 @@ POWER_USER = Persona(
     tags=("expert", "thorough"),
     focus_areas=("keyboard shortcuts", "advanced features", "edge cases"),
     frustration_triggers=("missing features", "inconsistent behavior", "no keyboard navigation"),
+    detection_weights=(
+        ("copy_paste_failure", 1.5),
+        ("js_error", 1.5),
+    ),
 )
 
 CASUAL_BROWSER = Persona(
@@ -254,8 +304,14 @@ CASUAL_BROWSER = Persona(
     tech_literacy=0.5,
     goal="Browse around and see what's available",
     tags=("casual", "explorer"),
+    max_actions=25,
     focus_areas=("content", "navigation", "visual appeal"),
     frustration_triggers=("popups", "aggressive CTAs", "cluttered layout"),
+    detection_weights=(
+        ("modal_frustration", 2.0),
+        ("scroll_rage", 1.5),
+        ("infinite_scroll_trap", 1.5),
+    ),
 )
 
 ANXIOUS_NEWBIE = Persona(
@@ -266,6 +322,11 @@ ANXIOUS_NEWBIE = Persona(
     tags=("newbie", "anxious", "low-tech"),
     focus_areas=("signup", "forms", "error messages"),
     frustration_triggers=("unclear errors", "too many fields", "no progress indicator", "unexpected behavior"),
+    detection_weights=(
+        ("form_abandonment", 2.0),
+        ("error_message_visible", 2.0),
+        ("back_button_abuse", 1.5),
+    ),
 )
 
 METHODICAL_TESTER = Persona(
@@ -277,6 +338,10 @@ METHODICAL_TESTER = Persona(
     max_actions=100,
     focus_areas=("links", "forms", "validation", "error states"),
     frustration_triggers=("broken links", "missing validation", "inconsistent states"),
+    detection_weights=(
+        ("error_message_visible", 1.5),
+        ("infinite_scroll_trap", 1.5),
+    ),
 )
 
 MOBILE_COMMUTER = Persona(
@@ -286,9 +351,15 @@ MOBILE_COMMUTER = Persona(
     goal="Quickly check order status while on the go",
     tags=("mobile", "rushed", "tech-savvy"),
     early_exit_fraction=0.3,
+    max_actions=20,
     viewport=(375, 667),
     focus_areas=("mobile layout", "touch targets", "quick actions"),
     frustration_triggers=("small tap targets", "horizontal scroll", "desktop-only features", "slow mobile load"),
+    detection_weights=(
+        ("mobile_tap_target", 2.0),
+        ("slow_interaction", 1.5),
+        ("slow_load", 1.5),
+    ),
 )
 
 ACCESSIBILITY_USER = Persona(
@@ -300,6 +371,58 @@ ACCESSIBILITY_USER = Persona(
     prefers_visible_text=True,
     focus_areas=("labels", "contrast", "focus indicators", "screen reader"),
     frustration_triggers=("missing labels", "icon-only buttons", "poor contrast", "no focus visible"),
+    detection_weights=(
+        ("accessibility_failure", 2.0),
+        ("copy_paste_failure", 1.5),
+    ),
+)
+
+# ── New personas for expanded friction coverage ────────────────────────
+
+FORM_FILLER = Persona(
+    name="form_filler",
+    patience=0.4,
+    tech_literacy=0.5,
+    goal="Complete a multi-step form without errors",
+    tags=("forms", "data-entry"),
+    focus_areas=("form validation", "error messages", "field labels", "progress indicators"),
+    frustration_triggers=("unclear errors", "lost form data", "confusing field labels", "no progress indicator"),
+    detection_weights=(
+        ("form_abandonment", 2.0),
+        ("error_message_visible", 2.0),
+        ("session_timeout", 1.5),
+    ),
+)
+
+SEARCH_USER = Persona(
+    name="search_user",
+    patience=0.35,
+    tech_literacy=0.6,
+    goal="Find a specific product or information using search",
+    tags=("search", "goal-oriented"),
+    focus_areas=("search functionality", "filters", "results relevance"),
+    frustration_triggers=("zero results", "irrelevant results", "no search feedback", "broken filters"),
+    detection_weights=(
+        ("search_frustration", 2.0),
+        ("confusing_navigation", 1.5),
+        ("infinite_scroll_trap", 1.5),
+    ),
+)
+
+CHECKOUT_USER = Persona(
+    name="checkout_user",
+    patience=0.3,
+    tech_literacy=0.7,
+    goal="Complete a purchase from cart to confirmation",
+    tags=("checkout", "purchase", "goal-oriented"),
+    focus_areas=("cart", "checkout flow", "payment forms", "order confirmation"),
+    frustration_triggers=("cart issues", "payment errors", "session timeout", "unclear totals"),
+    detection_weights=(
+        ("cart_abandonment", 2.0),
+        ("form_abandonment", 1.5),
+        ("slow_interaction", 1.5),
+        ("session_timeout", 2.0),
+    ),
 )
 
 DEFAULT_PERSONAS: dict[str, Persona] = {
@@ -311,6 +434,9 @@ DEFAULT_PERSONAS: dict[str, Persona] = {
     "methodical_tester": METHODICAL_TESTER,
     "mobile_commuter": MOBILE_COMMUTER,
     "accessibility_user": ACCESSIBILITY_USER,
+    "form_filler": FORM_FILLER,
+    "search_user": SEARCH_USER,
+    "checkout_user": CHECKOUT_USER,
 }
 
 

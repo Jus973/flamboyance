@@ -72,6 +72,14 @@ class EventThresholds:
     long_dwell_threshold_s: float = 10.0
     rage_click_threshold: int = 3
     rage_click_window_s: float = 1.5
+    # New thresholds for expanded friction patterns
+    scroll_rage_direction_changes: int = 5  # Direction changes in window to trigger
+    scroll_rage_window_s: float = 3.0  # Time window for scroll rage detection
+    slow_interaction_threshold_ms: float = 500.0  # Click → DOM change latency
+    tap_target_min_px: int = 44  # Minimum tap target size for mobile
+    contrast_ratio_min: float = 4.5  # WCAG AA minimum contrast ratio
+    breadcrumb_depth_max: int = 4  # Max breadcrumb depth before confusing
+    back_button_abuse_threshold: int = 3  # Sequential back navigations
 
     @classmethod
     def from_profile(cls, profile: ThresholdProfile) -> EventThresholds:
@@ -82,6 +90,13 @@ class EventThresholds:
                 long_dwell_threshold_s=5.0,
                 rage_click_threshold=2,
                 rage_click_window_s=2.0,
+                scroll_rage_direction_changes=3,
+                scroll_rage_window_s=2.0,
+                slow_interaction_threshold_ms=300.0,
+                tap_target_min_px=48,
+                contrast_ratio_min=7.0,  # WCAG AAA
+                breadcrumb_depth_max=3,
+                back_button_abuse_threshold=2,
             )
         elif profile == "lenient":
             return cls(
@@ -89,6 +104,13 @@ class EventThresholds:
                 long_dwell_threshold_s=20.0,
                 rage_click_threshold=5,
                 rage_click_window_s=1.0,
+                scroll_rage_direction_changes=8,
+                scroll_rage_window_s=5.0,
+                slow_interaction_threshold_ms=1000.0,
+                tap_target_min_px=36,
+                contrast_ratio_min=3.0,
+                breadcrumb_depth_max=6,
+                back_button_abuse_threshold=5,
             )
         else:  # balanced
             return cls()
