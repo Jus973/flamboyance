@@ -5,23 +5,28 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "flamboyance"
 version = "0.1.0"
-description = "Spark-style master/worker/reducer orchestrator for parallelized LLM coding tasks."
+description = "Spark-style orchestrator + Windsurf UX-friction agent extension for parallelized LLM coding tasks."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "Flamboyance" }]
 dependencies = [
     "groq>=0.11.0",
+    "playwright>=1.40.0",
+    "mcp[cli]>=1.0.0",
+    "pydantic>=2.5.0",
 ]
 
 [project.optional-dependencies]
 dev = ["pytest>=7", "pytest-asyncio>=0.23"]
+agents = ["playwright>=1.40.0"]
+mcp = ["mcp[cli]>=1.0.0"]
 
 [project.scripts]
 flamboyance = "orchestrator.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["orchestrator*"]
+include = ["orchestrator*", "agents*", "mcp*"]
 exclude = ["tests*", "examples*"]
 
 [tool.pytest.ini_options]
