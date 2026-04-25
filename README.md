@@ -2,7 +2,8 @@
 
 A Spark-style **master / worker / reducer** orchestrator for parallelizing
 LLM coding tasks against a single git repo. Built on `asyncio` and
-`git worktree` — no external runtime dependencies.
+`git worktree`, with an optional **Groq** backend (Llama 3.3 70B) for real
+LLM calls.
 
 The design follows [`orchestrator_spec.md`](./orchestrator_spec.md):
 
@@ -36,7 +37,8 @@ The design follows [`orchestrator_spec.md`](./orchestrator_spec.md):
 | `orchestrator/master.py` | Asyncio driver. Plans → Prepares → Executes → Reduces. |
 | `orchestrator/worktree.py` | Async wrapper around `git worktree` for parallel isolation. |
 | `orchestrator/context_mapper.py` | AST-based import graph + per-task minimum context set. |
-| `orchestrator/worker.py` | Mock LLM worker loop with §4 sandbox enforcement. |
+| `orchestrator/worker.py` | Worker loop + `LLMClient` protocol; §4 sandbox enforcement. |
+| `orchestrator/groq_llm.py` | Groq Chat Completions client (`llama-3.3-70b-versatile`). |
 | `orchestrator/reducer.py` | Merges branches; auto-resolves disjoint additive conflicts. |
 | `orchestrator/cli.py` | `discover`, `prepare`, `run`, `clean` subcommands. |
 
@@ -61,6 +63,13 @@ flamboyance --root ./my-repo prepare -n 3 --keep
 
 # Full pipeline: plan → 3 parallel worktrees → 3 parallel mock-LLM workers → reduce
 flamboyance --root ./my-repo run -n 3 --output report.json
+
+# Same pipeline with Groq (Llama 3.3 70B). Key must be in the environment only:
+export GROQ_API_KEY="gsk_..."   # never commit; rotate if exposed
+flamboyance --root ./my-repo run -n 3 --llm groq --output report.json
+
+# Optional: override the default model id
+flamboyance --root ./my-repo run --llm groq --groq-model llama-3.3-70b-versatile
 
 # Tear down every flamboyance/* worktree git knows about in the repo
 flamboyance --root ./my-repo clean
@@ -100,7 +109,11 @@ to race overlapping work.
 
 ## Plugging in a real LLM
 
-`worker.LLMClient` is a `Protocol`. Drop in any class with this signature:
+**Groq (built-in):** set `GROQ_API_KEY` and run with `--llm groq`. The client
+lives in `orchestrator/groq_llm.py`; it requests JSON object mode and must
+return every path in `files_to_edit` with full new file contents.
+
+**Custom provider:** `worker.LLMClient` is a `Protocol`. Implement:
 
 ```python
 async def edit(self, *, task, worktree_root, file_contents, context_contents) -> dict[str, str]: ...

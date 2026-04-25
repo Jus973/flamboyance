@@ -23,7 +23,9 @@ import sys
 from pathlib import Path
 
 from .context_mapper import ContextMapper
+from .groq_llm import DEFAULT_GROQ_MODEL, GroqLLMClient
 from .master import Orchestrator
+from .worker import MockLLMClient
 from .worktree import WorktreeManager
 
 
@@ -50,6 +52,17 @@ def _build_parser() -> argparse.ArgumentParser:
 
     pr = sub.add_parser("run", help="Full pipeline.")
     pr.add_argument("--num-tasks", "-n", type=int, default=3)
+    pr.add_argument(
+        "--llm",
+        choices=("mock", "groq"),
+        default="mock",
+        help="Worker backend: local mock (default) or Groq (Llama 3.3 70B).",
+    )
+    pr.add_argument(
+        "--groq-model",
+        default=DEFAULT_GROQ_MODEL,
+        help=f"Groq model id (default: {DEFAULT_GROQ_MODEL}).",
+    )
     pr.add_argument("--keep", action="store_true",
                     help="Don't tear down worktrees after the run.")
     pr.add_argument("--skip-reduce", action="store_true",
@@ -110,9 +123,15 @@ async def _cmd_prepare(args: argparse.Namespace) -> int:
 
 
 async def _cmd_run(args: argparse.Namespace) -> int:
+    if args.llm == "groq":
+        llm = GroqLLMClient(model=args.groq_model)
+    else:
+        llm = MockLLMClient()
+
     orch = Orchestrator(
         args.root,
         trunk_branch=args.trunk,
+        llm=llm,
         max_concurrency=args.concurrency,
     )
     report = await orch.run(
