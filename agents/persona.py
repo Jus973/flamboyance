@@ -34,7 +34,10 @@ See also ``persona_loader.py`` for loading custom personas from JSON files.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from .config import EventThresholds
 
 
 @dataclass(frozen=True)
@@ -49,6 +52,10 @@ class Persona:
     max_actions: int = 50
     viewport: tuple[int, int] = (1280, 720)
     prefers_visible_text: bool = False
+    # Threshold overrides (None = use global defaults)
+    slow_load_threshold_ms: float | None = None
+    long_dwell_threshold_s: float | None = None
+    rage_click_threshold: int | None = None
 
     def __post_init__(self) -> None:
         if not 0.0 <= self.patience <= 1.0:
@@ -61,6 +68,33 @@ class Persona:
             raise ValueError(f"max_actions must be >= 1, got {self.max_actions}")
         if len(self.viewport) != 2 or self.viewport[0] < 1 or self.viewport[1] < 1:
             raise ValueError(f"viewport must be (width, height) with positive ints, got {self.viewport}")
+
+    def get_thresholds(self) -> EventThresholds:
+        """Get event detection thresholds, applying any persona-specific overrides.
+
+        Returns a new EventThresholds instance with persona overrides applied
+        on top of the global defaults.
+        """
+        from .config import DEFAULT_THRESHOLDS, EventThresholds
+
+        return EventThresholds(
+            slow_load_threshold_ms=(
+                self.slow_load_threshold_ms
+                if self.slow_load_threshold_ms is not None
+                else DEFAULT_THRESHOLDS.slow_load_threshold_ms
+            ),
+            long_dwell_threshold_s=(
+                self.long_dwell_threshold_s
+                if self.long_dwell_threshold_s is not None
+                else DEFAULT_THRESHOLDS.long_dwell_threshold_s
+            ),
+            rage_click_threshold=(
+                self.rage_click_threshold
+                if self.rage_click_threshold is not None
+                else DEFAULT_THRESHOLDS.rage_click_threshold
+            ),
+            rage_click_window_s=DEFAULT_THRESHOLDS.rage_click_window_s,
+        )
 
     @property
     def page_load_timeout_ms(self) -> float:
@@ -83,7 +117,7 @@ class Persona:
         return self.patience < 0.4
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        result: dict[str, Any] = {
             "name": self.name,
             "patience": self.patience,
             "tech_literacy": self.tech_literacy,
@@ -100,6 +134,14 @@ class Persona:
                 "gives_up_early": self.gives_up_early,
             },
         }
+        # Include threshold overrides if set
+        if self.slow_load_threshold_ms is not None:
+            result["slow_load_threshold_ms"] = self.slow_load_threshold_ms
+        if self.long_dwell_threshold_s is not None:
+            result["long_dwell_threshold_s"] = self.long_dwell_threshold_s
+        if self.rage_click_threshold is not None:
+            result["rage_click_threshold"] = self.rage_click_threshold
+        return result
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Persona:
@@ -114,6 +156,9 @@ class Persona:
             max_actions=data.get("max_actions", 50),
             viewport=(viewport[0], viewport[1]),
             prefers_visible_text=data.get("prefers_visible_text", False),
+            slow_load_threshold_ms=data.get("slow_load_threshold_ms"),
+            long_dwell_threshold_s=data.get("long_dwell_threshold_s"),
+            rage_click_threshold=data.get("rage_click_threshold"),
         )
 
     def to_llm_prompt(self) -> str:

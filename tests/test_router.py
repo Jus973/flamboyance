@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from llm.router import call_llm, FAST_TASKS
-from llm.ollama import OllamaError, OllamaConnectionError
 from llm.groq import GroqRateLimitError
-from llm.logging import get_metrics, reset_metrics, LLMCallLog
+from llm.logging import LLMCallLog, get_metrics, reset_metrics
+from llm.router import FAST_TASKS, call_llm
 
 
 class TestCallLLMRouting:
@@ -219,7 +218,7 @@ class TestGroqClient:
             pytest.skip("openai package not installed")
 
         with patch("llm.groq._get_client", return_value=mock_client):
-            from llm.groq import call_groq, GroqRateLimitError
+            from llm.groq import GroqRateLimitError, call_groq
 
             with pytest.raises(GroqRateLimitError):
                 await call_groq("Test prompt")

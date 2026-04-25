@@ -24,9 +24,10 @@ import time
 from dataclasses import dataclass, field
 
 from .config import MAX_LLM_CALLS_PER_SESSION
-from .events import EventDetector, FrustrationEvent
+from .events import EventDetector
 from .llm_driver import ActionDecision, ActionHistoryEntry, LLMDriver
 from .persona import Persona, resolve_personas
+from .validation import ValidationError, validate_url
 
 log = logging.getLogger(__name__)
 
@@ -72,6 +73,15 @@ async def run_agent(
         max_llm_calls: Maximum LLM API calls per session (default from config).
     """
     try:
+        url = validate_url(url, allow_localhost=True)
+    except ValidationError as e:
+        return AgentResult(
+            persona=persona.name,
+            status="error",
+            error=f"Invalid URL: {e}",
+        )
+
+    try:
         from playwright.async_api import async_playwright
     except ImportError:
         return AgentResult(
@@ -80,7 +90,7 @@ async def run_agent(
             error="playwright is not installed — run `pip install playwright && playwright install chromium`",
         )
 
-    detector = EventDetector()
+    detector = EventDetector(thresholds=persona.get_thresholds())
     visited: list[str] = []
     action_history: list[ActionHistoryEntry] = []
     start = time.monotonic()
@@ -94,7 +104,7 @@ async def run_agent(
     llm_driver: LLMDriver | None = None
     if llm_mode:
         try:
-            llm_driver = LLMDriver()
+            llm_driver = LLMDriver(viewport=persona.viewport)
         except (ImportError, ValueError) as e:
             return AgentResult(
                 persona=persona.name,
@@ -111,6 +121,47 @@ async def run_agent(
             )
             page = await context.new_page()
             page.set_default_timeout(timeout_ms)
+
+            # ── Set up console error listener ──────────────────────────
+            def on_console_message(msg):
+                if msg.type == "error":
+                    location = msg.location
+                    detector.record_js_error(
+                        url=page.url,
+                        message=msg.text,
+                        source=location.get("url", "") if location else "",
+                        line=location.get("lineNumber", 0) if location else 0,
+                    )
+                    log.info("event: JS error - %s", msg.text[:100])
+
+            page.on("console", on_console_message)
+
+            # ── Set up network failure listener ────────────────────────
+            def on_response(response):
+                if response.status >= 400:
+                    detector.record_network_error(
+                        url=page.url,
+                        request_url=response.url,
+                        status_code=response.status,
+                        error_text=response.status_text,
+                        method=response.request.method,
+                    )
+                    log.info("event: Network error - %s %d", response.url[:60], response.status)
+
+            page.on("response", on_response)
+
+            def on_request_failed(request):
+                failure = request.failure
+                detector.record_network_error(
+                    url=page.url,
+                    request_url=request.url,
+                    status_code=0,
+                    error_text=failure if failure else "request failed",
+                    method=request.method,
+                )
+                log.info("event: Request failed - %s", request.url[:60])
+
+            page.on("requestfailed", on_request_failed)
 
             # ── Initial navigation with slow_load detection ──────────
             nav_start = time.monotonic()
@@ -132,6 +183,12 @@ async def run_agent(
             detector.record_navigation(url)
             detector.touch()
 
+            # ── Check for broken images on initial page ────────────────
+            broken_images = await _find_broken_images(page)
+            for img in broken_images:
+                detector.record_broken_image(url, img["src"], img["selector"])
+                log.info("event: Broken image - %s", img["src"][:60])
+
             # ── Rage decoy detection on initial page ───────────────────
             decoys = await _find_rage_decoys(page)
             for decoy in decoys:
@@ -139,7 +196,6 @@ async def run_agent(
                 log.info("event: %s", decoy_evt.description)
 
             actions_taken = 0
-            gave_up = False
             goal_complete = False
 
             while actions_taken < effective_max_actions:
@@ -148,7 +204,6 @@ async def run_agent(
                     break
 
                 if persona.gives_up_early and elapsed > timeout_s * persona.early_exit_fraction:
-                    gave_up = True
                     result.status = "gave_up"
                     break
 
@@ -185,7 +240,6 @@ async def run_agent(
                         result.status = "goal_complete"
                         break
                     elif decision.action_type == "give_up":
-                        gave_up = True
                         result.status = "gave_up"
                         break
 
@@ -196,6 +250,12 @@ async def run_agent(
                         nav_evt = detector.record_navigation(current_url)
                         if nav_evt:
                             log.info("event: %s", nav_evt.description)
+
+                        # Check for broken images on new page
+                        broken_images = await _find_broken_images(page)
+                        for img in broken_images:
+                            detector.record_broken_image(current_url, img["src"], img["selector"])
+                            log.info("event: Broken image - %s", img["src"][:60])
 
                     actions_taken += 1
                     continue
@@ -240,6 +300,12 @@ async def run_agent(
                     if nav_evt:
                         log.info("event: %s", nav_evt.description)
 
+                    # Check for broken images on new page
+                    broken_images = await _find_broken_images(page)
+                    for img in broken_images:
+                        detector.record_broken_image(current_url, img["src"], img["selector"])
+                        log.info("event: Broken image - %s", img["src"][:60])
+
                     decoys = await _find_rage_decoys(page)
                     for decoy in decoys:
                         decoy_evt = detector.record_rage_decoy(
@@ -262,7 +328,20 @@ async def run_agent(
 
             await browser.close()
 
+    except asyncio.CancelledError:
+        log.info("Agent run cancelled for %s", persona.name)
+        result.status = "error"
+        result.error = "Agent run was cancelled"
+    except TimeoutError as exc:
+        log.warning("Timeout during agent run: %s", exc)
+        result.status = "error"
+        result.error = f"Timeout: {exc}"
+    except ConnectionError as exc:
+        log.error("Connection error during agent run: %s", exc)
+        result.status = "error"
+        result.error = f"Connection error: {exc}"
     except Exception as exc:
+        log.error("Unexpected error during agent run: %s", exc, exc_info=True)
         result.status = "error"
         result.error = str(exc)
 
@@ -273,6 +352,7 @@ async def run_agent(
             "description": e.description,
             "url": e.url,
             "timestamp": e.timestamp,
+            "severity": e.severity.value,
         }
         for e in detector.all_events()
     ]
@@ -389,19 +469,61 @@ async def _find_clickables(
     return elements
 
 
-async def _find_rage_decoys(page: object) -> list[dict[str, str]]:
-    """Find elements that look clickable but are not actual buttons or links.
+async def _find_broken_images(page: object) -> list[dict[str, str]]:
+    """Find images that failed to load on the page.
 
-    Detects elements with visual affordances (cursor:pointer, button-like styling)
-    that are not semantic interactive elements.
+    Detects images with src attributes that have naturalWidth of 0 (failed to load).
     """
     from playwright.async_api import Page
 
     assert isinstance(page, Page)
 
-    decoys: list[dict[str, str]] = []
+    broken = await page.evaluate("""
+        () => {
+            const results = [];
+            const images = document.querySelectorAll('img[src]');
 
-    # Find non-interactive elements that have cursor:pointer or button-like styling
+            for (const img of images) {
+                // Skip tiny images (likely tracking pixels)
+                if (img.width < 10 && img.height < 10) continue;
+
+                // Check if image failed to load
+                if (!img.complete || img.naturalWidth === 0) {
+                    let selector = 'img';
+                    if (img.id) {
+                        selector = `#${img.id}`;
+                    } else if (img.alt) {
+                        selector = `img[alt="${img.alt.slice(0, 30).replace(/"/g, '\\"')}"]`;
+                    } else if (img.className) {
+                        const firstClass = img.className.split(' ')[0];
+                        if (firstClass) selector = `img.${firstClass}`;
+                    }
+
+                    results.push({
+                        src: img.src,
+                        selector: selector
+                    });
+                }
+
+                if (results.length >= 10) break;
+            }
+            return results;
+        }
+    """)
+
+    return broken
+
+
+async def _find_rage_decoys(page: object) -> list[dict[str, str]]:
+    """Find elements that look clickable but are not actual buttons or links.
+
+    Detects elements with visual affordances (cursor:pointer, button-like styling,
+    box shadows, transforms, hover effects) that are not semantic interactive elements.
+    """
+    from playwright.async_api import Page
+
+    assert isinstance(page, Page)
+
     candidates = await page.evaluate("""
         () => {
             const results = [];
@@ -412,7 +534,7 @@ async def _find_rage_decoys(page: object) -> list[dict[str, str]]:
 
             // Query common decoy patterns: divs/spans with pointer cursor or button-like appearance
             const candidates = document.querySelectorAll(
-                'div, span, p, li, img, label, td, th, h1, h2, h3, h4, h5, h6'
+                'div, span, p, li, img, label, td, th, h1, h2, h3, h4, h5, h6, article, section, figure'
             );
 
             for (const el of candidates) {
@@ -436,9 +558,38 @@ async def _find_rage_decoys(page: object) -> list[dict[str, str]]:
                     reasons.push('cursor:pointer');
                 }
 
-                // Check for hover class patterns (limited detection)
-                if (el.className && /hover|clickable|btn|button/i.test(el.className)) {
+                // Check for hover class patterns
+                if (el.className && /hover|clickable|btn|button|card|action|link/i.test(String(el.className))) {
                     reasons.push('clickable class name');
+                }
+
+                // Check for box shadow (often indicates clickable cards)
+                if (style.boxShadow && style.boxShadow !== 'none') {
+                    const hasShadow = !/^0px 0px 0px/.test(style.boxShadow);
+                    if (hasShadow && style.cursor === 'pointer') {
+                        reasons.push('box-shadow with pointer');
+                    }
+                }
+
+                // Check for border-radius with background (button-like appearance)
+                if (style.borderRadius && style.borderRadius !== '0px') {
+                    const hasBackground = style.backgroundColor !== 'rgba(0, 0, 0, 0)' &&
+                                         style.backgroundColor !== 'transparent';
+                    if (hasBackground && parseFloat(style.borderRadius) >= 4) {
+                        reasons.push('button-like styling');
+                    }
+                }
+
+                // Check for transform or transition (often indicates interactive elements)
+                if (style.transition && /transform|scale|translate/i.test(style.transition)) {
+                    if (style.cursor === 'pointer') {
+                        reasons.push('interactive transition');
+                    }
+                }
+
+                // Check for tabindex (suggests keyboard navigation expectation)
+                if (el.hasAttribute('tabindex') && el.getAttribute('tabindex') !== '-1') {
+                    reasons.push('has tabindex');
                 }
 
                 if (reasons.length > 0) {
@@ -449,7 +600,7 @@ async def _find_rage_decoys(page: object) -> list[dict[str, str]]:
                         selector = `${tag}:has-text('${text.replace(/'/g, "\\'")}')`;
                     } else if (el.id) {
                         selector = `#${el.id}`;
-                    } else if (el.className) {
+                    } else if (el.className && typeof el.className === 'string') {
                         const firstClass = el.className.split(' ')[0];
                         if (firstClass) selector = `${tag}.${firstClass}`;
                     }

@@ -3,7 +3,7 @@
 import time
 from unittest.mock import patch
 
-from agents.events import EventDetector
+from agents.events import EVENT_SEVERITY, EventDetector, EventSeverity
 
 
 class TestCircularNavigation:
@@ -217,3 +217,173 @@ class TestRageDecoy:
         d.record_rage_decoy("http://b.com", "p.action", "cursor:pointer")
         assert len(d.all_events()) == 3
         assert all(e.kind == "rage_decoy" for e in d.all_events())
+
+
+class TestJsError:
+    def test_emits_js_error(self) -> None:
+        d = EventDetector()
+        evt = d.record_js_error(
+            "http://example.com/app",
+            "Uncaught TypeError: Cannot read property 'foo' of undefined",
+            source="app.js",
+            line=42,
+        )
+        assert evt is not None
+        assert evt.kind == "js_error"
+        assert "JavaScript error" in evt.description
+        assert "TypeError" in evt.description
+        assert "app.js:42" in evt.description
+        assert evt.url == "http://example.com/app"
+        assert evt.details["source"] == "app.js"
+        assert evt.details["line"] == 42
+
+    def test_js_error_without_source(self) -> None:
+        d = EventDetector()
+        evt = d.record_js_error(
+            "http://example.com",
+            "ReferenceError: x is not defined",
+        )
+        assert evt is not None
+        assert evt.kind == "js_error"
+        assert "ReferenceError" in evt.description
+        assert "source" not in evt.description
+
+    def test_js_error_truncates_long_message(self) -> None:
+        d = EventDetector()
+        long_message = "Error: " + "x" * 200
+        evt = d.record_js_error("http://example.com", long_message)
+        assert evt is not None
+        assert len(evt.description) < len(long_message) + 50
+        assert evt.details["message"] == long_message
+
+    def test_multiple_js_errors_accumulate(self) -> None:
+        d = EventDetector()
+        d.record_js_error("http://a.com", "Error 1")
+        d.record_js_error("http://a.com", "Error 2")
+        d.record_js_error("http://b.com", "Error 3")
+        assert len(d.all_events()) == 3
+        assert all(e.kind == "js_error" for e in d.all_events())
+
+
+class TestBrokenImage:
+    def test_emits_broken_image(self) -> None:
+        d = EventDetector()
+        evt = d.record_broken_image(
+            "http://example.com/page",
+            "http://example.com/images/missing.png",
+            selector="img.hero",
+        )
+        assert evt is not None
+        assert evt.kind == "broken_image"
+        assert "Broken image" in evt.description
+        assert "missing.png" in evt.description
+        assert evt.url == "http://example.com/page"
+        assert evt.details["image_src"] == "http://example.com/images/missing.png"
+        assert evt.details["selector"] == "img.hero"
+
+    def test_broken_image_truncates_long_src(self) -> None:
+        d = EventDetector()
+        long_src = "http://example.com/images/" + "x" * 200 + ".png"
+        evt = d.record_broken_image("http://example.com", long_src)
+        assert evt is not None
+        assert len(evt.description) < len(long_src) + 50
+        assert evt.details["image_src"] == long_src
+
+    def test_multiple_broken_images_accumulate(self) -> None:
+        d = EventDetector()
+        d.record_broken_image("http://a.com", "http://a.com/img1.png")
+        d.record_broken_image("http://a.com", "http://a.com/img2.png")
+        assert len(d.all_events()) == 2
+        assert all(e.kind == "broken_image" for e in d.all_events())
+
+
+class TestNetworkError:
+    def test_emits_network_error_with_status(self) -> None:
+        d = EventDetector()
+        evt = d.record_network_error(
+            "http://example.com/app",
+            "http://api.example.com/users",
+            status_code=500,
+            error_text="Internal Server Error",
+            method="POST",
+        )
+        assert evt is not None
+        assert evt.kind == "network_error"
+        assert "Network error" in evt.description
+        assert "500" in evt.description
+        assert "POST" in evt.description
+        assert evt.url == "http://example.com/app"
+        assert evt.details["request_url"] == "http://api.example.com/users"
+        assert evt.details["status_code"] == 500
+        assert evt.details["method"] == "POST"
+
+    def test_emits_network_error_404(self) -> None:
+        d = EventDetector()
+        evt = d.record_network_error(
+            "http://example.com",
+            "http://example.com/api/missing",
+            status_code=404,
+            error_text="Not Found",
+        )
+        assert evt is not None
+        assert "404" in evt.description
+
+    def test_emits_network_error_connection_failure(self) -> None:
+        d = EventDetector()
+        evt = d.record_network_error(
+            "http://example.com",
+            "http://api.example.com/data",
+            status_code=0,
+            error_text="net::ERR_CONNECTION_REFUSED",
+        )
+        assert evt is not None
+        assert evt.kind == "network_error"
+        assert "failed" in evt.description.lower()
+        assert evt.details["status_code"] == 0
+
+    def test_multiple_network_errors_accumulate(self) -> None:
+        d = EventDetector()
+        d.record_network_error("http://a.com", "http://api.a.com/1", status_code=500)
+        d.record_network_error("http://a.com", "http://api.a.com/2", status_code=404)
+        d.record_network_error("http://b.com", "http://api.b.com/3", status_code=0)
+        assert len(d.all_events()) == 3
+        assert all(e.kind == "network_error" for e in d.all_events())
+
+
+class TestEventSeverity:
+    def test_severity_levels_defined(self) -> None:
+        assert EventSeverity.LOW.value == "low"
+        assert EventSeverity.MEDIUM.value == "medium"
+        assert EventSeverity.HIGH.value == "high"
+        assert EventSeverity.CRITICAL.value == "critical"
+
+    def test_all_event_types_have_severity(self) -> None:
+        event_types = [
+            "slow_load", "dead_end", "long_dwell", "rage_decoy",
+            "js_error", "broken_image", "network_error",
+            "circular_navigation", "rage_click", "unmet_goal"
+        ]
+        for event_type in event_types:
+            assert event_type in EVENT_SEVERITY
+
+    def test_event_severity_property(self) -> None:
+        d = EventDetector()
+
+        # Test high severity events
+        evt = d.record_js_error("http://example.com", "Error")
+        assert evt.severity == EventSeverity.HIGH
+
+        evt = d.record_dead_end("http://example.com")
+        assert evt.severity == EventSeverity.HIGH
+
+        # Test critical severity
+        evt = d.check_unmet_goal("goal", reached=False, timed_out=True)
+        assert evt.severity == EventSeverity.CRITICAL
+
+        # Test medium severity
+        evt = d.record_slow_load("http://example.com", 5000.0)
+        assert evt.severity == EventSeverity.MEDIUM
+
+        # Test low severity
+        evt = d.record_long_dwell("http://example.com", 15.0)
+        assert evt.severity == EventSeverity.LOW

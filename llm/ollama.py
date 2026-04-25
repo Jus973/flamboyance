@@ -108,8 +108,8 @@ async def call_ollama(
 
 async def _call_ollama_urllib(url: str, payload: dict[str, Any]) -> str:
     """Fallback implementation using urllib (no httpx dependency)."""
-    import urllib.request
     import urllib.error
+    import urllib.request
 
     def do_request() -> str:
         req = urllib.request.Request(

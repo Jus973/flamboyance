@@ -25,7 +25,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from .agent import AgentResult, run_agent
-from .persona import DEFAULT_PERSONAS, Persona, resolve_personas
+from .persona import DEFAULT_PERSONAS, Persona
 from .persona_loader import load_personas_file, merge_personas
 from .report import generate_report
 
@@ -113,7 +113,7 @@ async def run_local(
             if not state.stopped
         ]
         results = await asyncio.gather(*tasks, return_exceptions=True)
-        for persona, result in zip(personas, results):
+        for persona, result in zip(personas, results, strict=True):
             if isinstance(result, Exception):
                 log.error("agent %s failed: %s", persona.name, result)
                 state.results.append(AgentResult(

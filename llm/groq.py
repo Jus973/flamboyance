@@ -45,10 +45,10 @@ def _get_client() -> Any:
     if _client is None:
         try:
             from openai import AsyncOpenAI
-        except ImportError:
+        except ImportError as e:
             raise ImportError(
                 "openai package required for Groq. Install with: pip install openai"
-            )
+            ) from e
 
         if not LLM_API_KEY:
             raise GroqError(

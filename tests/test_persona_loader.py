@@ -9,7 +9,6 @@ from pydantic import ValidationError
 from agents.persona import DEFAULT_PERSONAS, Persona
 from agents.persona_loader import (
     PersonaSchema,
-    PersonasFile,
     load_personas_file,
     merge_personas,
 )

@@ -116,10 +116,7 @@ def merge_personas(
     Returns:
         Merged dict of name -> Persona.
     """
-    if base is None:
-        base = dict(DEFAULT_PERSONAS)
-    else:
-        base = dict(base)
+    base = dict(DEFAULT_PERSONAS) if base is None else dict(base)
 
     if custom_overrides:
         base.update(custom)

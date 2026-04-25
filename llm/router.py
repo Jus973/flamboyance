@@ -15,9 +15,10 @@ from agents.config import (
     OLLAMA_MODEL_FAST,
     OLLAMA_MODEL_QUALITY,
 )
-from .groq import call_groq, GroqRateLimitError
-from .ollama import call_ollama, OllamaError
-from .logging import timed_call, log_fallback
+
+from .groq import GroqRateLimitError, call_groq
+from .logging import log_fallback, timed_call
+from .ollama import call_ollama
 
 log = logging.getLogger(__name__)
 

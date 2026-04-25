@@ -21,11 +21,10 @@ import logging
 import uuid
 from typing import Any
 
-from mcp.server.fastmcp import FastMCP
-
-from agents.persona import resolve_personas
 from agents.report import generate_report
 from agents.runner_local import RunState, get_run, run_local, save_report
+from agents.validation import ValidationError, validate_timeout, validate_url
+from mcp.server.fastmcp import FastMCP
 
 log = logging.getLogger(__name__)
 
@@ -60,8 +59,16 @@ async def run_simulation(
         max_llm_calls: Maximum LLM API calls per agent session (default: 30).
 
     Returns:
-        ``{"run_id": "<uuid>", "llm_mode": bool}``
+        ``{"run_id": "<uuid>", "llm_mode": bool}`` on success, or
+        ``{"error": "message"}`` on validation failure.
     """
+    try:
+        validated_url = validate_url(url, allow_localhost=True)
+        validated_timeout = validate_timeout(timeout)
+    except ValidationError as e:
+        log.warning("Validation failed: %s", e)
+        return {"error": str(e)}
+
     run_id = str(uuid.uuid4())
 
     if mode == "docker":
@@ -69,9 +76,9 @@ async def run_simulation(
 
     task = asyncio.create_task(
         run_local(
-            url,
+            validated_url,
             personas,
-            timeout_s=float(timeout),
+            timeout_s=validated_timeout,
             run_id=run_id,
             personas_file=personas_file,
             llm_mode=llm_mode,

@@ -1,47 +1,120 @@
 """Frustration event detection for UX-friction agents.
 
-Detects seven categories of frustration:
+Detects multiple categories of frustration:
 
 Notice tier (passive UX friction):
 1. **slow_load** — page load time exceeds a threshold (default 3 000 ms).
 2. **dead_end** — no clickable elements found on a page after load.
 3. **long_dwell** — agent stays on a page without acting for too long (default 10 s).
 4. **rage_decoy** — elements that look clickable but are not buttons/links.
+5. **js_error** — JavaScript console errors detected on the page.
+6. **broken_image** — images that failed to load (404 or broken src).
+7. **network_error** — failed network requests (API errors, timeouts).
 
 Frustration tier (active user struggle):
-5. **Circular navigation** — visiting A → B → A in the URL history.
-6. **Rage clicks** — ≥3 clicks on the same non-interactive element within 1.5 s.
-7. **Unmet goal** — the agent's goal was not reached before timeout / give-up.
+8. **Circular navigation** — visiting A → B → A in the URL history.
+9. **Rage clicks** — ≥3 clicks on the same non-interactive element within 1.5 s.
+10. **Unmet goal** — the agent's goal was not reached before timeout / give-up.
 """
 
 from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
+from enum import Enum
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .config import EventThresholds
+
+
+class EventSeverity(Enum):
+    """Severity levels for frustration events."""
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
+
+
+EVENT_SEVERITY: dict[str, EventSeverity] = {
+    "slow_load": EventSeverity.MEDIUM,
+    "dead_end": EventSeverity.HIGH,
+    "long_dwell": EventSeverity.LOW,
+    "rage_decoy": EventSeverity.MEDIUM,
+    "js_error": EventSeverity.HIGH,
+    "broken_image": EventSeverity.MEDIUM,
+    "network_error": EventSeverity.HIGH,
+    "circular_navigation": EventSeverity.MEDIUM,
+    "rage_click": EventSeverity.HIGH,
+    "unmet_goal": EventSeverity.CRITICAL,
+}
 
 
 @dataclass
 class FrustrationEvent:
-    kind: str  # "slow_load" | "dead_end" | "long_dwell" | "rage_decoy" | "circular_navigation" | "rage_click" | "unmet_goal"
+    kind: str
     timestamp: float
     description: str
     url: str = ""
     details: dict[str, object] = field(default_factory=dict)
 
+    @property
+    def severity(self) -> EventSeverity:
+        """Get the severity level for this event type."""
+        return EVENT_SEVERITY.get(self.kind, EventSeverity.MEDIUM)
+
 
 class EventDetector:
-    """Stateful detector that accumulates navigation/click history and emits events."""
+    """Stateful detector that accumulates navigation/click history and emits events.
 
-    RAGE_CLICK_THRESHOLD: int = 3
-    RAGE_CLICK_WINDOW_S: float = 1.5
-    SLOW_LOAD_THRESHOLD_MS: float = 3000.0
-    LONG_DWELL_THRESHOLD_S: float = 10.0
+    Thresholds can be configured via:
+    1. Environment variables (FLAMBOYANCE_SLOW_LOAD_THRESHOLD_MS, etc.)
+    2. Threshold profiles ("strict", "balanced", "lenient")
+    3. Direct constructor argument for per-instance customization
 
-    def __init__(self) -> None:
+    Example:
+        # Use default thresholds from environment
+        detector = EventDetector()
+
+        # Use strict profile
+        from agents.config import EventThresholds
+        detector = EventDetector(thresholds=EventThresholds.from_profile("strict"))
+
+        # Custom thresholds
+        detector = EventDetector(thresholds=EventThresholds(
+            slow_load_threshold_ms=2000.0,
+            long_dwell_threshold_s=5.0,
+        ))
+    """
+
+    def __init__(self, thresholds: EventThresholds | None = None) -> None:
+        from .config import DEFAULT_THRESHOLDS
+
+        self.thresholds = thresholds or DEFAULT_THRESHOLDS
         self.url_history: list[str] = []
         self.click_log: list[tuple[float, str]] = []  # (timestamp, selector)
         self.events: list[FrustrationEvent] = []
         self.last_action_time: float = time.time()
+
+    @property
+    def RAGE_CLICK_THRESHOLD(self) -> int:
+        """Number of clicks to trigger rage click detection."""
+        return self.thresholds.rage_click_threshold
+
+    @property
+    def RAGE_CLICK_WINDOW_S(self) -> float:
+        """Time window for rage click detection in seconds."""
+        return self.thresholds.rage_click_window_s
+
+    @property
+    def SLOW_LOAD_THRESHOLD_MS(self) -> float:
+        """Page load time threshold in milliseconds."""
+        return self.thresholds.slow_load_threshold_ms
+
+    @property
+    def LONG_DWELL_THRESHOLD_S(self) -> float:
+        """Time without action threshold in seconds."""
+        return self.thresholds.long_dwell_threshold_s
 
     # ── Notice-tier detectors ──────────────────────────────────────────
 
@@ -116,6 +189,93 @@ class EventDetector:
             description=f"Rage decoy: element '{selector}' looks clickable ({reason}) but is not interactive",
             url=url,
             details={"selector": selector, "reason": reason},
+        )
+        self.events.append(evt)
+        return evt
+
+    def record_js_error(
+        self, url: str, message: str, source: str = "", line: int = 0
+    ) -> FrustrationEvent:
+        """Emit a *js_error* event when a JavaScript error is detected.
+
+        Args:
+            url: Page URL where the error occurred.
+            message: The error message from the console.
+            source: Source file or script that caused the error.
+            line: Line number where the error occurred.
+        """
+        desc = f"JavaScript error: {message[:100]}"
+        if source:
+            desc += f" (source: {source}"
+            if line:
+                desc += f":{line}"
+            desc += ")"
+
+        evt = FrustrationEvent(
+            kind="js_error",
+            timestamp=time.time(),
+            description=desc,
+            url=url,
+            details={"message": message, "source": source, "line": line},
+        )
+        self.events.append(evt)
+        return evt
+
+    def record_broken_image(
+        self, url: str, image_src: str, selector: str = ""
+    ) -> FrustrationEvent:
+        """Emit a *broken_image* event when an image fails to load.
+
+        Args:
+            url: Page URL where the broken image was found.
+            image_src: The src attribute of the broken image.
+            selector: CSS selector for the image element.
+        """
+        evt = FrustrationEvent(
+            kind="broken_image",
+            timestamp=time.time(),
+            description=f"Broken image: failed to load '{image_src[:80]}'",
+            url=url,
+            details={"image_src": image_src, "selector": selector},
+        )
+        self.events.append(evt)
+        return evt
+
+    def record_network_error(
+        self,
+        url: str,
+        request_url: str,
+        status_code: int = 0,
+        error_text: str = "",
+        method: str = "GET",
+    ) -> FrustrationEvent:
+        """Emit a *network_error* event when a network request fails.
+
+        Args:
+            url: Page URL where the error occurred.
+            request_url: The URL of the failed request.
+            status_code: HTTP status code (0 for connection failures).
+            error_text: Error description or response text.
+            method: HTTP method (GET, POST, etc.).
+        """
+        if status_code >= 400:
+            desc = f"Network error: {method} {request_url[:60]} returned {status_code}"
+        else:
+            desc = f"Network error: {method} {request_url[:60]} failed"
+            if error_text:
+                desc += f" ({error_text[:40]})"
+
+        evt = FrustrationEvent(
+            kind="network_error",
+            timestamp=time.time(),
+            description=desc,
+            url=url,
+            details={
+                "request_url": request_url,
+                "status_code": status_code,
+                "error_text": error_text,
+                "method": method,
+            },
         )
         self.events.append(evt)
         return evt
