@@ -1,0 +1,11 @@
+{
+  "$schema": "https://raw.githubusercontent.com/anthropics/anthropic-cookbook/main/misc/mcp_config.schema.json",
+  "mcpServers": {
+    "flamboyance": {
+      "command": "python3",
+      "args": ["-m", "mcp.server"],
+      "cwd": "${workspaceFolder}",
+      "env": {}
+    }
+  }
+}

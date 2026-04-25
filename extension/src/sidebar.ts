@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { MCPClient } from "./mcpClient";
+import { IMCPClient } from "./mcpClient";
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
   private view?: vscode.WebviewView;
@@ -7,7 +7,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
   constructor(
     private readonly extensionUri: vscode.Uri,
-    private readonly mcp: MCPClient
+    private readonly mcp: IMCPClient
   ) {}
 
   resolveWebviewView(

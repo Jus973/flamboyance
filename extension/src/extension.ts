@@ -1,11 +1,34 @@
 import * as vscode from "vscode";
 import { SidebarProvider } from "./sidebar";
-import { MCPClient } from "./mcpClient";
+import {
+  createMCPClient,
+  IMCPClient,
+  TransportType,
+} from "./mcpClient";
 
-let mcpClient: MCPClient;
+let mcpClient: IMCPClient;
+
+function getWorkspaceRoot(): string | undefined {
+  const folders = vscode.workspace.workspaceFolders;
+  return folders?.[0]?.uri.fsPath;
+}
 
 export function activate(context: vscode.ExtensionContext): void {
-  mcpClient = new MCPClient();
+  const config = vscode.workspace.getConfiguration("flamboyance");
+  const transport = config.get<TransportType>("transport", "stdio");
+  const pythonPath = config.get<string>("pythonPath", "python3");
+  const httpUrl = config.get<string>("httpUrl", "http://localhost:8765");
+
+  mcpClient = createMCPClient({
+    transport,
+    pythonPath,
+    httpUrl,
+    workingDirectory: getWorkspaceRoot(),
+  });
+
+  vscode.window.showInformationMessage(
+    `Flamboyance: Using ${transport} transport`
+  );
 
   const sidebarProvider = new SidebarProvider(context.extensionUri, mcpClient);
 

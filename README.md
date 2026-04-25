@@ -101,14 +101,75 @@ python -m mcp.server              # stdio (e.g. Cascade)
 python -m mcp.server --http --port 8765   # HTTP for the extension sidebar
 ```
 
-## VS Code extension
+## VS Code / Windsurf Extension
+
+The extension works in both VS Code and Windsurf with two transport modes:
+
+| Transport | Description | Use Case |
+|-----------|-------------|----------|
+| **stdio** (default) | Spawns `python -m mcp.server` as child process | Local development |
+| **http** | Connects to running MCP server | Docker, remote servers |
+
+### Installation
 
 ```bash
 cd extension
 npm install
 npm run compile
-# Load the folder in VS Code; use "Run Simulation" from the command palette.
 ```
+
+### Extension Settings
+
+Configure via VS Code/Windsurf settings:
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `flamboyance.transport` | `"stdio"` | Transport mode: `"stdio"` or `"http"` |
+| `flamboyance.pythonPath` | `"python3"` | Python executable for stdio transport |
+| `flamboyance.httpUrl` | `"http://localhost:8765"` | MCP server URL for http transport |
+
+### Usage
+
+1. Open the Flamboyance sidebar (activity bar icon)
+2. Enter target URL and click "Run Simulation"
+3. Watch live agent status in the feed
+4. Click "Get Report" when done
+
+## Windsurf Cascade Integration
+
+For direct MCP tool access in Cascade (without the sidebar):
+
+1. Copy `mcp_config.json` to your Windsurf MCP config directory:
+   - **macOS**: `~/.windsurf/mcp_config.json`
+   - **Linux**: `~/.config/windsurf/mcp_config.json`
+   - **Windows**: `%APPDATA%\windsurf\mcp_config.json`
+
+2. Or merge into existing config:
+   ```json
+   {
+     "mcpServers": {
+       "flamboyance": {
+         "command": "python3",
+         "args": ["-m", "mcp.server"],
+         "cwd": "/path/to/flamboyance"
+       }
+     }
+   }
+   ```
+
+3. Restart Windsurf — Cascade will have access to:
+   - `run_simulation` — Start UX friction test
+   - `get_live_feed` — Poll agent status
+   - `get_report` — Generate Markdown report
+   - `stop_simulation` — Cancel running test
+   - `run_mutation_test_tool` — Test with UI mutations
+
+### IDE Compatibility
+
+| IDE | Sidebar Extension | Cascade MCP Tools |
+|-----|-------------------|-------------------|
+| VS Code | ✅ (stdio or http) | ❌ (no Cascade) |
+| Windsurf | ✅ (stdio or http) | ✅ (via mcp_config.json) |
 
 ## Docker
 

@@ -47,7 +47,28 @@
         "command": "flamboyance.showReport",
         "title": "Flamboyance: Show Report"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Flamboyance",
+      "properties": {
+        "flamboyance.transport": {
+          "type": "string",
+          "enum": ["stdio", "http"],
+          "default": "stdio",
+          "description": "MCP transport mode: stdio (spawns Python process) or http (connects to running server)"
+        },
+        "flamboyance.pythonPath": {
+          "type": "string",
+          "default": "python3",
+          "description": "Path to Python executable for stdio transport"
+        },
+        "flamboyance.httpUrl": {
+          "type": "string",
+          "default": "http://localhost:8765",
+          "description": "MCP server URL for http transport"
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
@@ -62,5 +83,8 @@
     "eslint": "^8.56.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
   }
 }
