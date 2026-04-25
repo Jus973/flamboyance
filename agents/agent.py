@@ -101,7 +101,9 @@ async def run_agent(
 
     timeout_ms = persona.page_load_timeout_ms
     effective_max_actions = max_actions if max_actions is not None else persona.max_actions
-    effective_max_llm_calls = max_llm_calls if max_llm_calls is not None else MAX_LLM_CALLS_PER_SESSION
+    effective_max_llm_calls = (
+        max_llm_calls if max_llm_calls is not None else MAX_LLM_CALLS_PER_SESSION
+    )
 
     llm_driver: LLMDriver | None = None
     if llm_mode:
@@ -199,13 +201,14 @@ async def run_agent(
                 log.info("event: Broken image - %s", img["src"][:60])
 
             # ── Rage decoy detection on initial page ───────────────────
-            decoys = await _find_rage_decoys(page)
-            for decoy in decoys:
-                decoy_evt = detector.record_rage_decoy(
-                    url, decoy["selector"], decoy["reason"],
-                    x=decoy.get("x"), y=decoy.get("y")
-                )
-                log.info("event: %s", decoy_evt.description)
+            # Only detect rage decoys for low tech_literacy personas (< 0.5)
+            if persona.tech_literacy < 0.5:
+                decoys = await _find_rage_decoys(page)
+                for decoy in decoys:
+                    decoy_evt = detector.record_rage_decoy(
+                        url, decoy["selector"], decoy["reason"], x=decoy.get("x"), y=decoy.get("y")
+                    )
+                    log.info("event: %s", decoy_evt.description)
 
             # ── Run expanded page-level checks ─────────────────────────
             await _run_page_checks(page, detector, persona, url)
@@ -242,12 +245,14 @@ async def run_agent(
                     log.info("LLM decision: %s - %s", decision.action_type, decision.reasoning)
 
                     action_result = await _execute_llm_action(page, decision)
-                    action_history.append(ActionHistoryEntry(
-                        action=decision.action_type,
-                        target=decision.target,
-                        result=action_result,
-                        url=page.url,
-                    ))
+                    action_history.append(
+                        ActionHistoryEntry(
+                            action=decision.action_type,
+                            target=decision.target,
+                            result=action_result,
+                            url=page.url,
+                        )
+                    )
                     detector.touch()
 
                     if decision.action_type == "done":
@@ -270,7 +275,9 @@ async def run_agent(
                         if current_url not in page_screenshots:
                             try:
                                 new_screenshot = await page.screenshot(type="png")
-                                page_screenshots[current_url] = base64.b64encode(new_screenshot).decode()
+                                page_screenshots[current_url] = base64.b64encode(
+                                    new_screenshot
+                                ).decode()
                             except Exception as e:
                                 log.debug("Failed to capture screenshot: %s", e)
 
@@ -320,9 +327,7 @@ async def run_agent(
                     continue
 
                 detector.touch()
-                evt = detector.record_click(
-                    selector, is_interactive=is_interactive
-                )
+                evt = detector.record_click(selector, is_interactive=is_interactive)
                 if evt:
                     log.info("event: %s", evt.description)
 
@@ -338,7 +343,9 @@ async def run_agent(
                     if current_url not in page_screenshots:
                         try:
                             new_screenshot = await page.screenshot(type="png")
-                            page_screenshots[current_url] = base64.b64encode(new_screenshot).decode()
+                            page_screenshots[current_url] = base64.b64encode(
+                                new_screenshot
+                            ).decode()
                         except Exception as e:
                             log.debug("Failed to capture screenshot: %s", e)
 
@@ -348,13 +355,18 @@ async def run_agent(
                         detector.record_broken_image(current_url, img["src"], img["selector"])
                         log.info("event: Broken image - %s", img["src"][:60])
 
-                    decoys = await _find_rage_decoys(page)
-                    for decoy in decoys:
-                        decoy_evt = detector.record_rage_decoy(
-                            current_url, decoy["selector"], decoy["reason"],
-                            x=decoy.get("x"), y=decoy.get("y")
-                        )
-                        log.info("event: %s", decoy_evt.description)
+                    # Only detect rage decoys for low tech_literacy personas
+                    if persona.tech_literacy < 0.5:
+                        decoys = await _find_rage_decoys(page)
+                        for decoy in decoys:
+                            decoy_evt = detector.record_rage_decoy(
+                                current_url,
+                                decoy["selector"],
+                                decoy["reason"],
+                                x=decoy.get("x"),
+                                y=decoy.get("y"),
+                            )
+                            log.info("event: %s", decoy_evt.description)
 
                     # Run expanded page-level checks on new page
                     await _run_page_checks(page, detector, persona, current_url)
@@ -371,9 +383,7 @@ async def run_agent(
 
             timed_out = (time.monotonic() - start) >= timeout_s
             if not goal_complete:
-                detector.check_unmet_goal(
-                    persona.goal, reached=False, timed_out=timed_out
-                )
+                detector.check_unmet_goal(persona.goal, reached=False, timed_out=timed_out)
 
             if llm_driver:
                 stats = llm_driver.get_usage_stats()
@@ -442,7 +452,11 @@ async def _execute_llm_action(page: object, decision: ActionDecision) -> str:
         elif decision.action_type == "type":
             if isinstance(decision.target, str):
                 await page.keyboard.type(decision.target)
-                return f"typed '{decision.target[:20]}...'" if len(decision.target) > 20 else f"typed '{decision.target}'"
+                return (
+                    f"typed '{decision.target[:20]}...'"
+                    if len(decision.target) > 20
+                    else f"typed '{decision.target}'"
+                )
             return "invalid type target"
 
         elif decision.action_type == "scroll":
@@ -470,9 +484,7 @@ async def _execute_llm_action(page: object, decision: ActionDecision) -> str:
         return f"action failed: {e}"
 
 
-async def _find_clickables(
-    page: object, persona: Persona
-) -> list[dict[str, object]]:
+async def _find_clickables(page: object, persona: Persona) -> list[dict[str, object]]:
     """Discover clickable elements on the page, respecting persona limitations.
 
     Returns empty list if page context is destroyed (e.g., during navigation).
@@ -510,9 +522,7 @@ async def _find_clickables(
 
             if persona.skips_hidden_menus:
                 try:
-                    aria_expanded = await el.evaluate(
-                        "el => el.getAttribute('aria-expanded')"
-                    )
+                    aria_expanded = await el.evaluate("el => el.getAttribute('aria-expanded')")
                     if aria_expanded == "false":
                         continue
                 except Exception:
@@ -596,7 +606,9 @@ async def _find_broken_images(page: object) -> list[dict[str, str]]:
     return broken
 
 
-async def _find_accessibility_issues(page: object, min_contrast: float = 4.5) -> list[dict[str, object]]:
+async def _find_accessibility_issues(
+    page: object, min_contrast: float = 4.5
+) -> list[dict[str, object]]:
     """Find accessibility issues on the page.
 
     Detects:
@@ -702,7 +714,9 @@ async def _find_accessibility_issues(page: object, min_contrast: float = 4.5) ->
     return issues
 
 
-async def _find_mobile_issues(page: object, viewport: tuple[int, int], min_tap_target: int = 44) -> list[dict[str, object]]:
+async def _find_mobile_issues(
+    page: object, viewport: tuple[int, int], min_tap_target: int = 44
+) -> list[dict[str, object]]:
     """Find mobile UX issues on the page.
 
     Detects:
@@ -718,7 +732,8 @@ async def _find_mobile_issues(page: object, viewport: tuple[int, int], min_tap_t
     viewport_width = viewport[0]
 
     try:
-        issues = await page.evaluate("""
+        issues = await page.evaluate(
+            """
         (args) => {
             const { viewportWidth, minTapTarget } = args;
             const results = [];
@@ -770,7 +785,9 @@ async def _find_mobile_issues(page: object, viewport: tuple[int, int], min_tap_t
 
             return results;
         }
-    """, {"viewportWidth": viewport_width, "minTapTarget": min_tap_target})
+    """,
+            {"viewportWidth": viewport_width, "minTapTarget": min_tap_target},
+        )
     except Exception as e:
         if "context was destroyed" in str(e) or "navigation" in str(e).lower():
             log.debug("Skipping mobile check - page navigating")
@@ -1089,8 +1106,8 @@ async def _find_rage_decoys(page: object) -> list[dict[str, str]]:
                     reasons.push('cursor:pointer');
                 }
 
-                // Check for hover class patterns
-                if (el.className && /hover|clickable|btn|button|card|action|link/i.test(String(el.className))) {
+                // Check for explicit button/clickable class patterns (tightened to reduce false positives)
+                if (el.className && /\b(btn|button|clickable)\b/i.test(String(el.className))) {
                     reasons.push('clickable class name');
                 }
 
@@ -1123,7 +1140,8 @@ async def _find_rage_decoys(page: object) -> list[dict[str, str]]:
                     reasons.push('has tabindex');
                 }
 
-                if (reasons.length > 0) {
+                // Require 2+ visual affordances to reduce false positives
+                if (reasons.length >= 2) {
                     // Build a selector
                     let selector = tag;
                     const text = (el.innerText || '').trim().slice(0, 30);
@@ -1190,7 +1208,9 @@ async def _run_page_checks(
         modals = await _find_modal_overlays(page)
         for modal in modals:
             if modal.get("modal_type") == "intrusive_modal":
-                detector.record_modal_frustration(url, modal.get("modal_type", ""), modal.get("selector", ""))
+                detector.record_modal_frustration(
+                    url, modal.get("modal_type", ""), modal.get("selector", "")
+                )
                 log.info("event: Modal frustration - %s", modal.get("modal_type", ""))
 
     # Check for accessibility issues (prioritized for accessibility_user)
@@ -1250,7 +1270,9 @@ def main() -> None:
     parser.add_argument("--headless", action="store_true", default=True)
     parser.add_argument("--no-headless", dest="headless", action="store_false")
     parser.add_argument("--llm", action="store_true", help="Use LLM vision model for navigation")
-    parser.add_argument("--max-llm-calls", type=int, default=None, help="Max LLM API calls per session")
+    parser.add_argument(
+        "--max-llm-calls", type=int, default=None, help="Max LLM API calls per session"
+    )
     args = parser.parse_args()
 
     persona = resolve_personas([args.persona])[0]

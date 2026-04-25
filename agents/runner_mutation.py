@@ -161,7 +161,9 @@ async def _run_agent_with_mutations(
 
     timeout_ms = persona.page_load_timeout_ms
     effective_max_actions = persona.max_actions
-    effective_max_llm_calls = max_llm_calls if max_llm_calls is not None else MAX_LLM_CALLS_PER_SESSION
+    effective_max_llm_calls = (
+        max_llm_calls if max_llm_calls is not None else MAX_LLM_CALLS_PER_SESSION
+    )
 
     llm_driver: LLMDriver | None = None
     if llm_mode:
@@ -255,11 +257,12 @@ async def _run_agent_with_mutations(
                 detector.record_broken_image(url, img["src"], img["selector"])
                 log.info("event: Broken image - %s", img["src"][:60])
 
-            # Rage decoy detection on initial page
-            decoys = await _find_rage_decoys(page)
-            for decoy in decoys:
-                decoy_evt = detector.record_rage_decoy(url, decoy["selector"], decoy["reason"])
-                log.info("event: %s", decoy_evt.description)
+            # Rage decoy detection on initial page (only for low tech_literacy personas)
+            if persona.tech_literacy < 0.5:
+                decoys = await _find_rage_decoys(page)
+                for decoy in decoys:
+                    decoy_evt = detector.record_rage_decoy(url, decoy["selector"], decoy["reason"])
+                    log.info("event: %s", decoy_evt.description)
 
             actions_taken = 0
             goal_complete = False
@@ -294,12 +297,14 @@ async def _run_agent_with_mutations(
                     log.info("LLM decision: %s - %s", decision.action_type, decision.reasoning)
 
                     action_result = await _execute_llm_action(page, decision)
-                    action_history.append(ActionHistoryEntry(
-                        action=decision.action_type,
-                        target=decision.target,
-                        result=action_result,
-                        url=page.url,
-                    ))
+                    action_history.append(
+                        ActionHistoryEntry(
+                            action=decision.action_type,
+                            target=decision.target,
+                            result=action_result,
+                            url=page.url,
+                        )
+                    )
                     detector.touch()
 
                     if decision.action_type == "done":
@@ -377,20 +382,20 @@ async def _run_agent_with_mutations(
                         detector.record_broken_image(current_url, img["src"], img["selector"])
                         log.info("event: Broken image - %s", img["src"][:60])
 
-                    decoys = await _find_rage_decoys(page)
-                    for decoy in decoys:
-                        decoy_evt = detector.record_rage_decoy(
-                            current_url, decoy["selector"], decoy["reason"]
-                        )
-                        log.info("event: %s", decoy_evt.description)
+                    # Only detect rage decoys for low tech_literacy personas
+                    if persona.tech_literacy < 0.5:
+                        decoys = await _find_rage_decoys(page)
+                        for decoy in decoys:
+                            decoy_evt = detector.record_rage_decoy(
+                                current_url, decoy["selector"], decoy["reason"]
+                            )
+                            log.info("event: %s", decoy_evt.description)
 
                 actions_taken += 1
 
             timed_out = (time.monotonic() - start) >= timeout_s
             if not goal_complete:
-                detector.check_unmet_goal(
-                    persona.goal, reached=False, timed_out=timed_out
-                )
+                detector.check_unmet_goal(persona.goal, reached=False, timed_out=timed_out)
 
             if llm_driver:
                 stats = llm_driver.get_usage_stats()
@@ -551,14 +556,16 @@ def generate_mutation_report(result: MutationTestResult) -> str:
 
     summary = result.summary()
 
-    lines.extend([
-        "## Summary",
-        "",
-        f"- **Total personas tested:** {summary['total_personas']}",
-        f"- **Failed:** {summary['failed_count']}",
-        f"- **Succeeded:** {summary['succeeded_count']}",
-        "",
-    ])
+    lines.extend(
+        [
+            "## Summary",
+            "",
+            f"- **Total personas tested:** {summary['total_personas']}",
+            f"- **Failed:** {summary['failed_count']}",
+            f"- **Succeeded:** {summary['succeeded_count']}",
+            "",
+        ]
+    )
 
     if summary["failed_personas"]:
         lines.extend(["## Failed Personas", ""])
@@ -588,7 +595,9 @@ def generate_mutation_report(result: MutationTestResult) -> str:
         if r.frustration_events:
             lines.append("- **Frustration events:**")
             for e in r.frustration_events:
-                lines.append(f"  - [{e.get('severity', 'unknown')}] {e.get('description', 'No description')}")
+                lines.append(
+                    f"  - [{e.get('severity', 'unknown')}] {e.get('description', 'No description')}"
+                )
 
         if r.error:
             lines.append(f"- **Error:** {r.error}")
@@ -607,9 +616,7 @@ def main() -> None:
         required=True,
         help=f"Mutation scenario name or JSON. Built-in: {list(COMMON_SCENARIOS.keys())}",
     )
-    parser.add_argument(
-        "--personas", nargs="*", default=None, help="Persona names (default: all)"
-    )
+    parser.add_argument("--personas", nargs="*", default=None, help="Persona names (default: all)")
     parser.add_argument(
         "--personas-file",
         type=Path,
@@ -620,7 +627,9 @@ def main() -> None:
     parser.add_argument("--headless", action="store_true", default=True)
     parser.add_argument("--no-headless", dest="headless", action="store_false")
     parser.add_argument("--llm", action="store_true", help="Use LLM vision model for navigation")
-    parser.add_argument("--max-llm-calls", type=int, default=None, help="Max LLM API calls per agent")
+    parser.add_argument(
+        "--max-llm-calls", type=int, default=None, help="Max LLM API calls per agent"
+    )
     parser.add_argument("--output", default="results", help="Output directory")
     parser.add_argument("--json", action="store_true", help="Output JSON instead of Markdown")
     args = parser.parse_args()

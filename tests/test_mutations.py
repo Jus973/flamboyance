@@ -1,7 +1,5 @@
 """Tests for the UI mutation layer."""
 
-import pytest
-
 from agents.mutations import (
     COMMON_SCENARIOS,
     MutationScenario,

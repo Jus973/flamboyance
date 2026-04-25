@@ -69,7 +69,11 @@ class TestReportGeneration:
                     status="done",
                     visited_urls=["http://example.com"],
                     frustration_events=[
-                        {"kind": "unmet_goal", "description": "Goal failed", "severity": "critical"},
+                        {
+                            "kind": "unmet_goal",
+                            "description": "Goal failed",
+                            "severity": "critical",
+                        },
                         {"kind": "js_error", "description": "JS Error", "severity": "high"},
                         {"kind": "slow_load", "description": "Page slow", "severity": "medium"},
                         {"kind": "long_dwell", "description": "User waited", "severity": "low"},
@@ -207,9 +211,16 @@ class TestSeverityHelpers:
 class TestRecommendations:
     def test_all_event_types_have_recommendations(self) -> None:
         event_types = [
-            "slow_load", "dead_end", "long_dwell", "rage_decoy",
-            "js_error", "broken_image", "network_error",
-            "circular_navigation", "rage_click", "unmet_goal"
+            "slow_load",
+            "dead_end",
+            "long_dwell",
+            "rage_decoy",
+            "js_error",
+            "broken_image",
+            "network_error",
+            "circular_navigation",
+            "rage_click",
+            "unmet_goal",
         ]
         for event_type in event_types:
             assert event_type in FIX_RECOMMENDATIONS

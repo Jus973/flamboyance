@@ -175,8 +175,12 @@ async def call_groq_with_retry(
         except GroqRateLimitError as e:
             if attempt < max_retries:
                 delay = e.retry_after or (LLM_RETRY_DELAY_S * (2**attempt))
-                log.info("Groq rate limited, retrying in %.1fs (attempt %d/%d)",
-                         delay, attempt + 1, max_retries + 1)
+                log.info(
+                    "Groq rate limited, retrying in %.1fs (attempt %d/%d)",
+                    delay,
+                    attempt + 1,
+                    max_retries + 1,
+                )
                 await asyncio.sleep(delay)
             else:
                 log.warning("Groq rate limit exceeded after %d retries", max_retries + 1)

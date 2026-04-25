@@ -2,23 +2,21 @@
 
 import base64
 import io
-from unittest.mock import patch, MagicMock
-
-import pytest
+from unittest.mock import patch
 
 from agents.screenshot_annotator import (
     AnnotationMarker,
-    annotate_screenshot,
-    extract_event_coordinates,
-    create_markers_from_events,
     _parse_color,
+    annotate_screenshot,
+    create_markers_from_events,
+    extract_event_coordinates,
 )
 
 
 def _create_test_image_b64(width: int = 100, height: int = 100) -> str:
     """Create a simple test PNG image as base64."""
     from PIL import Image
-    
+
     img = Image.new("RGB", (width, height), color="white")
     buffer = io.BytesIO()
     img.save(buffer, format="PNG")
@@ -35,9 +33,7 @@ class TestAnnotationMarker:
         assert marker.radius == 20
 
     def test_marker_custom_values(self) -> None:
-        marker = AnnotationMarker(
-            x=100, y=200, label="custom", color="blue", radius=30
-        )
+        marker = AnnotationMarker(x=100, y=200, label="custom", color="blue", radius=30)
         assert marker.x == 100
         assert marker.y == 200
         assert marker.label == "custom"
@@ -157,7 +153,7 @@ class TestCreateMarkersFromEvents:
     def test_uses_default_positions(self) -> None:
         events = [
             {"kind": "rage_decoy"},  # No coordinates
-            {"kind": "dead_end"},    # No coordinates
+            {"kind": "dead_end"},  # No coordinates
         ]
         defaults = [(50, 50), (150, 150)]
         markers = create_markers_from_events(events, default_positions=defaults)
@@ -176,7 +172,7 @@ class TestCreateMarkersFromEvents:
         markers = create_markers_from_events(events, default_positions=defaults)
         assert len(markers) == 2
         assert markers[0].x == 100  # Uses event coordinates
-        assert markers[1].x == 50   # Uses first default
+        assert markers[1].x == 50  # Uses first default
 
     def test_severity_color_mapping(self) -> None:
         events = [
@@ -186,10 +182,10 @@ class TestCreateMarkersFromEvents:
             {"kind": "low_event", "x": 40, "y": 40, "severity": "low"},
         ]
         markers = create_markers_from_events(events)
-        assert markers[0].color == "red"     # critical
+        assert markers[0].color == "red"  # critical
         assert markers[1].color == "orange"  # high
         assert markers[2].color == "yellow"  # medium
-        assert markers[3].color == "green"   # low
+        assert markers[3].color == "green"  # low
 
     def test_default_severity_is_medium(self) -> None:
         events = [{"kind": "unknown", "x": 100, "y": 100}]  # No severity
@@ -219,13 +215,14 @@ class TestAnnotateScreenshot:
         original_b64 = _create_test_image_b64(200, 200)
         markers = [AnnotationMarker(x=100, y=100, label="test", color="red")]
         result = annotate_screenshot(original_b64, markers)
-        
+
         # Result should be different from original (annotated)
         assert result != original_b64
-        
+
         # Result should be valid base64 PNG
         decoded = base64.b64decode(result)
         from PIL import Image
+
         img = Image.open(io.BytesIO(decoded))
         assert img.format == "PNG"
         assert img.size == (200, 200)
@@ -238,10 +235,11 @@ class TestAnnotateScreenshot:
             AnnotationMarker(x=250, y=250, label="3", color="yellow"),
         ]
         result = annotate_screenshot(original_b64, markers)
-        
+
         assert result != original_b64
         decoded = base64.b64decode(result)
         from PIL import Image
+
         img = Image.open(io.BytesIO(decoded))
         assert img.format == "PNG"
 
@@ -290,21 +288,18 @@ class TestAnnotateScreenshotWithoutPillow:
     def test_returns_original_when_pillow_not_installed(self) -> None:
         original_b64 = "test_base64_string"
         markers = [AnnotationMarker(x=50, y=50, label="test")]
-        
+
         with patch.dict("sys.modules", {"PIL": None, "PIL.Image": None}):
             # Force reimport to trigger ImportError path
-            import importlib
             import agents.screenshot_annotator as sa
-            
+
             # Mock the import to raise ImportError
-            original_annotate = sa.annotate_screenshot
-            
             def mock_annotate(image_b64, markers):
                 # Simulate what happens when PIL import fails
                 if not markers:
                     return image_b64
                 return image_b64  # Return original when PIL unavailable
-            
+
             with patch.object(sa, "annotate_screenshot", mock_annotate):
                 result = sa.annotate_screenshot(original_b64, markers)
                 assert result == original_b64
@@ -329,19 +324,20 @@ class TestIntegrationWithEvents:
                 "description": "Fake link",
             },
         ]
-        
+
         markers = create_markers_from_events(events)
         assert len(markers) == 2
-        
+
         original_b64 = _create_test_image_b64(300, 200)
         result = annotate_screenshot(original_b64, markers)
-        
+
         # Verify annotation was applied
         assert result != original_b64
-        
+
         # Verify result is valid image
         decoded = base64.b64decode(result)
         from PIL import Image
+
         img = Image.open(io.BytesIO(decoded))
         assert img.format == "PNG"
 
@@ -353,14 +349,14 @@ class TestIntegrationWithEvents:
             {"kind": "rage_decoy", "x": 150, "y": 50, "severity": "medium"},
             {"kind": "long_dwell", "x": 200, "y": 50, "severity": "low"},
         ]
-        
+
         markers = create_markers_from_events(events)
         assert len(markers) == 4
         assert markers[0].color == "red"
         assert markers[1].color == "orange"
         assert markers[2].color == "yellow"
         assert markers[3].color == "green"
-        
+
         original_b64 = _create_test_image_b64(250, 100)
         result = annotate_screenshot(original_b64, markers)
         assert result != original_b64
@@ -371,7 +367,7 @@ class TestIntegrationWithEvents:
             {"kind": "click", "target": [100, 100], "severity": "medium"},
             {"kind": "click", "target": (200, 200), "severity": "medium"},
         ]
-        
+
         markers = create_markers_from_events(events)
         assert len(markers) == 2
         assert markers[0].x == 100

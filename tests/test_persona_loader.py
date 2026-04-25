@@ -44,9 +44,7 @@ class TestPersonaSchema:
         assert ps.prefers_visible_text is True
 
     def test_to_persona(self) -> None:
-        ps = PersonaSchema(
-            name="x", patience=0.4, tech_literacy=0.5, goal="g", tags=["a"]
-        )
+        ps = PersonaSchema(name="x", patience=0.4, tech_literacy=0.5, goal="g", tags=["a"])
         p = ps.to_persona()
         assert isinstance(p, Persona)
         assert p.name == "x"
@@ -58,9 +56,7 @@ class TestPersonaSchema:
 
     def test_invalid_viewport(self) -> None:
         with pytest.raises(ValidationError):
-            PersonaSchema(
-                name="bad", patience=0.5, tech_literacy=0.5, goal="x", viewport=[0, 720]
-            )
+            PersonaSchema(name="bad", patience=0.5, tech_literacy=0.5, goal="x", viewport=[0, 720])
 
 
 class TestLoadPersonasFile:
@@ -95,11 +91,7 @@ class TestLoadPersonasFile:
 
 class TestMergePersonas:
     def test_merge_adds_custom(self) -> None:
-        custom = {
-            "new_one": Persona(
-                name="new_one", patience=0.5, tech_literacy=0.5, goal="test"
-            )
-        }
+        custom = {"new_one": Persona(name="new_one", patience=0.5, tech_literacy=0.5, goal="test")}
         merged = merge_personas(custom)
         assert "new_one" in merged
         assert "frustrated_exec" in merged  # built-in still present
@@ -131,7 +123,9 @@ class TestMergePersonas:
 
     def test_merge_with_custom_base(self) -> None:
         base = {"only_base": Persona(name="only_base", patience=0.5, tech_literacy=0.5, goal="x")}
-        custom = {"only_custom": Persona(name="only_custom", patience=0.5, tech_literacy=0.5, goal="y")}
+        custom = {
+            "only_custom": Persona(name="only_custom", patience=0.5, tech_literacy=0.5, goal="y")
+        }
         merged = merge_personas(custom, base=base)
         assert "only_base" in merged
         assert "only_custom" in merged

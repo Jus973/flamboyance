@@ -58,15 +58,10 @@ def validate_url(url: str, allow_localhost: bool = True) -> str:
         raise ValidationError(f"Invalid URL format: {e}") from e
 
     if not parsed.scheme:
-        raise ValidationError(
-            f"URL must include scheme (http:// or https://): {url[:50]}"
-        )
+        raise ValidationError(f"URL must include scheme (http:// or https://): {url[:50]}")
 
     if parsed.scheme.lower() not in ALLOWED_URL_SCHEMES:
-        raise ValidationError(
-            f"URL scheme '{parsed.scheme}' not allowed. "
-            f"Use http:// or https://"
-        )
+        raise ValidationError(f"URL scheme '{parsed.scheme}' not allowed. Use http:// or https://")
 
     if not parsed.netloc:
         raise ValidationError(f"URL must include a host: {url[:50]}")
@@ -76,14 +71,10 @@ def validate_url(url: str, allow_localhost: bool = True) -> str:
     if not allow_localhost:
         localhost_patterns = ["localhost", "127.0.0.1", "::1", "0.0.0.0"]
         if host.lower() in localhost_patterns:
-            raise ValidationError(
-                f"Localhost URLs not allowed: {url[:50]}"
-            )
+            raise ValidationError(f"Localhost URLs not allowed: {url[:50]}")
 
     if _is_private_ip(host) and not allow_localhost:
-        raise ValidationError(
-            f"Private IP addresses not allowed: {url[:50]}"
-        )
+        raise ValidationError(f"Private IP addresses not allowed: {url[:50]}")
 
     return url
 
@@ -158,9 +149,7 @@ def validate_personas(
         return list(available.keys())
 
     if not isinstance(persona_names, list):
-        raise ValidationError(
-            f"personas must be a list, got {type(persona_names).__name__}"
-        )
+        raise ValidationError(f"personas must be a list, got {type(persona_names).__name__}")
 
     invalid = [name for name in persona_names if name not in available]
     if invalid:

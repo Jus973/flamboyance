@@ -36,7 +36,9 @@ from typing import Literal
 # Groq / OpenAI-compatible API settings
 LLM_API_KEY: str | None = os.environ.get("FLAMBOYANCE_LLM_API_KEY")
 LLM_BASE_URL: str = os.environ.get("FLAMBOYANCE_LLM_BASE_URL", "https://api.groq.com/openai/v1")
-LLM_MODEL: str = os.environ.get("FLAMBOYANCE_LLM_MODEL", "meta-llama/llama-4-scout-17b-16e-instruct")
+LLM_MODEL: str = os.environ.get(
+    "FLAMBOYANCE_LLM_MODEL", "meta-llama/llama-4-scout-17b-16e-instruct"
+)
 
 # Ollama local model settings
 OLLAMA_BASE_URL: str = os.environ.get("FLAMBOYANCE_OLLAMA_URL", "http://localhost:11434")
@@ -135,14 +137,10 @@ class EventThresholds:
             )
 
         if "FLAMBOYANCE_RAGE_CLICK_THRESHOLD" in os.environ:
-            thresholds.rage_click_threshold = int(
-                os.environ["FLAMBOYANCE_RAGE_CLICK_THRESHOLD"]
-            )
+            thresholds.rage_click_threshold = int(os.environ["FLAMBOYANCE_RAGE_CLICK_THRESHOLD"])
 
         if "FLAMBOYANCE_RAGE_CLICK_WINDOW_S" in os.environ:
-            thresholds.rage_click_window_s = float(
-                os.environ["FLAMBOYANCE_RAGE_CLICK_WINDOW_S"]
-            )
+            thresholds.rage_click_window_s = float(os.environ["FLAMBOYANCE_RAGE_CLICK_WINDOW_S"])
 
         return thresholds
 

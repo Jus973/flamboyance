@@ -54,10 +54,10 @@ def annotate_screenshot(
         # Try to load a font, fall back to default
         try:
             font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", 14)
-        except (OSError, IOError):
+        except OSError:
             try:
                 font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 14)
-            except (OSError, IOError):
+            except OSError:
                 font = ImageFont.load_default()
 
         for i, marker in enumerate(markers, 1):

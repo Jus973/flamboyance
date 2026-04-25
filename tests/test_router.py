@@ -95,8 +95,10 @@ class TestFallbackBehavior:
     @pytest.mark.asyncio
     async def test_groq_rate_limit_falls_back_to_ollama(self):
         """429 rate limit from Groq should trigger Ollama fallback."""
-        with patch("llm.router.call_groq", new_callable=AsyncMock) as mock_groq, \
-             patch("llm.router.call_ollama", new_callable=AsyncMock) as mock_ollama:
+        with (
+            patch("llm.router.call_groq", new_callable=AsyncMock) as mock_groq,
+            patch("llm.router.call_ollama", new_callable=AsyncMock) as mock_ollama,
+        ):
             mock_groq.side_effect = GroqRateLimitError("Rate limit exceeded", retry_after=5.0)
             mock_ollama.return_value = "Ollama fallback result"
 
@@ -109,8 +111,10 @@ class TestFallbackBehavior:
     @pytest.mark.asyncio
     async def test_groq_returns_none_falls_back_to_ollama(self):
         """Groq returning None should trigger Ollama fallback."""
-        with patch("llm.router.call_groq", new_callable=AsyncMock) as mock_groq, \
-             patch("llm.router.call_ollama", new_callable=AsyncMock) as mock_ollama:
+        with (
+            patch("llm.router.call_groq", new_callable=AsyncMock) as mock_groq,
+            patch("llm.router.call_ollama", new_callable=AsyncMock) as mock_ollama,
+        ):
             mock_groq.return_value = None
             mock_ollama.return_value = "Ollama fallback result"
 
@@ -121,8 +125,10 @@ class TestFallbackBehavior:
     @pytest.mark.asyncio
     async def test_groq_exception_falls_back_to_ollama(self):
         """Generic Groq exceptions should trigger Ollama fallback."""
-        with patch("llm.router.call_groq", new_callable=AsyncMock) as mock_groq, \
-             patch("llm.router.call_ollama", new_callable=AsyncMock) as mock_ollama:
+        with (
+            patch("llm.router.call_groq", new_callable=AsyncMock) as mock_groq,
+            patch("llm.router.call_ollama", new_callable=AsyncMock) as mock_ollama,
+        ):
             mock_groq.side_effect = Exception("Network error")
             mock_ollama.return_value = "Ollama fallback result"
 
@@ -209,6 +215,7 @@ class TestGroqClient:
 
         try:
             from openai import RateLimitError
+
             mock_client.chat.completions.create.side_effect = RateLimitError(
                 "Rate limit exceeded, try again in 5s",
                 response=MagicMock(status_code=429),
@@ -326,7 +333,7 @@ class TestModelConfiguration:
 
     def test_vision_model_used_for_image_tasks(self):
         """Vision model should be distinct from quality model for image tasks."""
-        from agents.config import OLLAMA_MODEL_QUALITY, OLLAMA_MODEL_VISION
+        from agents.config import OLLAMA_MODEL_VISION
 
         # Vision model should be a vision-capable model
         assert "llava" in OLLAMA_MODEL_VISION.lower() or "vision" in OLLAMA_MODEL_VISION.lower()
@@ -351,8 +358,10 @@ class TestModelConfiguration:
     @pytest.mark.asyncio
     async def test_text_decision_uses_quality_model_on_fallback(self):
         """Text-only decisions falling back to Ollama should use quality model."""
-        with patch("llm.router.call_groq", new_callable=AsyncMock) as mock_groq, \
-             patch("llm.router.call_ollama", new_callable=AsyncMock) as mock_ollama:
+        with (
+            patch("llm.router.call_groq", new_callable=AsyncMock) as mock_groq,
+            patch("llm.router.call_ollama", new_callable=AsyncMock) as mock_ollama,
+        ):
             mock_groq.side_effect = Exception("API error")
             mock_ollama.return_value = '{"action": "click", "target": [50, 50]}'
 

@@ -174,11 +174,7 @@ class TestLongDwell:
 class TestRageDecoy:
     def test_emits_rage_decoy_with_cursor_pointer(self) -> None:
         d = EventDetector()
-        evt = d.record_rage_decoy(
-            "http://example.com/page",
-            "div.fake-button",
-            "cursor:pointer"
-        )
+        evt = d.record_rage_decoy("http://example.com/page", "div.fake-button", "cursor:pointer")
         assert evt is not None
         assert evt.kind == "rage_decoy"
         assert "div.fake-button" in evt.description
@@ -190,9 +186,7 @@ class TestRageDecoy:
     def test_emits_rage_decoy_with_clickable_class(self) -> None:
         d = EventDetector()
         evt = d.record_rage_decoy(
-            "http://example.com/form",
-            "span.clickable-item",
-            "clickable class name"
+            "http://example.com/form", "span.clickable-item", "clickable class name"
         )
         assert evt is not None
         assert evt.kind == "rage_decoy"
@@ -202,9 +196,7 @@ class TestRageDecoy:
     def test_emits_rage_decoy_with_multiple_reasons(self) -> None:
         d = EventDetector()
         evt = d.record_rage_decoy(
-            "http://example.com",
-            "div.clickable-card",
-            "cursor:pointer, clickable class name"
+            "http://example.com", "div.clickable-card", "cursor:pointer, clickable class name"
         )
         assert evt is not None
         assert "cursor:pointer" in evt.details["reason"]
@@ -415,9 +407,7 @@ class TestErrorMessage:
     def test_emits_error_message(self) -> None:
         d = EventDetector()
         evt = d.record_error_message(
-            "http://example.com/form",
-            "Email address is invalid",
-            selector=".error-text"
+            "http://example.com/form", "Email address is invalid", selector=".error-text"
         )
         assert evt is not None
         assert evt.kind == "error_message_visible"
@@ -428,10 +418,7 @@ class TestErrorMessage:
 class TestSessionTimeout:
     def test_emits_session_timeout(self) -> None:
         d = EventDetector()
-        evt = d.record_session_timeout(
-            "http://example.com/app",
-            reason="Your session has expired"
-        )
+        evt = d.record_session_timeout("http://example.com/app", reason="Your session has expired")
         assert evt is not None
         assert evt.kind == "session_timeout"
         assert "session" in evt.description.lower()
@@ -445,7 +432,7 @@ class TestAccessibilityFailure:
             "http://example.com/page",
             "missing_alt",
             element_selector="img.hero",
-            details={"src": "hero.jpg"}
+            details={"src": "hero.jpg"},
         )
         assert evt is not None
         assert evt.kind == "accessibility_failure"
@@ -461,7 +448,7 @@ class TestMobileIssue:
             "http://example.com/page",
             "small_tap_target",
             element_selector="button.tiny",
-            details={"width": 30, "height": 30}
+            details={"width": 30, "height": 30},
         )
         assert evt is not None
         assert evt.kind == "mobile_tap_target"
@@ -490,7 +477,7 @@ class TestConfusingNavigation:
         evt = d.record_confusing_navigation(
             "http://example.com/deep/nested/path",
             "breadcrumb depth exceeds 4",
-            details={"depth": 5}
+            details={"depth": 5},
         )
         assert evt is not None
         assert evt.kind == "confusing_navigation"
@@ -502,9 +489,7 @@ class TestModalFrustration:
     def test_emits_modal_frustration(self) -> None:
         d = EventDetector()
         evt = d.record_modal_frustration(
-            "http://example.com",
-            "intrusive_modal",
-            selector=".popup-overlay"
+            "http://example.com", "intrusive_modal", selector=".popup-overlay"
         )
         assert evt is not None
         assert evt.kind == "modal_frustration"
@@ -516,9 +501,7 @@ class TestSearchFrustration:
     def test_emits_search_frustration(self) -> None:
         d = EventDetector()
         evt = d.record_search_frustration(
-            "http://example.com/search",
-            "zero_results",
-            query="nonexistent product"
+            "http://example.com/search", "zero_results", query="nonexistent product"
         )
         assert evt is not None
         assert evt.kind == "search_frustration"
@@ -595,10 +578,7 @@ class TestBackButtonAbuse:
 class TestCopyPasteFailure:
     def test_emits_copy_paste_failure(self) -> None:
         d = EventDetector()
-        evt = d.record_copy_paste_failure(
-            "http://example.com/article",
-            selector="article.content"
-        )
+        evt = d.record_copy_paste_failure("http://example.com/article", selector="article.content")
         assert evt is not None
         assert evt.kind == "copy_paste_failure"
         assert "text selection disabled" in evt.description
@@ -607,10 +587,7 @@ class TestCopyPasteFailure:
 class TestInfiniteScrollTrap:
     def test_emits_infinite_scroll_trap(self) -> None:
         d = EventDetector()
-        evt = d.record_infinite_scroll_trap(
-            "http://example.com/feed",
-            reason="footer unreachable"
-        )
+        evt = d.record_infinite_scroll_trap("http://example.com/feed", reason="footer unreachable")
         assert evt is not None
         assert evt.kind == "infinite_scroll_trap"
         assert "footer unreachable" in evt.description
@@ -626,15 +603,31 @@ class TestEventSeverity:
     def test_all_event_types_have_severity(self) -> None:
         event_types = [
             # Original events
-            "slow_load", "dead_end", "long_dwell", "rage_decoy",
-            "js_error", "broken_image", "network_error",
-            "circular_navigation", "rage_click", "unmet_goal",
+            "slow_load",
+            "dead_end",
+            "long_dwell",
+            "rage_decoy",
+            "js_error",
+            "broken_image",
+            "network_error",
+            "circular_navigation",
+            "rage_click",
+            "unmet_goal",
             # New events
-            "error_message_visible", "accessibility_failure", "mobile_tap_target",
-            "confusing_navigation", "modal_frustration", "copy_paste_failure",
-            "infinite_scroll_trap", "scroll_rage", "form_abandonment",
-            "session_timeout", "slow_interaction", "search_frustration",
-            "cart_abandonment", "back_button_abuse",
+            "error_message_visible",
+            "accessibility_failure",
+            "mobile_tap_target",
+            "confusing_navigation",
+            "modal_frustration",
+            "copy_paste_failure",
+            "infinite_scroll_trap",
+            "scroll_rage",
+            "form_abandonment",
+            "session_timeout",
+            "slow_interaction",
+            "search_frustration",
+            "cart_abandonment",
+            "back_button_abuse",
         ]
         for event_type in event_types:
             assert event_type in EVENT_SEVERITY, f"Missing severity for {event_type}"
@@ -666,7 +659,7 @@ class TestEventSeverity:
         evt = d.record_scroll_rage("http://example.com", "down")
         # Need to trigger the event first
         d.scroll_log = []  # Reset
-        for i, direction in enumerate(["down", "up"] * 4):
+        for _i, direction in enumerate(["down", "up"] * 4):
             with patch("agents.events.time.time", return_value=time.time()):
                 evt = d.record_scroll_rage("http://example.com", direction)
         if evt:

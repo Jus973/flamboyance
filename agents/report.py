@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import contextlib
 import logging
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -82,7 +83,8 @@ def _save_screenshot(
         filepath.write_bytes(image_data)
 
         # Return relative path from results dir (report is saved inside results_dir)
-        return str(filepath.relative_to(Path(results_dir)))
+        # Prefix with ./ for proper markdown preview resolution
+        return "./" + str(filepath.relative_to(Path(results_dir)))
     except Exception as e:
         log.warning("Failed to save screenshot: %s", e)
         return None
@@ -130,17 +132,13 @@ def _annotate_and_save_screenshot(
         # Try to extract coordinates from event
         coords = None
         if "x" in event and "y" in event:
-            try:
+            with contextlib.suppress(ValueError, TypeError):
                 coords = (int(event["x"]), int(event["y"]))
-            except (ValueError, TypeError):
-                pass
         elif "target" in event:
             target = event["target"]
             if isinstance(target, (list, tuple)) and len(target) == 2:
-                try:
+                with contextlib.suppress(ValueError, TypeError):
                     coords = (int(target[0]), int(target[1]))
-                except (ValueError, TypeError):
-                    pass
 
         if coords:
             severity = event.get("severity", "medium")
@@ -154,10 +152,7 @@ def _annotate_and_save_screenshot(
             )
 
     # Annotate if we have markers
-    if markers:
-        annotated_b64 = annotate_screenshot(screenshot_b64, markers)
-    else:
-        annotated_b64 = screenshot_b64
+    annotated_b64 = annotate_screenshot(screenshot_b64, markers) if markers else screenshot_b64
 
     return _save_screenshot(annotated_b64, run_id, persona, url, index, results_dir)
 
@@ -339,7 +334,7 @@ def generate_report(state: RunState) -> str:
         lines.append("")
 
         # LLM mode stats
-        if getattr(r, 'llm_mode', False):
+        if getattr(r, "llm_mode", False):
             lines.append("### LLM Navigation Stats")
             lines.append("")
             lines.append(f"- **LLM Calls:** {getattr(r, 'llm_calls', 0)}")
@@ -366,7 +361,7 @@ def generate_report(state: RunState) -> str:
             lines.append("")
 
         # LLM Action History (if available)
-        action_history = getattr(r, 'action_history', [])
+        action_history = getattr(r, "action_history", [])
         if action_history:
             lines.append("### Action History")
             lines.append("")
@@ -382,7 +377,7 @@ def generate_report(state: RunState) -> str:
             lines.append("")
 
         # Visual Evidence (screenshots)
-        page_screenshots = getattr(r, 'page_screenshots', {})
+        page_screenshots = getattr(r, "page_screenshots", {})
         if page_screenshots:
             lines.append("### Visual Evidence")
             lines.append("")
@@ -411,11 +406,25 @@ def generate_report(state: RunState) -> str:
                 if screenshot_path:
                     short_url = _escape_markdown(url[:60])
                     event_count = len(page_events)
-                    event_note = f" ({event_count} issue{'s' if event_count != 1 else ''})" if event_count else ""
+                    event_note = (
+                        f" ({event_count} issue{'s' if event_count != 1 else ''})"
+                        if event_count
+                        else ""
+                    )
                     lines.append(f"**Page {idx + 1}:** {short_url}{event_note}")
                     lines.append("")
                     lines.append(f"![Screenshot]({screenshot_path})")
                     lines.append("")
+                    # List frustration events for this page
+                    if page_events:
+                        sorted_page_events = _sort_events_by_severity(page_events)
+                        for ev in sorted_page_events:
+                            kind = ev.get("kind", "unknown")
+                            desc = _escape_markdown(ev.get("description", ""))
+                            severity = _get_severity(ev)
+                            emoji = SEVERITY_EMOJI.get(severity, "")
+                            lines.append(f"- {emoji} **{kind}**: {desc}")
+                        lines.append("")
 
     if total_events == 0:
         lines.append("---")

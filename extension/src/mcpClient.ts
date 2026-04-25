@@ -34,22 +34,22 @@ export class MCPClient {
       mode: mode ?? "local",
       timeout: timeout ?? 60,
     });
-    return result.run_id;
+    return result.run_id as string;
   }
 
   async getLiveFeed(runId: string): Promise<AgentStatus[]> {
     const result = await this.callTool("get_live_feed", { run_id: runId });
-    return result.agents;
+    return result.agents as AgentStatus[];
   }
 
   async getReport(runId: string): Promise<string> {
     const result = await this.callTool("get_report", { run_id: runId });
-    return result.markdown;
+    return result.markdown as string;
   }
 
   async stopSimulation(runId: string): Promise<boolean> {
     const result = await this.callTool("stop_simulation", { run_id: runId });
-    return result.stopped;
+    return result.stopped as boolean;
   }
 
   dispose(): void {

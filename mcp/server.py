@@ -112,9 +112,7 @@ async def get_live_feed(run_id: str) -> dict[str, Any]:
             "persona": r.persona,
             "status": r.status,
             "currentUrl": r.visited_urls[-1] if r.visited_urls else "",
-            "frustrationEvents": [
-                e.get("description", "") for e in r.frustration_events
-            ],
+            "frustrationEvents": [e.get("description", "") for e in r.frustration_events],
             "elapsedSeconds": r.elapsed_seconds,
         }
         if r.llm_mode:
@@ -241,7 +239,9 @@ async def run_mutation_test_tool(
         if mutations in COMMON_SCENARIOS:
             scenario = COMMON_SCENARIOS[mutations]
         else:
-            return {"error": f"Unknown built-in scenario: {mutations}. Available: {list(COMMON_SCENARIOS.keys())}"}
+            return {
+                "error": f"Unknown built-in scenario: {mutations}. Available: {list(COMMON_SCENARIOS.keys())}"
+            }
     else:
         scenario = MutationScenario.from_dict(mutations)
 
@@ -273,9 +273,7 @@ async def run_mutation_test_tool(
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     parser = argparse.ArgumentParser(description="Flamboyance MCP Server")
-    parser.add_argument(
-        "--http", action="store_true", help="Run HTTP transport on port 8765"
-    )
+    parser.add_argument("--http", action="store_true", help="Run HTTP transport on port 8765")
     parser.add_argument("--port", type=int, default=8765)
     args = parser.parse_args()
 

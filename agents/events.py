@@ -44,6 +44,7 @@ if TYPE_CHECKING:
 
 class EventSeverity(Enum):
     """Severity levels for frustration events."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -174,9 +175,7 @@ class EventDetector:
 
     # ── Notice-tier detectors ──────────────────────────────────────────
 
-    def record_slow_load(
-        self, url: str, load_time_ms: float
-    ) -> FrustrationEvent | None:
+    def record_slow_load(self, url: str, load_time_ms: float) -> FrustrationEvent | None:
         """Emit a *slow_load* event if page load exceeded the threshold."""
         if load_time_ms <= self.SLOW_LOAD_THRESHOLD_MS:
             return None
@@ -204,9 +203,7 @@ class EventDetector:
         self.events.append(evt)
         return evt
 
-    def record_long_dwell(
-        self, url: str, dwell_s: float
-    ) -> FrustrationEvent | None:
+    def record_long_dwell(self, url: str, dwell_s: float) -> FrustrationEvent | None:
         """Emit a *long_dwell* event if dwell time exceeds the threshold."""
         if dwell_s <= self.LONG_DWELL_THRESHOLD_S:
             return None
@@ -283,9 +280,7 @@ class EventDetector:
         self.events.append(evt)
         return evt
 
-    def record_broken_image(
-        self, url: str, image_src: str, selector: str = ""
-    ) -> FrustrationEvent:
+    def record_broken_image(self, url: str, image_src: str, selector: str = "") -> FrustrationEvent:
         """Emit a *broken_image* event when an image fails to load.
 
         Args:
@@ -376,9 +371,7 @@ class EventDetector:
             return None
 
         cutoff = now - self.RAGE_CLICK_WINDOW_S
-        recent = [
-            (t, s) for t, s in self.click_log if t >= cutoff and s == selector
-        ]
+        recent = [(t, s) for t, s in self.click_log if t >= cutoff and s == selector]
         if len(recent) >= self.RAGE_CLICK_THRESHOLD:
             evt = FrustrationEvent(
                 kind="rage_click",
@@ -391,9 +384,7 @@ class EventDetector:
             )
             self.events.append(evt)
             # Clear to avoid duplicate firing on the next click.
-            self.click_log = [
-                (t, s) for t, s in self.click_log if s != selector
-            ]
+            self.click_log = [(t, s) for t, s in self.click_log if s != selector]
             return evt
         return None
 
@@ -415,14 +406,12 @@ class EventDetector:
 
     # ── New friction pattern detectors ────────────────────────────────────
 
-    def record_form_abandonment(
-        self, url: str, form_selector: str = ""
-    ) -> FrustrationEvent:
+    def record_form_abandonment(self, url: str, form_selector: str = "") -> FrustrationEvent:
         """Emit a *form_abandonment* event when user leaves page with focused form."""
         evt = FrustrationEvent(
             kind="form_abandonment",
             timestamp=time.time(),
-            description=f"Form abandonment: user left page without submitting form",
+            description="Form abandonment: user left page without submitting form",
             url=url,
             details={"form_selector": form_selector},
         )
@@ -440,9 +429,7 @@ class EventDetector:
             return self.record_form_abandonment(self.form_focus_url)
         return None
 
-    def record_scroll_rage(
-        self, url: str, direction: str
-    ) -> FrustrationEvent | None:
+    def record_scroll_rage(self, url: str, direction: str) -> FrustrationEvent | None:
         """Record a scroll event; returns event if scroll rage detected.
 
         Args:
@@ -477,9 +464,7 @@ class EventDetector:
             return evt
         return None
 
-    def record_error_message(
-        self, url: str, message: str, selector: str = ""
-    ) -> FrustrationEvent:
+    def record_error_message(self, url: str, message: str, selector: str = "") -> FrustrationEvent:
         """Emit an *error_message_visible* event when error state is detected."""
         evt = FrustrationEvent(
             kind="error_message_visible",
@@ -491,9 +476,7 @@ class EventDetector:
         self.events.append(evt)
         return evt
 
-    def record_session_timeout(
-        self, url: str, reason: str = "session expired"
-    ) -> FrustrationEvent:
+    def record_session_timeout(self, url: str, reason: str = "session expired") -> FrustrationEvent:
         """Emit a *session_timeout* event when session expiry is detected."""
         evt = FrustrationEvent(
             kind="session_timeout",
@@ -610,9 +593,7 @@ class EventDetector:
         self.events.append(evt)
         return evt
 
-    def record_search_frustration(
-        self, url: str, reason: str, query: str = ""
-    ) -> FrustrationEvent:
+    def record_search_frustration(self, url: str, reason: str, query: str = "") -> FrustrationEvent:
         """Emit a *search_frustration* event for search UX issues."""
         if query:
             self.search_queries.append(query)
@@ -645,10 +626,13 @@ class EventDetector:
 
     def check_cart_abandonment(self, new_url: str) -> FrustrationEvent | None:
         """Check if leaving cart page without checkout."""
-        if self.cart_visited and not self._is_checkout_url(new_url):
+        if (
+            self.cart_visited
+            and not self._is_checkout_url(new_url)
+            and not self._is_cart_url(new_url)
+        ):
             # Only trigger if not going to checkout
-            if not self._is_cart_url(new_url):
-                return self.record_cart_abandonment(new_url)
+            return self.record_cart_abandonment(new_url)
         return None
 
     def _is_cart_url(self, url: str) -> bool:
@@ -685,9 +669,7 @@ class EventDetector:
         """Reset back button counter (call on forward navigation)."""
         self.back_nav_count = 0
 
-    def record_copy_paste_failure(
-        self, url: str, selector: str = ""
-    ) -> FrustrationEvent:
+    def record_copy_paste_failure(self, url: str, selector: str = "") -> FrustrationEvent:
         """Emit a *copy_paste_failure* event when text selection is blocked."""
         evt = FrustrationEvent(
             kind="copy_paste_failure",

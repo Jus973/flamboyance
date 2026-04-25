@@ -64,15 +64,11 @@ class LLMMetrics:
         if not call_log.success:
             self.errors += 1
         self.total_latency_ms += call_log.latency_ms
-        self.calls_by_task[call_log.task_type] = (
-            self.calls_by_task.get(call_log.task_type, 0) + 1
-        )
+        self.calls_by_task[call_log.task_type] = self.calls_by_task.get(call_log.task_type, 0) + 1
 
     def summary(self) -> str:
         """Return a summary string of metrics."""
-        avg_latency = (
-            self.total_latency_ms / self.total_calls if self.total_calls > 0 else 0
-        )
+        avg_latency = self.total_latency_ms / self.total_calls if self.total_calls > 0 else 0
         return (
             f"LLM Metrics: {self.total_calls} calls "
             f"(ollama={self.ollama_calls}, groq={self.groq_calls}), "

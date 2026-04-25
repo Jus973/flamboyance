@@ -68,11 +68,15 @@ class Persona:
         if not 0.0 <= self.tech_literacy <= 1.0:
             raise ValueError(f"tech_literacy must be in [0, 1], got {self.tech_literacy}")
         if not 0.0 < self.early_exit_fraction <= 1.0:
-            raise ValueError(f"early_exit_fraction must be in (0, 1], got {self.early_exit_fraction}")
+            raise ValueError(
+                f"early_exit_fraction must be in (0, 1], got {self.early_exit_fraction}"
+            )
         if self.max_actions < 1:
             raise ValueError(f"max_actions must be >= 1, got {self.max_actions}")
         if len(self.viewport) != 2 or self.viewport[0] < 1 or self.viewport[1] < 1:
-            raise ValueError(f"viewport must be (width, height) with positive ints, got {self.viewport}")
+            raise ValueError(
+                f"viewport must be (width, height) with positive ints, got {self.viewport}"
+            )
 
     def get_thresholds(self) -> EventThresholds:
         """Get event detection thresholds, applying any persona-specific overrides.
@@ -260,7 +264,12 @@ FRUSTRATED_EXEC = Persona(
     early_exit_fraction=0.3,
     max_actions=15,
     focus_areas=("speed", "checkout", "forms"),
-    frustration_triggers=("slow loading", "unnecessary steps", "loading spinners", "required fields"),
+    frustration_triggers=(
+        "slow loading",
+        "unnecessary steps",
+        "loading spinners",
+        "required fields",
+    ),
     detection_weights=(
         ("slow_interaction", 2.0),
         ("session_timeout", 1.5),
@@ -321,7 +330,12 @@ ANXIOUS_NEWBIE = Persona(
     goal="Sign up for an account without getting confused",
     tags=("newbie", "anxious", "low-tech"),
     focus_areas=("signup", "forms", "error messages"),
-    frustration_triggers=("unclear errors", "too many fields", "no progress indicator", "unexpected behavior"),
+    frustration_triggers=(
+        "unclear errors",
+        "too many fields",
+        "no progress indicator",
+        "unexpected behavior",
+    ),
     detection_weights=(
         ("form_abandonment", 2.0),
         ("error_message_visible", 2.0),
@@ -354,7 +368,12 @@ MOBILE_COMMUTER = Persona(
     max_actions=20,
     viewport=(375, 667),
     focus_areas=("mobile layout", "touch targets", "quick actions"),
-    frustration_triggers=("small tap targets", "horizontal scroll", "desktop-only features", "slow mobile load"),
+    frustration_triggers=(
+        "small tap targets",
+        "horizontal scroll",
+        "desktop-only features",
+        "slow mobile load",
+    ),
     detection_weights=(
         ("mobile_tap_target", 2.0),
         ("slow_interaction", 1.5),
@@ -370,7 +389,12 @@ ACCESSIBILITY_USER = Persona(
     tags=("a11y", "needs-clarity"),
     prefers_visible_text=True,
     focus_areas=("labels", "contrast", "focus indicators", "screen reader"),
-    frustration_triggers=("missing labels", "icon-only buttons", "poor contrast", "no focus visible"),
+    frustration_triggers=(
+        "missing labels",
+        "icon-only buttons",
+        "poor contrast",
+        "no focus visible",
+    ),
     detection_weights=(
         ("accessibility_failure", 2.0),
         ("copy_paste_failure", 1.5),
@@ -386,7 +410,12 @@ FORM_FILLER = Persona(
     goal="Complete a multi-step form without errors",
     tags=("forms", "data-entry"),
     focus_areas=("form validation", "error messages", "field labels", "progress indicators"),
-    frustration_triggers=("unclear errors", "lost form data", "confusing field labels", "no progress indicator"),
+    frustration_triggers=(
+        "unclear errors",
+        "lost form data",
+        "confusing field labels",
+        "no progress indicator",
+    ),
     detection_weights=(
         ("form_abandonment", 2.0),
         ("error_message_visible", 2.0),
@@ -401,7 +430,12 @@ SEARCH_USER = Persona(
     goal="Find a specific product or information using search",
     tags=("search", "goal-oriented"),
     focus_areas=("search functionality", "filters", "results relevance"),
-    frustration_triggers=("zero results", "irrelevant results", "no search feedback", "broken filters"),
+    frustration_triggers=(
+        "zero results",
+        "irrelevant results",
+        "no search feedback",
+        "broken filters",
+    ),
     detection_weights=(
         ("search_frustration", 2.0),
         ("confusing_navigation", 1.5),
@@ -448,8 +482,6 @@ def resolve_personas(names: list[str] | None = None) -> list[Persona]:
     for n in names:
         persona = DEFAULT_PERSONAS.get(n)
         if persona is None:
-            raise ValueError(
-                f"Unknown persona {n!r}. Available: {sorted(DEFAULT_PERSONAS)}"
-            )
+            raise ValueError(f"Unknown persona {n!r}. Available: {sorted(DEFAULT_PERSONAS)}")
         result.append(persona)
     return result

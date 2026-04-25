@@ -180,7 +180,9 @@ class TestDecideAction:
         driver = LLMDriver()
 
         with patch("llm.router.call_ollama", new_callable=AsyncMock) as mock_ollama:
-            mock_ollama.return_value = '{"action": "click", "target": [100, 200], "reasoning": "clicking button"}'
+            mock_ollama.return_value = (
+                '{"action": "click", "target": [100, 200], "reasoning": "clicking button"}'
+            )
 
             decision = await driver.decide_action(
                 screenshot_b64="fake_base64_data",
@@ -200,7 +202,9 @@ class TestDecideAction:
         driver = LLMDriver()
 
         with patch("llm.call_llm", new_callable=AsyncMock) as mock_call_llm:
-            mock_call_llm.return_value = '{"action": "scroll", "target": "down", "reasoning": "looking for more"}'
+            mock_call_llm.return_value = (
+                '{"action": "scroll", "target": "down", "reasoning": "looking for more"}'
+            )
 
             decision = await driver.decide_action(
                 screenshot_b64="fake_base64_data",
@@ -264,7 +268,9 @@ class TestGetUsageStats:
         driver = LLMDriver()
 
         with patch("llm.call_llm", new_callable=AsyncMock) as mock_call_llm:
-            mock_call_llm.return_value = '{"action": "click", "target": [100, 200], "reasoning": "test"}'
+            mock_call_llm.return_value = (
+                '{"action": "click", "target": [100, 200], "reasoning": "test"}'
+            )
 
             await driver.decide_action("same_screenshot", FRUSTRATED_EXEC, [], "http://test.com")
             await driver.decide_action("same_screenshot", FRUSTRATED_EXEC, [], "http://test.com")
@@ -390,14 +396,16 @@ class TestNestedJsonParsing:
         assert result == '{"action": "done"}'
 
         # No JSON
-        assert driver._extract_json_object('No JSON here') is None
+        assert driver._extract_json_object("No JSON here") is None
 
 
 class TestHistoryContext:
     def test_history_truncates_to_limit(self):
         driver = LLMDriver()
         history = [
-            ActionHistoryEntry(action="click", target=(i*10, i*10), result=f"result{i}", url="http://test.com")
+            ActionHistoryEntry(
+                action="click", target=(i * 10, i * 10), result=f"result{i}", url="http://test.com"
+            )
             for i in range(10)
         ]
         context = driver._build_history_context(history)

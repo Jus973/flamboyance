@@ -112,15 +112,19 @@ async def run_local(
         for i in range(0, len(personas), batch_size):
             if state.stopped:
                 break
-            batch = personas[i:i + batch_size]
+            batch = personas[i : i + batch_size]
             batch_num = i // batch_size + 1
             total_batches = (len(personas) + batch_size - 1) // batch_size
             log.info("=== Batch %d/%d: %s ===", batch_num, total_batches, [p.name for p in batch])
 
             tasks = [
                 run_agent(
-                    url, persona, timeout_s=timeout_s, headless=headless,
-                    llm_mode=llm_mode, max_llm_calls=max_llm_calls
+                    url,
+                    persona,
+                    timeout_s=timeout_s,
+                    headless=headless,
+                    llm_mode=llm_mode,
+                    max_llm_calls=max_llm_calls,
                 )
                 for persona in batch
             ]
@@ -128,14 +132,16 @@ async def run_local(
             for persona, result in zip(batch, results, strict=True):
                 if isinstance(result, Exception):
                     log.error("agent %s failed: %s", persona.name, result)
-                    state.results.append(AgentResult(
-                        persona=persona.name, status="error", error=str(result)
-                    ))
+                    state.results.append(
+                        AgentResult(persona=persona.name, status="error", error=str(result))
+                    )
                 else:
                     state.results.append(result)
                     log.info(
                         "agent %s finished: status=%s events=%d%s",
-                        persona.name, result.status, len(result.frustration_events),
+                        persona.name,
+                        result.status,
+                        len(result.frustration_events),
                         f" llm_calls={result.llm_calls}" if llm_mode else "",
                     )
     elif parallel and not llm_mode:
@@ -150,14 +156,16 @@ async def run_local(
         for persona, result in zip(personas, results, strict=True):
             if isinstance(result, Exception):
                 log.error("agent %s failed: %s", persona.name, result)
-                state.results.append(AgentResult(
-                    persona=persona.name, status="error", error=str(result)
-                ))
+                state.results.append(
+                    AgentResult(persona=persona.name, status="error", error=str(result))
+                )
             else:
                 state.results.append(result)
                 log.info(
                     "agent %s finished: status=%s events=%d",
-                    persona.name, result.status, len(result.frustration_events)
+                    persona.name,
+                    result.status,
+                    len(result.frustration_events),
                 )
     else:
         # Sequential execution (required for LLM mode due to rate limits)
@@ -272,9 +280,7 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     parser = argparse.ArgumentParser(description="Run UX-friction agents locally")
     parser.add_argument("--url", required=True, help="Target URL")
-    parser.add_argument(
-        "--personas", nargs="*", default=None, help="Persona names (default: all)"
-    )
+    parser.add_argument("--personas", nargs="*", default=None, help="Persona names (default: all)")
     parser.add_argument(
         "--personas-file",
         type=Path,
@@ -286,18 +292,22 @@ def main() -> None:
     parser.add_argument("--no-headless", dest="headless", action="store_false")
     parser.add_argument("--output", default="results", help="Output directory")
     parser.add_argument("--llm", action="store_true", help="Use LLM vision model for navigation")
-    parser.add_argument("--max-llm-calls", type=int, default=None, help="Max LLM API calls per agent")
     parser.add_argument(
-        "--parallel", action="store_true",
-        help="Run heuristic agents in parallel for speed"
+        "--max-llm-calls", type=int, default=None, help="Max LLM API calls per agent"
     )
     parser.add_argument(
-        "--batch-size", type=int, default=None,
-        help="Run agents in parallel batches of N (e.g., --batch-size 3)"
+        "--parallel", action="store_true", help="Run heuristic agents in parallel for speed"
     )
     parser.add_argument(
-        "--full", action="store_true",
-        help="Run both heuristic (parallel) and LLM (sequential) modes"
+        "--batch-size",
+        type=int,
+        default=None,
+        help="Run agents in parallel batches of N (e.g., --batch-size 3)",
+    )
+    parser.add_argument(
+        "--full",
+        action="store_true",
+        help="Run both heuristic (parallel) and LLM (sequential) modes",
     )
     args = parser.parse_args()
 

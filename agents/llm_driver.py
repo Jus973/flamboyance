@@ -21,7 +21,7 @@ ActionType = Literal["click", "type", "scroll", "back", "done", "give_up"]
 
 HISTORY_CONTEXT_SIZE = 5
 
-FEW_SHOT_EXAMPLES = '''
+FEW_SHOT_EXAMPLES = """
 Examples of good decisions:
 
 1. Login form visible, goal is to sign in:
@@ -41,7 +41,7 @@ Examples of good decisions:
 
 6. Stuck after multiple attempts:
    {"action": "give_up", "target": "Cannot find login button after scrolling entire page", "reasoning": "Element not present"}
-'''
+"""
 
 
 @dataclass
@@ -125,14 +125,18 @@ class LLMDriver:
 
         behavior_notes = []
         if persona.prefers_visible_text:
-            behavior_notes.append("- Only interact with clearly labeled elements (avoid icon-only buttons)")
+            behavior_notes.append(
+                "- Only interact with clearly labeled elements (avoid icon-only buttons)"
+            )
         if persona.patience < 0.4:
             behavior_notes.append("- Give up if stuck for more than 2-3 attempts on same goal")
         if persona.tech_literacy < 0.4:
             behavior_notes.append("- Avoid dropdown menus and hidden navigation")
             behavior_notes.append("- Look for large, obvious buttons and links")
 
-        behavior_section = "\n".join(behavior_notes) if behavior_notes else "- Standard browsing behavior"
+        behavior_section = (
+            "\n".join(behavior_notes) if behavior_notes else "- Standard browsing behavior"
+        )
 
         # Build persona-specific focus section
         focus_section = ""
@@ -196,7 +200,9 @@ Respond with ONLY a JSON object (no markdown, no explanation):
             if isinstance(entry.target, tuple):
                 target_str = f"({entry.target[0]},{entry.target[1]})"
             elif entry.target:
-                target_str = f'"{entry.target}"' if isinstance(entry.target, str) else str(entry.target)
+                target_str = (
+                    f'"{entry.target}"' if isinstance(entry.target, str) else str(entry.target)
+                )
             else:
                 target_str = "null"
 
@@ -237,7 +243,7 @@ Respond with ONLY a JSON object (no markdown, no explanation):
             ActionDecision with the chosen action
         """
         # Update viewport from persona if available
-        if hasattr(persona, 'viewport'):
+        if hasattr(persona, "viewport"):
             self.viewport = persona.viewport
 
         history_hash = self._history_hash(history)
@@ -341,7 +347,7 @@ Respond with ONLY a JSON object (no markdown, no explanation):
 
         Handles nested braces correctly, unlike simple regex.
         """
-        start = text.find('{')
+        start = text.find("{")
         if start == -1:
             return None
 
@@ -354,7 +360,7 @@ Respond with ONLY a JSON object (no markdown, no explanation):
                 escape_next = False
                 continue
 
-            if char == '\\' and in_string:
+            if char == "\\" and in_string:
                 escape_next = True
                 continue
 
@@ -365,12 +371,12 @@ Respond with ONLY a JSON object (no markdown, no explanation):
             if in_string:
                 continue
 
-            if char == '{':
+            if char == "{":
                 depth += 1
-            elif char == '}':
+            elif char == "}":
                 depth -= 1
                 if depth == 0:
-                    return text[start:i + 1]
+                    return text[start : i + 1]
 
         return None
 
@@ -389,8 +395,9 @@ Respond with ONLY a JSON object (no markdown, no explanation):
 
                 # Check bounds with small margin
                 if x < 0 or x > width or y < 0 or y > height:
-                    log.warning("Click coordinates (%d, %d) outside viewport %dx%d",
-                               x, y, width, height)
+                    log.warning(
+                        "Click coordinates (%d, %d) outside viewport %dx%d", x, y, width, height
+                    )
                     # Clamp to viewport bounds
                     x = max(0, min(x, width - 1))
                     y = max(0, min(y, height - 1))

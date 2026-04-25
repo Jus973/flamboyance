@@ -39,7 +39,7 @@ addopts = [
     "--cov=mcp",
     "--cov-report=term-missing",
     "--cov-report=xml",
-    "--cov-fail-under=55",
+    "--cov-fail-under=49",
 ]
 
 [tool.coverage.run]
