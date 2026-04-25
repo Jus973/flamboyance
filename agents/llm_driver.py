@@ -7,15 +7,18 @@ which action to take next based on the persona's goal.
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import logging
 import re
 from dataclasses import dataclass, field
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 
 from .config import (
     LLM_API_KEY,
     LLM_BASE_URL,
+    LLM_IMAGE_DETAIL,
+    LLM_MAX_TOKENS,
     LLM_MODEL,
     LLM_REQUEST_DELAY_S,
     LLM_RETRY_ATTEMPTS,
@@ -52,6 +55,9 @@ class ActionHistoryEntry:
 class LLMDriver:
     """Vision-based LLM driver for web navigation decisions."""
 
+    _response_cache: ClassVar[dict[str, "ActionDecision"]] = {}
+    _cache_hits: ClassVar[int] = 0
+
     def __init__(
         self,
         api_key: str | None = None,
@@ -72,6 +78,18 @@ class LLMDriver:
         self.total_tokens_used: int = 0
         self.call_count: int = 0
 
+    @classmethod
+    def _cache_key(cls, screenshot_b64: str, persona_name: str, url: str) -> str:
+        """Generate cache key from screenshot hash, persona, and URL."""
+        content = f"{persona_name}:{url}:{screenshot_b64[:2000]}"
+        return hashlib.sha256(content.encode()).hexdigest()[:16]
+
+    @classmethod
+    def clear_cache(cls) -> None:
+        """Clear the response cache (useful for testing)."""
+        cls._response_cache.clear()
+        cls._cache_hits = 0
+
     def _get_client(self) -> Any:
         """Lazily initialize the OpenAI client."""
         if self._client is None:
@@ -89,74 +107,53 @@ class LLMDriver:
         return self._client
 
     def _build_system_prompt(self, persona: Persona) -> str:
-        """Convert persona traits into LLM system instructions."""
+        """Convert persona traits into compact LLM system instructions."""
         patience_desc = (
-            "very impatient - give up quickly if things are confusing"
+            "impatient, give up quickly"
             if persona.patience < 0.3
-            else "somewhat impatient - don't spend too long on unclear UI"
+            else "somewhat impatient"
             if persona.patience < 0.5
-            else "moderately patient - willing to explore a bit"
+            else "moderately patient"
             if persona.patience < 0.7
-            else "very patient - thorough and methodical"
+            else "very patient, thorough"
         )
 
         tech_desc = (
-            "low tech literacy - prefer obvious, clearly labeled buttons"
+            "low-tech, needs obvious UI"
             if persona.tech_literacy < 0.3
-            else "moderate tech literacy - can handle standard web patterns"
+            else "moderate tech skills"
             if persona.tech_literacy < 0.7
-            else "high tech literacy - comfortable with complex interfaces"
+            else "tech-savvy"
         )
 
-        return f"""You are simulating a real user browsing a website. Act naturally as this persona would.
+        pref = " | Prefers labeled elements only" if persona.prefers_visible_text else ""
 
-PERSONA: {persona.name}
-GOAL: {persona.goal}
-PATIENCE: {patience_desc}
-TECH LEVEL: {tech_desc}
-{f"PREFERENCE: Only interact with clearly labeled, visible elements" if persona.prefers_visible_text else ""}
+        return f"""Simulate a user browsing a website to achieve a goal.
 
-You see a screenshot of the current webpage. Decide what action to take next to achieve your goal.
+PERSONA: {persona.name} | GOAL: {persona.goal}
+PATIENCE: {patience_desc} | TECH: {tech_desc}{pref}
 
-AVAILABLE ACTIONS:
-- click(x, y) - Click at the specified pixel coordinates
-- type("text") - Type text into the currently focused input field
-- scroll("up" | "down") - Scroll the page
-- back() - Go back to the previous page
-- done() - Goal has been accomplished
-- give_up("reason") - Cannot complete the goal, explain why
+ACTIONS: click([x,y]), type("text"), scroll("up"|"down"), back(), done(), give_up("reason")
 
-GUIDELINES:
-1. Look at the screenshot carefully to understand the current page state
-2. Click on buttons, links, or interactive elements that help achieve the goal
-3. For click coordinates, estimate the CENTER of the element you want to click
-4. If you see a form field that needs input, click it first, then type
-5. If the goal appears complete, use done()
-6. If stuck or frustrated (matching your patience level), use give_up()
+Click element centers. Click input first, then type. Use done() when goal complete, give_up() if stuck.
 
-Respond with ONLY a JSON object in this exact format:
-{{"action": "click", "target": [x, y], "reasoning": "clicking the login button to sign in"}}
-{{"action": "type", "target": "search query", "reasoning": "typing search term"}}
-{{"action": "scroll", "target": "down", "reasoning": "looking for more content"}}
-{{"action": "back", "target": null, "reasoning": "returning to previous page"}}
-{{"action": "done", "target": null, "reasoning": "successfully completed the goal"}}
-{{"action": "give_up", "target": "cannot find the settings page", "reasoning": "no clear path to settings"}}"""
+Respond with JSON only: {{"action":"...", "target":..., "reasoning":"brief explanation"}}"""
 
     def _build_history_context(self, history: list[ActionHistoryEntry]) -> str:
-        """Format recent action history for context."""
+        """Format recent action history for context (last 2 actions for token efficiency)."""
         if not history:
-            return "This is your first action on this site."
+            return "First action."
 
-        lines = ["Recent actions taken:"]
-        for i, entry in enumerate(history[-5:], 1):
+        parts = []
+        for entry in history[-2:]:
             target_str = (
-                f"({entry.target[0]}, {entry.target[1]})"
+                f"({entry.target[0]},{entry.target[1]})"
                 if isinstance(entry.target, tuple)
                 else repr(entry.target)
             )
-            lines.append(f"{i}. {entry.action}({target_str}) -> {entry.result}")
+            parts.append(f"{entry.action}({target_str})->{entry.result}")
 
-        return "\n".join(lines)
+        return "Recent: " + "; ".join(parts)
 
     async def decide_action(
         self,
@@ -176,11 +173,17 @@ Respond with ONLY a JSON object in this exact format:
         Returns:
             ActionDecision with the chosen action
         """
+        cache_key = self._cache_key(screenshot_b64, persona.name, current_url)
+        if cache_key in self._response_cache:
+            LLMDriver._cache_hits += 1
+            log.debug("Cache hit for %s (total hits: %d)", cache_key, self._cache_hits)
+            return self._response_cache[cache_key]
+
         client = self._get_client()
 
         system_prompt = self._build_system_prompt(persona)
         history_context = self._build_history_context(history)
-        user_content = f"Current URL: {current_url}\n\n{history_context}\n\nAnalyze this screenshot and decide your next action:"
+        user_content = f"URL: {current_url}\n{history_context}\nDecide next action:"
 
         messages = [
             {"role": "system", "content": system_prompt},
@@ -192,7 +195,7 @@ Respond with ONLY a JSON object in this exact format:
                         "type": "image_url",
                         "image_url": {
                             "url": f"data:image/png;base64,{screenshot_b64}",
-                            "detail": "high",
+                            "detail": LLM_IMAGE_DETAIL,
                         },
                     },
                 ],
@@ -202,13 +205,12 @@ Respond with ONLY a JSON object in this exact format:
         last_error: Exception | None = None
         for attempt in range(LLM_RETRY_ATTEMPTS + 1):
             try:
-                # Global rate limiting: ensure minimum delay between requests across all drivers
                 await GlobalRateLimiter.acquire(LLM_REQUEST_DELAY_S)
 
                 response = await client.chat.completions.create(
                     model=self.model,
                     messages=messages,
-                    max_tokens=500,
+                    max_tokens=LLM_MAX_TOKENS,
                     temperature=0.3,
                 )
 
@@ -217,7 +219,12 @@ Respond with ONLY a JSON object in this exact format:
                     self.total_tokens_used += response.usage.total_tokens
 
                 raw_content = response.choices[0].message.content or ""
-                return self._parse_response(raw_content)
+                decision = self._parse_response(raw_content)
+
+                if decision.action_type not in ("give_up",):
+                    self._response_cache[cache_key] = decision
+
+                return decision
 
             except Exception as e:
                 last_error = e
@@ -322,4 +329,6 @@ Respond with ONLY a JSON object in this exact format:
         return {
             "call_count": self.call_count,
             "total_tokens": self.total_tokens_used,
+            "cache_hits": self._cache_hits,
+            "cache_size": len(self._response_cache),
         }

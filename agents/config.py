@@ -23,3 +23,10 @@ LLM_RETRY_DELAY_S: float = float(os.environ.get("FLAMBOYANCE_LLM_RETRY_DELAY", "
 # Minimum delay between LLM requests to avoid rate limiting (seconds)
 # Groq free tier: ~30 requests/min, so 3s delay is conservative
 LLM_REQUEST_DELAY_S: float = float(os.environ.get("FLAMBOYANCE_LLM_REQUEST_DELAY", "3.0"))
+
+# Image detail mode for vision API: "low" (85 tokens), "high" (~1100 tokens), or "auto"
+# "low" is recommended for cost savings; "high" for maximum accuracy on small UI elements
+LLM_IMAGE_DETAIL: str = os.environ.get("FLAMBOYANCE_LLM_IMAGE_DETAIL", "low")
+
+# Maximum tokens for LLM response (actual JSON response is ~50-80 tokens)
+LLM_MAX_TOKENS: int = int(os.environ.get("FLAMBOYANCE_LLM_MAX_TOKENS", "150"))
