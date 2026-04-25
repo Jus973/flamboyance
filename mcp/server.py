@@ -45,6 +45,8 @@ async def run_simulation(
     mode: str = "local",
     timeout: int = 60,
     personas_file: str | None = None,
+    llm_mode: bool = False,
+    max_llm_calls: int | None = None,
 ) -> dict[str, Any]:
     """Start a UX-friction simulation against *url*.
 
@@ -54,9 +56,11 @@ async def run_simulation(
         mode: Execution mode — ``"local"`` (sequential) or ``"docker"`` (parallel).
         timeout: Per-agent timeout in seconds.
         personas_file: Optional path to a JSON file with custom persona definitions.
+        llm_mode: If True, use LLM vision model for intelligent navigation instead of random clicks.
+        max_llm_calls: Maximum LLM API calls per agent session (default: 30).
 
     Returns:
-        ``{"run_id": "<uuid>"}``
+        ``{"run_id": "<uuid>", "llm_mode": bool}``
     """
     run_id = str(uuid.uuid4())
 
@@ -70,11 +74,13 @@ async def run_simulation(
             timeout_s=float(timeout),
             run_id=run_id,
             personas_file=personas_file,
+            llm_mode=llm_mode,
+            max_llm_calls=max_llm_calls,
         )
     )
     _tasks[run_id] = task
 
-    return {"run_id": run_id}
+    return {"run_id": run_id, "llm_mode": llm_mode}
 
 
 @mcp.tool()
@@ -93,17 +99,19 @@ async def get_live_feed(run_id: str) -> dict[str, Any]:
 
     agents: list[dict[str, Any]] = []
     for r in state.results:
-        agents.append(
-            {
-                "persona": r.persona,
-                "status": r.status,
-                "currentUrl": r.visited_urls[-1] if r.visited_urls else "",
-                "frustrationEvents": [
-                    e.get("description", "") for e in r.frustration_events
-                ],
-                "elapsedSeconds": r.elapsed_seconds,
-            }
-        )
+        agent_info: dict[str, Any] = {
+            "persona": r.persona,
+            "status": r.status,
+            "currentUrl": r.visited_urls[-1] if r.visited_urls else "",
+            "frustrationEvents": [
+                e.get("description", "") for e in r.frustration_events
+            ],
+            "elapsedSeconds": r.elapsed_seconds,
+        }
+        if r.llm_mode:
+            agent_info["llmCalls"] = r.llm_calls
+            agent_info["llmTokens"] = r.llm_tokens
+        agents.append(agent_info)
 
     # Include personas that haven't started yet.
     finished_names = {r.persona for r in state.results}

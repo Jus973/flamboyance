@@ -39,6 +39,7 @@ class RunState:
     personas: list[Persona]
     results: list[AgentResult] = field(default_factory=list)
     status: str = "pending"  # "pending" | "running" | "done" | "stopped"
+    llm_mode: bool = False
     _stop_flag: bool = field(default=False, repr=False)
 
     def request_stop(self) -> None:
@@ -69,6 +70,8 @@ async def run_local(
     headless: bool = True,
     run_id: str | None = None,
     personas_file: str | Path | None = None,
+    llm_mode: bool = False,
+    max_llm_calls: int | None = None,
 ) -> RunState:
     """Run agents sequentially and return the completed RunState.
 
@@ -79,6 +82,8 @@ async def run_local(
         headless: Run browser without visible UI.
         run_id: Optional run identifier (generated if not provided).
         personas_file: Optional JSON file with custom persona definitions.
+        llm_mode: If True, use LLM vision model for navigation decisions.
+        max_llm_calls: Maximum LLM API calls per agent session.
     """
     available = dict(DEFAULT_PERSONAS)
     if personas_file:
@@ -94,22 +99,28 @@ async def run_local(
     else:
         personas = list(available.values())
     rid = run_id or str(uuid.uuid4())
-    state = RunState(run_id=rid, url=url, personas=personas, status="running")
+    state = RunState(run_id=rid, url=url, personas=personas, status="running", llm_mode=llm_mode)
     _runs[rid] = state
 
     for persona in personas:
         if state.stopped:
             break
-        log.info("starting agent: %s", persona.name)
+        log.info("starting agent: %s%s", persona.name, " (LLM mode)" if llm_mode else "")
         result = await run_agent(
-            url, persona, timeout_s=timeout_s, headless=headless
+            url,
+            persona,
+            timeout_s=timeout_s,
+            headless=headless,
+            llm_mode=llm_mode,
+            max_llm_calls=max_llm_calls,
         )
         state.results.append(result)
         log.info(
-            "agent %s finished: status=%s events=%d",
+            "agent %s finished: status=%s events=%d%s",
             persona.name,
             result.status,
             len(result.frustration_events),
+            f" llm_calls={result.llm_calls}" if llm_mode else "",
         )
 
     state.status = "stopped" if state.stopped else "done"
@@ -144,6 +155,8 @@ def main() -> None:
     parser.add_argument("--headless", action="store_true", default=True)
     parser.add_argument("--no-headless", dest="headless", action="store_false")
     parser.add_argument("--output", default="reports", help="Output directory")
+    parser.add_argument("--llm", action="store_true", help="Use LLM vision model for navigation")
+    parser.add_argument("--max-llm-calls", type=int, default=None, help="Max LLM API calls per agent")
     args = parser.parse_args()
 
     state = asyncio.run(
@@ -153,6 +166,8 @@ def main() -> None:
             timeout_s=args.timeout,
             headless=args.headless,
             personas_file=args.personas_file,
+            llm_mode=args.llm,
+            max_llm_calls=args.max_llm_calls,
         )
     )
 

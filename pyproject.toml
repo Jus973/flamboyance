@@ -14,6 +14,7 @@ dependencies = [
     "playwright>=1.40.0",
     "mcp[cli]>=1.0.0",
     "pydantic>=2.5.0",
+    "openai>=1.0",
 ]
 
 [project.optional-dependencies]

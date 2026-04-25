@@ -169,3 +169,51 @@ class TestLongDwell:
         # does not immediately re-fire (prevents duplicate flooding).
         dwell_since_reset = time.time() - d.last_action_time
         assert dwell_since_reset < 1.0
+
+
+class TestRageDecoy:
+    def test_emits_rage_decoy_with_cursor_pointer(self) -> None:
+        d = EventDetector()
+        evt = d.record_rage_decoy(
+            "http://example.com/page",
+            "div.fake-button",
+            "cursor:pointer"
+        )
+        assert evt is not None
+        assert evt.kind == "rage_decoy"
+        assert "div.fake-button" in evt.description
+        assert "cursor:pointer" in evt.description
+        assert evt.url == "http://example.com/page"
+        assert evt.details["selector"] == "div.fake-button"
+        assert evt.details["reason"] == "cursor:pointer"
+
+    def test_emits_rage_decoy_with_clickable_class(self) -> None:
+        d = EventDetector()
+        evt = d.record_rage_decoy(
+            "http://example.com/form",
+            "span.clickable-item",
+            "clickable class name"
+        )
+        assert evt is not None
+        assert evt.kind == "rage_decoy"
+        assert "clickable-item" in evt.description
+        assert "clickable class name" in evt.description
+
+    def test_emits_rage_decoy_with_multiple_reasons(self) -> None:
+        d = EventDetector()
+        evt = d.record_rage_decoy(
+            "http://example.com",
+            "div.clickable-card",
+            "cursor:pointer, clickable class name"
+        )
+        assert evt is not None
+        assert "cursor:pointer" in evt.details["reason"]
+        assert "clickable class name" in evt.details["reason"]
+
+    def test_multiple_decoys_accumulate(self) -> None:
+        d = EventDetector()
+        d.record_rage_decoy("http://a.com", "div.btn", "cursor:pointer")
+        d.record_rage_decoy("http://a.com", "span.link", "clickable class name")
+        d.record_rage_decoy("http://b.com", "p.action", "cursor:pointer")
+        assert len(d.all_events()) == 3
+        assert all(e.kind == "rage_decoy" for e in d.all_events())

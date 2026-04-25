@@ -116,6 +116,46 @@ class Persona:
             prefers_visible_text=data.get("prefers_visible_text", False),
         )
 
+    def to_llm_prompt(self) -> str:
+        """Generate a description of this persona for LLM system prompts."""
+        patience_desc = (
+            "very impatient and will give up quickly"
+            if self.patience < 0.3
+            else "somewhat impatient"
+            if self.patience < 0.5
+            else "moderately patient"
+            if self.patience < 0.7
+            else "very patient and thorough"
+        )
+
+        tech_desc = (
+            "struggles with technology and needs obvious UI"
+            if self.tech_literacy < 0.3
+            else "has basic tech skills"
+            if self.tech_literacy < 0.5
+            else "comfortable with standard web interfaces"
+            if self.tech_literacy < 0.7
+            else "highly tech-savvy and can navigate complex UIs"
+        )
+
+        lines = [
+            f"Persona: {self.name}",
+            f"Goal: {self.goal}",
+            f"Patience: {patience_desc} ({self.patience:.1f}/1.0)",
+            f"Tech literacy: {tech_desc} ({self.tech_literacy:.1f}/1.0)",
+        ]
+
+        if self.prefers_visible_text:
+            lines.append("Preference: Only uses clearly labeled, visible elements")
+
+        if self.gives_up_early:
+            lines.append(f"Behavior: May give up after {self.early_exit_fraction:.0%} of timeout")
+
+        if self.skips_hidden_menus:
+            lines.append("Behavior: Avoids collapsed menus and hidden UI")
+
+        return "\n".join(lines)
+
 
 # ── Built-in persona defaults ──────────────────────────────────────────
 

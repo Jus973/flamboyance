@@ -1,16 +1,17 @@
 """Frustration event detection for UX-friction agents.
 
-Detects six categories of frustration:
+Detects seven categories of frustration:
 
 Notice tier (passive UX friction):
 1. **slow_load** — page load time exceeds a threshold (default 3 000 ms).
 2. **dead_end** — no clickable elements found on a page after load.
 3. **long_dwell** — agent stays on a page without acting for too long (default 10 s).
+4. **rage_decoy** — elements that look clickable but are not buttons/links.
 
 Frustration tier (active user struggle):
-4. **Circular navigation** — visiting A → B → A in the URL history.
-5. **Rage clicks** — ≥3 clicks on the same non-interactive element within 1.5 s.
-6. **Unmet goal** — the agent's goal was not reached before timeout / give-up.
+5. **Circular navigation** — visiting A → B → A in the URL history.
+6. **Rage clicks** — ≥3 clicks on the same non-interactive element within 1.5 s.
+7. **Unmet goal** — the agent's goal was not reached before timeout / give-up.
 """
 
 from __future__ import annotations
@@ -21,7 +22,7 @@ from dataclasses import dataclass, field
 
 @dataclass
 class FrustrationEvent:
-    kind: str  # "slow_load" | "dead_end" | "long_dwell" | "circular_navigation" | "rage_click" | "unmet_goal"
+    kind: str  # "slow_load" | "dead_end" | "long_dwell" | "rage_decoy" | "circular_navigation" | "rage_click" | "unmet_goal"
     timestamp: float
     description: str
     url: str = ""
@@ -97,6 +98,27 @@ class EventDetector:
     def touch(self) -> None:
         """Reset the dwell timer (call after every meaningful agent action)."""
         self.last_action_time = time.time()
+
+    def record_rage_decoy(
+        self, url: str, selector: str, reason: str
+    ) -> FrustrationEvent:
+        """Emit a *rage_decoy* event for elements that look clickable but aren't.
+
+        Args:
+            url: Page URL where the decoy was found.
+            selector: CSS selector or description of the decoy element.
+            reason: Why the element appears clickable (e.g., "cursor:pointer",
+                    "button-like styling", "hover effect").
+        """
+        evt = FrustrationEvent(
+            kind="rage_decoy",
+            timestamp=time.time(),
+            description=f"Rage decoy: element '{selector}' looks clickable ({reason}) but is not interactive",
+            url=url,
+            details={"selector": selector, "reason": reason},
+        )
+        self.events.append(evt)
+        return evt
 
     # ── Frustration-tier detectors ─────────────────────────────────────
 
