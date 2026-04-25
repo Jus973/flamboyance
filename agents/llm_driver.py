@@ -36,11 +36,25 @@ Examples of good decisions:
 4. Wrong page, need to go back:
    {"action": "back", "target": null, "reasoning": "Return to previous page, this is not the settings page"}
 
-5. Goal achieved (e.g., order confirmation visible):
-   {"action": "done", "target": null, "reasoning": "Order confirmation shown, purchase complete"}
+5. Goal achieved - order confirmation visible:
+   {"action": "done", "target": null, "reasoning": "Order confirmation page shows 'Thank you for your order' - purchase complete"}
 
-6. Stuck after multiple attempts:
+6. Goal achieved - settings page reached:
+   {"action": "done", "target": null, "reasoning": "Account settings page is now visible with user preferences - goal complete"}
+
+7. Goal achieved - signup success:
+   {"action": "done", "target": null, "reasoning": "Success message 'Account created' is visible - signup complete"}
+
+8. Goal achieved - browsing complete:
+   {"action": "done", "target": null, "reasoning": "Explored multiple sections of the site including shop and account - browsing goal complete"}
+
+9. Stuck after multiple attempts:
    {"action": "give_up", "target": "Cannot find login button after scrolling entire page", "reasoning": "Element not present"}
+
+IMPORTANT: Use "done" when you see clear evidence the goal is achieved. Look for:
+- Confirmation messages ("Thank you", "Success", "Order confirmed", "Account created")
+- Reaching the target page (settings page, checkout confirmation, order status)
+- Completing the intended action (form submitted, purchase made, content found)
 """
 
 
@@ -103,6 +117,82 @@ class LLMDriver:
         cls._response_cache.clear()
         cls._cache_hits = 0
 
+    def _get_goal_completion_criteria(self, persona: Persona) -> str:
+        """Return goal-specific completion criteria for the LLM prompt."""
+        goal_lower = persona.goal.lower()
+
+        # Map common goal patterns to completion criteria
+        if "purchase" in goal_lower or "checkout" in goal_lower or "buy" in goal_lower:
+            return """
+## GOAL COMPLETION CRITERIA
+Your goal involves completing a purchase. Use "done" when you see:
+- Order confirmation page with "Thank you" or "Order confirmed" message
+- Order number or confirmation number displayed
+- Receipt or order summary after payment
+- "Your order has been placed" or similar success message
+Navigate: Look for Cart → Checkout → Payment → Confirmation flow."""
+
+        if "account" in goal_lower and "settings" in goal_lower:
+            return """
+## GOAL COMPLETION CRITERIA
+Your goal is to find account settings. Use "done" when you see:
+- Account settings page with user preferences/options
+- Profile settings, notification settings, or privacy settings visible
+- Settings form fields or toggles
+Navigate: Look for Account → Settings or Profile → Preferences."""
+
+        if "sign up" in goal_lower or "signup" in goal_lower or "register" in goal_lower:
+            return """
+## GOAL COMPLETION CRITERIA
+Your goal is to sign up for an account. Use "done" when you see:
+- "Account created" or "Registration successful" message
+- Welcome message after signup
+- Redirect to dashboard or home after form submission
+Navigate: Look for Sign Up button → Fill form → Submit."""
+
+        if "browse" in goal_lower or "explore" in goal_lower or "see what" in goal_lower:
+            return """
+## GOAL COMPLETION CRITERIA
+Your goal is to browse and explore. Use "done" when you have:
+- Visited at least 3-4 different sections/pages
+- Seen the main content areas (shop, products, categories)
+- Explored enough to understand what's available
+This is a flexible goal - use "done" after reasonable exploration."""
+
+        if "order status" in goal_lower or "track" in goal_lower:
+            return """
+## GOAL COMPLETION CRITERIA
+Your goal is to check order status. Use "done" when you see:
+- Order status page showing order details
+- Tracking information or delivery status
+- Order history with status indicators
+Navigate: Look for Orders → Order Status or My Account → Orders."""
+
+        if "form" in goal_lower:
+            return """
+## GOAL COMPLETION CRITERIA
+Your goal involves completing a form. Use "done" when you see:
+- Form submission success message
+- Confirmation that data was saved
+- Redirect to next step or thank you page
+Navigate: Fill all required fields → Submit → Look for confirmation."""
+
+        if "search" in goal_lower or "find" in goal_lower:
+            return """
+## GOAL COMPLETION CRITERIA
+Your goal is to find something using search. Use "done" when you:
+- Find the specific product/information you're looking for
+- See relevant search results displayed
+If no search functionality exists, use "give_up" with explanation."""
+
+        # Default criteria
+        return """
+## GOAL COMPLETION CRITERIA
+Use "done" when you see clear evidence your goal is achieved:
+- Success/confirmation messages
+- Reaching the target page or content
+- Completing the intended action"""
+
     def _build_system_prompt(self, persona: Persona) -> str:
         """Convert persona traits into detailed LLM system instructions with UX guidance."""
         patience_desc = (
@@ -150,6 +240,9 @@ class LLMDriver:
             frustration_section = f"\n## FRUSTRATION TRIGGERS\nThis persona gets frustrated by: {', '.join(persona.frustration_triggers)}\n"
             frustration_section += "Report these issues when encountered and consider giving up if they block progress.\n"
 
+        # Build goal completion criteria based on persona goal
+        goal_completion = self._get_goal_completion_criteria(persona)
+
         return f"""You are simulating a user browsing a website to achieve a specific goal.
 Analyze the screenshot and decide the next action based on the persona's characteristics.
 
@@ -177,11 +270,13 @@ Analyze the screenshot and decide the next action based on the persona's charact
 4. If content might be below the fold, scroll to check before giving up
 5. Avoid clicking the same element repeatedly if it doesn't produce results
 6. Consider the persona's patience - impatient users give up faster
-
+7. USE "done" ACTION when the goal is achieved - don't keep clicking after success!
+{goal_completion}
 {FEW_SHOT_EXAMPLES}
 
 ## RESPONSE FORMAT
-Respond with ONLY a JSON object (no markdown, no explanation):
+Respond with ONLY a JSON object (no markdown, no explanation).
+Coordinates must be PIXEL values (e.g., [640, 360]), NOT normalized (0-1) values.
 {{"action": "...", "target": ..., "reasoning": "brief explanation"}}"""
 
     def _build_history_context(self, history: list[ActionHistoryEntry]) -> str:
@@ -329,7 +424,23 @@ Respond with ONLY a JSON object (no markdown, no explanation):
 
         if action == "click" and isinstance(target, list) and len(target) == 2:
             try:
-                target = (int(target[0]), int(target[1]))
+                x, y = float(target[0]), float(target[1])
+                # Detect normalized coordinates (0-1 range) and convert to pixels
+                if 0 < x < 1 and 0 < y < 1:
+                    # LLM returned normalized coordinates, convert to pixels
+                    x = int(x * self.viewport[0])
+                    y = int(y * self.viewport[1])
+                    log.debug("Converted normalized coords to pixels: (%d, %d)", x, y)
+                else:
+                    x, y = int(x), int(y)
+                # Reject clicks at exact (0, 0) - usually indicates LLM confusion
+                if x == 0 and y == 0:
+                    log.warning("Rejecting click at (0, 0) - likely invalid")
+                    action = "scroll"
+                    target = "down"
+                    reasoning = "Scrolling to find clickable elements (invalid coords detected)"
+                else:
+                    target = (x, y)
             except (ValueError, TypeError):
                 log.warning("Invalid click coordinates: %s", target)
                 action = "give_up"

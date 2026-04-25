@@ -61,6 +61,9 @@ class Persona:
     frustration_triggers: tuple[str, ...] = field(default_factory=tuple)
     # Detection weights: friction_type -> weight multiplier (1.0 = normal, 2.0 = prioritized)
     detection_weights: tuple[tuple[str, float], ...] = field(default_factory=tuple)
+    # Success indicators: URL patterns or page content that indicate goal completion
+    success_url_patterns: tuple[str, ...] = field(default_factory=tuple)
+    success_text_patterns: tuple[str, ...] = field(default_factory=tuple)
 
     def __post_init__(self) -> None:
         if not 0.0 <= self.patience <= 1.0:
@@ -276,6 +279,8 @@ FRUSTRATED_EXEC = Persona(
         ("slow_load", 1.5),
         ("modal_frustration", 1.5),
     ),
+    success_url_patterns=("/checkout/confirmation", "/order/confirm", "/thank-you"),
+    success_text_patterns=("order confirmed", "thank you for your order", "order #"),
 )
 
 NON_TECH_SENIOR = Persona(
@@ -291,6 +296,8 @@ NON_TECH_SENIOR = Persona(
         ("scroll_rage", 1.5),
         ("back_button_abuse", 1.5),
     ),
+    success_url_patterns=("/account/settings/", "/settings/", "/profile/settings/"),
+    success_text_patterns=("account settings page", "your preferences", "notification preferences"),
 )
 
 POWER_USER = Persona(
@@ -341,6 +348,8 @@ ANXIOUS_NEWBIE = Persona(
         ("error_message_visible", 2.0),
         ("back_button_abuse", 1.5),
     ),
+    success_url_patterns=("/welcome", "/dashboard", "/account"),
+    success_text_patterns=("account created", "welcome", "registration successful", "signup complete"),
 )
 
 METHODICAL_TESTER = Persona(
@@ -379,6 +388,8 @@ MOBILE_COMMUTER = Persona(
         ("slow_interaction", 1.5),
         ("slow_load", 1.5),
     ),
+    success_url_patterns=("/order-status/", "/orders/", "/track/"),
+    success_text_patterns=("order status:", "tracking number", "order #", "delivery status"),
 )
 
 ACCESSIBILITY_USER = Persona(
@@ -457,6 +468,8 @@ CHECKOUT_USER = Persona(
         ("slow_interaction", 1.5),
         ("session_timeout", 2.0),
     ),
+    success_url_patterns=("/checkout/confirmation", "/order/confirm", "/thank-you", "/checkout/"),
+    success_text_patterns=("order confirmed", "thank you", "order #", "confirmation"),
 )
 
 DEFAULT_PERSONAS: dict[str, Persona] = {

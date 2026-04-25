@@ -258,6 +258,7 @@ async def run_agent(
                     if decision.action_type == "done":
                         goal_complete = True
                         result.status = "goal_complete"
+                        log.info("Goal completed by LLM decision")
                         break
                     elif decision.action_type == "give_up":
                         result.status = "gave_up"
@@ -265,6 +266,15 @@ async def run_agent(
 
                     await page.wait_for_load_state("domcontentloaded")
                     current_url = page.url
+
+                    # ── Heuristic goal detection ───────────────────────────
+                    if not goal_complete:
+                        goal_complete = await _check_goal_completion(page, persona, current_url)
+                        if goal_complete:
+                            result.status = "goal_complete"
+                            log.info("Goal completed by heuristic detection at %s", current_url)
+                            break
+
                     if current_url not in visited[-1:]:
                         visited.append(current_url)
                         nav_evt = detector.record_navigation(current_url)
@@ -482,6 +492,46 @@ async def _execute_llm_action(page: object, decision: ActionDecision) -> str:
     except Exception as e:
         log.warning("Action execution failed: %s", e)
         return f"action failed: {e}"
+
+
+async def _check_goal_completion(page: object, persona: Persona, current_url: str) -> bool:
+    """Check if the current page indicates goal completion using heuristic patterns.
+
+    Uses persona's success_url_patterns and success_text_patterns to detect
+    when a goal has been achieved, even if the LLM doesn't recognize it.
+
+    Returns:
+        True if goal appears to be complete, False otherwise.
+    """
+    from playwright.async_api import Page
+
+    assert isinstance(page, Page)
+
+    # Check URL patterns - match against URL path only
+    if persona.success_url_patterns:
+        from urllib.parse import urlparse
+        parsed = urlparse(current_url)
+        url_path = parsed.path.lower()
+        for pattern in persona.success_url_patterns:
+            pattern_lower = pattern.lower()
+            # Check if pattern matches the path (not just substring)
+            if url_path == pattern_lower or url_path.startswith(pattern_lower):
+                log.debug("Goal URL pattern matched: %s in path %s", pattern, url_path)
+                return True
+
+    # Check page text patterns
+    if persona.success_text_patterns:
+        try:
+            # Get visible text from the page body
+            body_text = await page.evaluate("() => document.body?.innerText?.toLowerCase() || ''")
+            for pattern in persona.success_text_patterns:
+                if pattern.lower() in body_text:
+                    log.debug("Goal text pattern matched: %s", pattern)
+                    return True
+        except Exception as e:
+            log.debug("Failed to check page text for goal completion: %s", e)
+
+    return False
 
 
 async def _find_clickables(page: object, persona: Persona) -> list[dict[str, object]]:
