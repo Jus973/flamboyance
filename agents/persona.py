@@ -56,6 +56,9 @@ class Persona:
     slow_load_threshold_ms: float | None = None
     long_dwell_threshold_s: float | None = None
     rage_click_threshold: int | None = None
+    # Persona-specific focus for differentiated LLM behavior
+    focus_areas: tuple[str, ...] = field(default_factory=tuple)
+    frustration_triggers: tuple[str, ...] = field(default_factory=tuple)
 
     def __post_init__(self) -> None:
         if not 0.0 <= self.patience <= 1.0:
@@ -127,6 +130,8 @@ class Persona:
             "max_actions": self.max_actions,
             "viewport": list(self.viewport),
             "prefers_visible_text": self.prefers_visible_text,
+            "focus_areas": list(self.focus_areas),
+            "frustration_triggers": list(self.frustration_triggers),
             "derived": {
                 "page_load_timeout_ms": self.page_load_timeout_ms,
                 "click_hesitation_ms": self.click_hesitation_ms,
@@ -159,6 +164,8 @@ class Persona:
             slow_load_threshold_ms=data.get("slow_load_threshold_ms"),
             long_dwell_threshold_s=data.get("long_dwell_threshold_s"),
             rage_click_threshold=data.get("rage_click_threshold"),
+            focus_areas=tuple(data.get("focus_areas", [])),
+            frustration_triggers=tuple(data.get("frustration_triggers", [])),
         )
 
     def to_llm_prompt(self) -> str:
@@ -190,6 +197,12 @@ class Persona:
             f"Tech literacy: {tech_desc} ({self.tech_literacy:.1f}/1.0)",
         ]
 
+        if self.focus_areas:
+            lines.append(f"Focus areas: {', '.join(self.focus_areas)}")
+
+        if self.frustration_triggers:
+            lines.append(f"Gets frustrated by: {', '.join(self.frustration_triggers)}")
+
         if self.prefers_visible_text:
             lines.append("Preference: Only uses clearly labeled, visible elements")
 
@@ -211,6 +224,8 @@ FRUSTRATED_EXEC = Persona(
     goal="Complete a purchase flow quickly",
     tags=("executive", "impatient"),
     early_exit_fraction=0.3,
+    focus_areas=("speed", "checkout", "forms"),
+    frustration_triggers=("slow loading", "unnecessary steps", "loading spinners", "required fields"),
 )
 
 NON_TECH_SENIOR = Persona(
@@ -219,6 +234,8 @@ NON_TECH_SENIOR = Persona(
     tech_literacy=0.2,
     goal="Find and read account settings",
     tags=("senior", "low-tech"),
+    focus_areas=("labels", "text size", "navigation"),
+    frustration_triggers=("small text", "confusing labels", "icon-only buttons", "jargon"),
 )
 
 POWER_USER = Persona(
@@ -227,6 +244,8 @@ POWER_USER = Persona(
     tech_literacy=0.9,
     goal="Navigate all features and check edge cases",
     tags=("expert", "thorough"),
+    focus_areas=("keyboard shortcuts", "advanced features", "edge cases"),
+    frustration_triggers=("missing features", "inconsistent behavior", "no keyboard navigation"),
 )
 
 CASUAL_BROWSER = Persona(
@@ -235,6 +254,8 @@ CASUAL_BROWSER = Persona(
     tech_literacy=0.5,
     goal="Browse around and see what's available",
     tags=("casual", "explorer"),
+    focus_areas=("content", "navigation", "visual appeal"),
+    frustration_triggers=("popups", "aggressive CTAs", "cluttered layout"),
 )
 
 ANXIOUS_NEWBIE = Persona(
@@ -243,6 +264,8 @@ ANXIOUS_NEWBIE = Persona(
     tech_literacy=0.3,
     goal="Sign up for an account without getting confused",
     tags=("newbie", "anxious", "low-tech"),
+    focus_areas=("signup", "forms", "error messages"),
+    frustration_triggers=("unclear errors", "too many fields", "no progress indicator", "unexpected behavior"),
 )
 
 METHODICAL_TESTER = Persona(
@@ -252,6 +275,8 @@ METHODICAL_TESTER = Persona(
     goal="Systematically check every link and form",
     tags=("qa", "thorough", "slow"),
     max_actions=100,
+    focus_areas=("links", "forms", "validation", "error states"),
+    frustration_triggers=("broken links", "missing validation", "inconsistent states"),
 )
 
 MOBILE_COMMUTER = Persona(
@@ -262,6 +287,8 @@ MOBILE_COMMUTER = Persona(
     tags=("mobile", "rushed", "tech-savvy"),
     early_exit_fraction=0.3,
     viewport=(375, 667),
+    focus_areas=("mobile layout", "touch targets", "quick actions"),
+    frustration_triggers=("small tap targets", "horizontal scroll", "desktop-only features", "slow mobile load"),
 )
 
 ACCESSIBILITY_USER = Persona(
@@ -271,6 +298,8 @@ ACCESSIBILITY_USER = Persona(
     goal="Navigate using visible labels and clear affordances",
     tags=("a11y", "needs-clarity"),
     prefers_visible_text=True,
+    focus_areas=("labels", "contrast", "focus indicators", "screen reader"),
+    frustration_triggers=("missing labels", "icon-only buttons", "poor contrast", "no focus visible"),
 )
 
 DEFAULT_PERSONAS: dict[str, Persona] = {

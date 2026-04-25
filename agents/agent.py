@@ -49,6 +49,7 @@ class AgentResult:
     llm_calls: int = 0
     llm_tokens: int = 0
     action_history: list[dict[str, object]] = field(default_factory=list)
+    page_screenshots: dict[str, str] = field(default_factory=dict)  # URL → base64 PNG
 
 
 async def run_agent(
@@ -93,6 +94,7 @@ async def run_agent(
     detector = EventDetector(thresholds=persona.get_thresholds())
     visited: list[str] = []
     action_history: list[ActionHistoryEntry] = []
+    page_screenshots: dict[str, str] = {}  # URL → base64 PNG
     start = time.monotonic()
 
     result = AgentResult(persona=persona.name, status="done", llm_mode=llm_mode)
@@ -183,6 +185,13 @@ async def run_agent(
             detector.record_navigation(url)
             detector.touch()
 
+            # ── Capture initial page screenshot ───────────────────────
+            try:
+                initial_screenshot = await page.screenshot(type="png")
+                page_screenshots[url] = base64.b64encode(initial_screenshot).decode()
+            except Exception as e:
+                log.debug("Failed to capture initial screenshot: %s", e)
+
             # ── Check for broken images on initial page ────────────────
             broken_images = await _find_broken_images(page)
             for img in broken_images:
@@ -251,6 +260,14 @@ async def run_agent(
                         if nav_evt:
                             log.info("event: %s", nav_evt.description)
 
+                        # Capture screenshot of new page
+                        if current_url not in page_screenshots:
+                            try:
+                                new_screenshot = await page.screenshot(type="png")
+                                page_screenshots[current_url] = base64.b64encode(new_screenshot).decode()
+                            except Exception as e:
+                                log.debug("Failed to capture screenshot: %s", e)
+
                         # Check for broken images on new page
                         broken_images = await _find_broken_images(page)
                         for img in broken_images:
@@ -299,6 +316,14 @@ async def run_agent(
                     nav_evt = detector.record_navigation(current_url)
                     if nav_evt:
                         log.info("event: %s", nav_evt.description)
+
+                    # Capture screenshot of new page
+                    if current_url not in page_screenshots:
+                        try:
+                            new_screenshot = await page.screenshot(type="png")
+                            page_screenshots[current_url] = base64.b64encode(new_screenshot).decode()
+                        except Exception as e:
+                            log.debug("Failed to capture screenshot: %s", e)
 
                     # Check for broken images on new page
                     broken_images = await _find_broken_images(page)
@@ -365,6 +390,7 @@ async def run_agent(
         }
         for h in action_history
     ]
+    result.page_screenshots = page_screenshots
     result.elapsed_seconds = time.monotonic() - start
     return result
 

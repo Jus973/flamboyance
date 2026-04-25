@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
+import base64
+import logging
 from collections import defaultdict
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .runner_local import RunState
+
+log = logging.getLogger(__name__)
 
 SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
 SEVERITY_EMOJI = {"critical": "🔴", "high": "🟠", "medium": "🟡", "low": "🟢"}
@@ -24,6 +29,121 @@ FIX_RECOMMENDATIONS: dict[str, str] = {
     "rage_click": "Ensure the element responds to clicks or remove interactive affordances.",
     "unmet_goal": "Review the user flow for this goal and remove friction points.",
 }
+
+
+def _save_screenshot(
+    screenshot_b64: str,
+    run_id: str,
+    persona: str,
+    url: str,
+    index: int,
+    results_dir: str = "results",
+) -> str | None:
+    """Save a base64 screenshot to disk and return the relative path.
+
+    Args:
+        screenshot_b64: Base64-encoded PNG screenshot
+        run_id: Unique run identifier
+        persona: Persona name for organizing screenshots
+        url: Page URL (used for filename)
+        index: Screenshot index for ordering
+        results_dir: Base results directory
+
+    Returns:
+        Relative path to saved screenshot, or None if save failed
+    """
+    try:
+        screenshots_dir = Path(results_dir) / "screenshots" / run_id / persona
+        screenshots_dir.mkdir(parents=True, exist_ok=True)
+
+        # Create safe filename from URL
+        safe_url = url.replace("://", "_").replace("/", "_").replace("?", "_")[:50]
+        filename = f"{index:02d}_{safe_url}.png"
+        filepath = screenshots_dir / filename
+
+        # Decode and save
+        image_data = base64.b64decode(screenshot_b64)
+        filepath.write_bytes(image_data)
+
+        # Return relative path from results dir
+        return str(filepath.relative_to(Path(results_dir).parent))
+    except Exception as e:
+        log.warning("Failed to save screenshot: %s", e)
+        return None
+
+
+def _annotate_and_save_screenshot(
+    screenshot_b64: str,
+    events: list[dict],
+    run_id: str,
+    persona: str,
+    url: str,
+    index: int,
+    results_dir: str = "results",
+) -> str | None:
+    """Annotate a screenshot with frustration events and save to disk.
+
+    Args:
+        screenshot_b64: Base64-encoded PNG screenshot
+        events: Frustration events that occurred on this page
+        run_id: Unique run identifier
+        persona: Persona name
+        url: Page URL
+        index: Screenshot index
+        results_dir: Base results directory
+
+    Returns:
+        Relative path to saved annotated screenshot, or None if failed
+    """
+    try:
+        from .screenshot_annotator import AnnotationMarker, annotate_screenshot
+    except ImportError:
+        log.warning("screenshot_annotator not available, saving unannotated")
+        return _save_screenshot(screenshot_b64, run_id, persona, url, index, results_dir)
+
+    # Create markers from events
+    markers: list[AnnotationMarker] = []
+    severity_colors = {
+        "critical": "red",
+        "high": "orange",
+        "medium": "yellow",
+        "low": "green",
+    }
+
+    for event in events:
+        # Try to extract coordinates from event
+        coords = None
+        if "x" in event and "y" in event:
+            try:
+                coords = (int(event["x"]), int(event["y"]))
+            except (ValueError, TypeError):
+                pass
+        elif "target" in event:
+            target = event["target"]
+            if isinstance(target, (list, tuple)) and len(target) == 2:
+                try:
+                    coords = (int(target[0]), int(target[1]))
+                except (ValueError, TypeError):
+                    pass
+
+        if coords:
+            severity = event.get("severity", "medium")
+            markers.append(
+                AnnotationMarker(
+                    x=coords[0],
+                    y=coords[1],
+                    label=event.get("kind", "event"),
+                    color=severity_colors.get(severity, "yellow"),
+                )
+            )
+
+    # Annotate if we have markers
+    if markers:
+        annotated_b64 = annotate_screenshot(screenshot_b64, markers)
+    else:
+        annotated_b64 = screenshot_b64
+
+    return _save_screenshot(annotated_b64, run_id, persona, url, index, results_dir)
 
 
 def _escape_markdown(text: str) -> str:
@@ -244,6 +364,42 @@ def generate_report(state: RunState) -> str:
             if len(action_history) > 20:
                 lines.append(f"| ... | ({len(action_history) - 20} more actions) | | |")
             lines.append("")
+
+        # Visual Evidence (screenshots)
+        page_screenshots = getattr(r, 'page_screenshots', {})
+        if page_screenshots:
+            lines.append("### Visual Evidence")
+            lines.append("")
+
+            # Group events by URL for annotation
+            events_by_url: dict[str, list[dict]] = defaultdict(list)
+            for ev in r.frustration_events:
+                ev_url = ev.get("url", "")
+                if ev_url:
+                    events_by_url[ev_url].append(ev)
+
+            for idx, (url, screenshot_b64) in enumerate(page_screenshots.items()):
+                # Get events for this page
+                page_events = events_by_url.get(url, [])
+
+                # Save annotated screenshot
+                screenshot_path = _annotate_and_save_screenshot(
+                    screenshot_b64,
+                    page_events,
+                    state.run_id,
+                    r.persona,
+                    url,
+                    idx,
+                )
+
+                if screenshot_path:
+                    short_url = _escape_markdown(url[:60])
+                    event_count = len(page_events)
+                    event_note = f" ({event_count} issue{'s' if event_count != 1 else ''})" if event_count else ""
+                    lines.append(f"**Page {idx + 1}:** {short_url}{event_note}")
+                    lines.append("")
+                    lines.append(f"![Screenshot]({screenshot_path})")
+                    lines.append("")
 
     if total_events == 0:
         lines.append("---")

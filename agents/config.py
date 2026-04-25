@@ -46,12 +46,10 @@ OLLAMA_MODEL_VISION: str = os.environ.get("FLAMBOYANCE_OLLAMA_MODEL_VISION", "ll
 OLLAMA_TIMEOUT_S: float = float(os.environ.get("FLAMBOYANCE_OLLAMA_TIMEOUT", "60.0"))
 
 MAX_LLM_CALLS_PER_SESSION: int = int(os.environ.get("FLAMBOYANCE_MAX_LLM_CALLS", "30"))
+
+# Groq rate limit retry settings (not used for local Ollama)
 LLM_RETRY_ATTEMPTS: int = int(os.environ.get("FLAMBOYANCE_LLM_RETRY_ATTEMPTS", "3"))
 LLM_RETRY_DELAY_S: float = float(os.environ.get("FLAMBOYANCE_LLM_RETRY_DELAY", "2.0"))
-
-# Minimum delay between LLM requests to avoid rate limiting (seconds)
-# Groq free tier: ~30 requests/min, so 3s delay is conservative
-LLM_REQUEST_DELAY_S: float = float(os.environ.get("FLAMBOYANCE_LLM_REQUEST_DELAY", "3.0"))
 
 # Image detail mode for vision API: "low" (85 tokens), "high" (~1100 tokens), or "auto"
 # "auto" balances accuracy and cost; "high" for maximum accuracy on small UI elements

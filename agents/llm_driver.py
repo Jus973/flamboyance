@@ -134,6 +134,18 @@ class LLMDriver:
 
         behavior_section = "\n".join(behavior_notes) if behavior_notes else "- Standard browsing behavior"
 
+        # Build persona-specific focus section
+        focus_section = ""
+        if persona.focus_areas:
+            focus_section = f"\n## WHAT TO LOOK FOR\nThis persona specifically focuses on: {', '.join(persona.focus_areas)}\n"
+            focus_section += "Pay extra attention to issues in these areas when navigating.\n"
+
+        # Build frustration triggers section
+        frustration_section = ""
+        if persona.frustration_triggers:
+            frustration_section = f"\n## FRUSTRATION TRIGGERS\nThis persona gets frustrated by: {', '.join(persona.frustration_triggers)}\n"
+            frustration_section += "Report these issues when encountered and consider giving up if they block progress.\n"
+
         return f"""You are simulating a user browsing a website to achieve a specific goal.
 Analyze the screenshot and decide the next action based on the persona's characteristics.
 
@@ -145,7 +157,7 @@ Analyze the screenshot and decide the next action based on the persona's charact
 
 ## PERSONA BEHAVIORS
 {behavior_section}
-
+{focus_section}{frustration_section}
 ## AVAILABLE ACTIONS
 - click([x,y]): Click at coordinates. Always click element centers. For inputs, click first then type.
 - type("text"): Type text into the currently focused input field.
