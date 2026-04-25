@@ -15,8 +15,8 @@
 
 | Path | Purpose |
 | --- | --- |
-| `agents/` | Personas, `runner_local`, single-agent `agent` module, event detection, Markdown reports. |
-| `mcp/` | `python -m mcp` — FastMCP server (`run_simulation`, `get_live_feed`, `get_report`, `stop_simulation`). |
+| `agents/` | Personas, `runner_local`, `runner_mutation`, single-agent `agent` module, event detection, Markdown reports. |
+| `mcp/` | `python -m mcp` — FastMCP server (`run_simulation`, `get_live_feed`, `get_report`, `stop_simulation`, `run_mutation_test_tool`). |
 | `extension/` | TypeScript VS Code extension ("UX Friction Monitor"). |
 | `docker/` | `Dockerfile.agent` + `docker-compose.yml` for containerized agents / MCP HTTP. |
 | `tests/` | `pytest` for agent report/persona/events. |
@@ -118,6 +118,57 @@ File format:
 
 Custom personas merge with built-ins; same-name entries override.
 
+## Mutation Testing
+
+Test how personas behave when UI elements are broken, hidden, or degraded:
+
+```bash
+# Use a built-in mutation scenario
+python -m agents.runner_mutation --url http://localhost:3000 --mutation broken_checkout
+
+# Use a custom mutation scenario (JSON)
+python -m agents.runner_mutation --url http://localhost:3000 \
+  --mutation '{"name": "custom", "hide": ["#checkout-btn"], "disable": [".nav"]}'
+```
+
+### Built-in Mutation Scenarios
+
+| Name | Effect |
+|------|--------|
+| `broken_checkout` | Hides checkout buttons |
+| `no_nav` | Removes navigation elements |
+| `slow_submit` | Adds 3s delay to form submissions |
+| `disabled_forms` | Disables all form inputs |
+| `hidden_cta` | Hides call-to-action buttons |
+
+### MCP Tool
+
+The `run_mutation_test_tool` MCP tool allows mutation testing via Cascade:
+
+```python
+# Example: Test with hidden checkout button
+await run_mutation_test_tool(
+    url="http://localhost:3000",
+    mutations={"name": "test", "hide": ["#checkout-btn"]},
+    personas=["frustrated_exec"],
+    llm_mode=True,
+)
+```
+
+### Mutation Schema
+
+```python
+MutationScenario(
+    name="example",
+    hide=["#selector"],           # visibility: hidden
+    disable=[".selector"],        # pointer-events: none
+    remove=["nav"],               # remove from DOM
+    delay_clicks={"button": 3000} # delay clicks by ms
+)
+```
+
+---
+
 ## Testing
 
 ```bash
@@ -125,4 +176,4 @@ python3 -m pip install -e ".[dev]"
 python3 -m pytest tests/ -v
 ```
 
-Tests cover report shape, persona validation, frustration event detection, and custom persona loading (`tests/test_report.py`, `tests/test_persona.py`, `tests/test_events.py`, `tests/test_persona_loader.py`).
+Tests cover report shape, persona validation, frustration event detection, custom persona loading, and mutation scenarios (`tests/test_report.py`, `tests/test_persona.py`, `tests/test_events.py`, `tests/test_persona_loader.py`, `tests/test_mutations.py`).

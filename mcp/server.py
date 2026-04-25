@@ -21,8 +21,10 @@ import logging
 import uuid
 from typing import Any
 
+from agents.mutations import COMMON_SCENARIOS, MutationScenario
 from agents.report import generate_report
 from agents.runner_local import RunState, get_run, run_local, save_report
+from agents.runner_mutation import generate_mutation_report, run_mutation_test
 from agents.validation import ValidationError, validate_timeout, validate_url
 from mcp.server.fastmcp import FastMCP
 
@@ -183,6 +185,89 @@ async def stop_simulation(run_id: str) -> dict[str, Any]:
         task.cancel()
 
     return {"run_id": run_id, "stopped": True}
+
+
+@mcp.tool()
+async def run_mutation_test_tool(
+    url: str,
+    mutations: dict[str, Any],
+    personas: list[str] | None = None,
+    timeout: int = 60,
+    llm_mode: bool = False,
+    max_llm_calls: int | None = None,
+) -> dict[str, Any]:
+    """Run persona agents against a page with UI elements mutated.
+
+    This tool applies mutations (hide/disable/remove elements) to simulate
+    broken or degraded UX scenarios, then runs persona agents to detect
+    frustration events caused by the mutations.
+
+    Args:
+        url: Target web application URL.
+        mutations: Mutation scenario as dict with keys:
+            - name (str): Scenario identifier
+            - hide (list[str]): CSS selectors to hide (visibility: hidden)
+            - disable (list[str]): Selectors to disable (pointer-events: none)
+            - remove (list[str]): Selectors to remove from DOM
+            - delay_clicks (dict[str, int]): Selector -> ms delay before click
+        personas: List of persona names (default: all built-in personas).
+        timeout: Per-agent timeout in seconds.
+        llm_mode: If True, use LLM vision model for intelligent navigation.
+        max_llm_calls: Maximum LLM API calls per agent session.
+
+    Returns:
+        Dict with mutation test results including:
+        - scenario: Name of the mutation scenario
+        - status: "done" | "error"
+        - summary: Which personas failed/succeeded
+        - markdown: Full report in Markdown format
+
+    Example mutations:
+        - {"name": "broken_checkout", "hide": ["#checkout-btn"]}
+        - {"name": "no_nav", "remove": [".main-nav", "nav"]}
+        - {"name": "slow_submit", "delay_clicks": {"button[type=submit]": 3000}}
+
+    Built-in scenarios: broken_checkout, no_nav, slow_submit, disabled_forms, hidden_cta
+    """
+    try:
+        validated_url = validate_url(url, allow_localhost=True)
+        validated_timeout = validate_timeout(timeout)
+    except ValidationError as e:
+        log.warning("Validation failed: %s", e)
+        return {"error": str(e)}
+
+    # Handle built-in scenario names
+    if isinstance(mutations, str):
+        if mutations in COMMON_SCENARIOS:
+            scenario = COMMON_SCENARIOS[mutations]
+        else:
+            return {"error": f"Unknown built-in scenario: {mutations}. Available: {list(COMMON_SCENARIOS.keys())}"}
+    else:
+        scenario = MutationScenario.from_dict(mutations)
+
+    log.info("starting mutation test: scenario=%s url=%s", scenario.name, validated_url)
+
+    result = await run_mutation_test(
+        validated_url,
+        scenario,
+        personas,
+        timeout_s=validated_timeout,
+        headless=True,
+        llm_mode=llm_mode,
+        max_llm_calls=max_llm_calls,
+    )
+
+    markdown = generate_mutation_report(result)
+
+    return {
+        "scenario": result.scenario,
+        "url": result.url,
+        "status": result.status,
+        "elapsed_seconds": result.elapsed_seconds,
+        "error": result.error,
+        "summary": result.summary(),
+        "markdown": markdown,
+    }
 
 
 def main() -> None:
