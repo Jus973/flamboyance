@@ -51,7 +51,7 @@ class TestCallLLMRouting:
 
     @pytest.mark.asyncio
     async def test_decision_with_vision_routes_to_ollama(self):
-        """Decision tasks with images should use Ollama quality model."""
+        """Decision tasks with images should use Ollama vision model."""
         with patch("llm.router.call_ollama", new_callable=AsyncMock) as mock_ollama:
             mock_ollama.return_value = '{"action": "click", "target": [100, 200]}'
 
@@ -64,7 +64,7 @@ class TestCallLLMRouting:
             assert result == '{"action": "click", "target": [100, 200]}'
             mock_ollama.assert_called_once()
             call_kwargs = mock_ollama.call_args[1]
-            assert call_kwargs["model"] == "llama3:70b"
+            assert call_kwargs["model"] == "llava:latest"
             assert call_kwargs["image_b64"] == "fake_base64_image"
 
     @pytest.mark.asyncio
@@ -301,3 +301,124 @@ class TestFastTasks:
         assert "classify" in FAST_TASKS
         assert "report" in FAST_TASKS
         assert "decision" not in FAST_TASKS
+
+
+class TestModelConfiguration:
+    """Test model configuration from environment."""
+
+    def test_default_vision_model(self):
+        """Default vision model should be llava:latest."""
+        from agents.config import OLLAMA_MODEL_VISION
+
+        assert OLLAMA_MODEL_VISION == "llava:latest"
+
+    def test_default_fast_model(self):
+        """Default fast model should be llama3:8b."""
+        from agents.config import OLLAMA_MODEL_FAST
+
+        assert OLLAMA_MODEL_FAST == "llama3:8b"
+
+    def test_default_quality_model(self):
+        """Default quality model should be llama3:8b."""
+        from agents.config import OLLAMA_MODEL_QUALITY
+
+        assert OLLAMA_MODEL_QUALITY == "llama3:8b"
+
+    def test_vision_model_used_for_image_tasks(self):
+        """Vision model should be distinct from quality model for image tasks."""
+        from agents.config import OLLAMA_MODEL_QUALITY, OLLAMA_MODEL_VISION
+
+        # Vision model should be a vision-capable model
+        assert "llava" in OLLAMA_MODEL_VISION.lower() or "vision" in OLLAMA_MODEL_VISION.lower()
+
+    @pytest.mark.asyncio
+    async def test_vision_task_uses_vision_model_not_quality(self):
+        """Vision tasks should use OLLAMA_MODEL_VISION, not OLLAMA_MODEL_QUALITY."""
+        with patch("llm.router.call_ollama", new_callable=AsyncMock) as mock_ollama:
+            mock_ollama.return_value = '{"action": "scroll", "target": "down"}'
+
+            await call_llm(
+                "decision",
+                "Analyze this screenshot",
+                image_b64="base64_screenshot_data",
+            )
+
+            call_kwargs = mock_ollama.call_args[1]
+            # Should use vision model, not quality model
+            assert call_kwargs["model"] == "llava:latest"
+            assert call_kwargs["model"] != "llama3:8b"
+
+    @pytest.mark.asyncio
+    async def test_text_decision_uses_quality_model_on_fallback(self):
+        """Text-only decisions falling back to Ollama should use quality model."""
+        with patch("llm.router.call_groq", new_callable=AsyncMock) as mock_groq, \
+             patch("llm.router.call_ollama", new_callable=AsyncMock) as mock_ollama:
+            mock_groq.side_effect = Exception("API error")
+            mock_ollama.return_value = '{"action": "click", "target": [50, 50]}'
+
+            await call_llm("decision", "What should I click?")
+
+            call_kwargs = mock_ollama.call_args[1]
+            # Should use quality model for text fallback
+            assert call_kwargs["model"] == "llama3:8b"
+
+
+class TestVisionRouting:
+    """Test vision-specific routing behavior."""
+
+    @pytest.mark.asyncio
+    async def test_image_passed_to_ollama(self):
+        """Image data should be passed through to Ollama."""
+        with patch("llm.router.call_ollama", new_callable=AsyncMock) as mock_ollama:
+            mock_ollama.return_value = '{"action": "type", "target": "hello"}'
+            test_image = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+
+            await call_llm(
+                "decision",
+                "What text should I type?",
+                image_b64=test_image,
+            )
+
+            call_kwargs = mock_ollama.call_args[1]
+            assert call_kwargs["image_b64"] == test_image
+
+    @pytest.mark.asyncio
+    async def test_no_image_does_not_use_vision_model(self):
+        """Tasks without images should not use vision model."""
+        with patch("llm.router.call_groq", new_callable=AsyncMock) as mock_groq:
+            mock_groq.return_value = '{"action": "done"}'
+
+            await call_llm("decision", "Are we done?")
+
+            # Should try Groq first for text-only decisions
+            mock_groq.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_empty_image_string_treated_as_no_image(self):
+        """Empty image string should be treated as no image."""
+        with patch("llm.router.call_groq", new_callable=AsyncMock) as mock_groq:
+            mock_groq.return_value = '{"action": "scroll", "target": "up"}'
+
+            # Empty string should not trigger vision path
+            await call_llm(
+                "decision",
+                "Should I scroll?",
+                image_b64="",
+            )
+
+            # Empty string is falsy, so should use text path (Groq first)
+            mock_groq.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_none_image_treated_as_no_image(self):
+        """None image should be treated as no image."""
+        with patch("llm.router.call_groq", new_callable=AsyncMock) as mock_groq:
+            mock_groq.return_value = '{"action": "back"}'
+
+            await call_llm(
+                "decision",
+                "Should I go back?",
+                image_b64=None,
+            )
+
+            mock_groq.assert_called_once()

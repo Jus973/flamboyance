@@ -10,8 +10,9 @@ Set these before running with --llm mode:
 For local Ollama:
 
     export FLAMBOYANCE_OLLAMA_URL="http://localhost:11434"  # optional
-    export FLAMBOYANCE_OLLAMA_MODEL_FAST="llama3:8b"  # optional
-    export FLAMBOYANCE_OLLAMA_MODEL_QUALITY="llama3:70b"  # optional
+    export FLAMBOYANCE_OLLAMA_MODEL_FAST="llama3:8b"  # optional, for text tasks
+    export FLAMBOYANCE_OLLAMA_MODEL_QUALITY="llama3:8b"  # optional, for complex text
+    export FLAMBOYANCE_OLLAMA_MODEL_VISION="llava:latest"  # optional, for vision tasks
 
 Event detection thresholds:
 
@@ -40,7 +41,8 @@ LLM_MODEL: str = os.environ.get("FLAMBOYANCE_LLM_MODEL", "meta-llama/llama-4-sco
 # Ollama local model settings
 OLLAMA_BASE_URL: str = os.environ.get("FLAMBOYANCE_OLLAMA_URL", "http://localhost:11434")
 OLLAMA_MODEL_FAST: str = os.environ.get("FLAMBOYANCE_OLLAMA_MODEL_FAST", "llama3:8b")
-OLLAMA_MODEL_QUALITY: str = os.environ.get("FLAMBOYANCE_OLLAMA_MODEL_QUALITY", "llama3:70b")
+OLLAMA_MODEL_QUALITY: str = os.environ.get("FLAMBOYANCE_OLLAMA_MODEL_QUALITY", "llama3:8b")
+OLLAMA_MODEL_VISION: str = os.environ.get("FLAMBOYANCE_OLLAMA_MODEL_VISION", "llava:latest")
 OLLAMA_TIMEOUT_S: float = float(os.environ.get("FLAMBOYANCE_OLLAMA_TIMEOUT", "60.0"))
 
 MAX_LLM_CALLS_PER_SESSION: int = int(os.environ.get("FLAMBOYANCE_MAX_LLM_CALLS", "30"))

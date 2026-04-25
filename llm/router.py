@@ -14,6 +14,7 @@ from typing import Literal
 from agents.config import (
     OLLAMA_MODEL_FAST,
     OLLAMA_MODEL_QUALITY,
+    OLLAMA_MODEL_VISION,
 )
 
 from .groq import GroqRateLimitError, call_groq
@@ -123,8 +124,8 @@ async def _call_ollama_vision(
     system_prompt: str | None,
     temperature: float,
 ) -> str:
-    """Call Ollama with quality model for vision-based decisions."""
-    model = OLLAMA_MODEL_QUALITY
+    """Call Ollama with vision model for image-based decisions."""
+    model = OLLAMA_MODEL_VISION
 
     with timed_call(task_type, "ollama", model) as call_log:
         result = await call_ollama(
