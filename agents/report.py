@@ -18,6 +18,7 @@ SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
 SEVERITY_EMOJI = {"critical": "🔴", "high": "🟠", "medium": "🟡", "low": "🟢"}
 
 FIX_RECOMMENDATIONS: dict[str, str] = {
+    # Notice tier
     "slow_load": "Optimize page load performance: compress images, minify JS/CSS, enable caching, use lazy loading.",
     "dead_end": "Add navigation options or call-to-action buttons to this page.",
     "long_dwell": "Simplify the page content or add clearer guidance for user actions.",
@@ -25,8 +26,23 @@ FIX_RECOMMENDATIONS: dict[str, str] = {
     "js_error": "Fix the JavaScript error. Check the browser console for stack traces.",
     "broken_image": "Fix broken image src URLs or add appropriate fallback images.",
     "network_error": "Ensure API endpoints are available and returning correct responses.",
+    "error_message_visible": "Review error message clarity and ensure users understand how to resolve the issue.",
+    "accessibility_failure": "Add missing alt text, labels, or ARIA attributes. Ensure WCAG 2.1 AA compliance.",
+    "mobile_tap_target": "Increase tap target size to at least 44x44px. Fix horizontal scroll and viewport issues.",
+    "confusing_navigation": "Simplify navigation structure. Reduce breadcrumb depth and clarify CTAs.",
+    "modal_frustration": "Add clear dismiss buttons to modals. Avoid intrusive overlays on page load.",
+    "copy_paste_failure": "Remove user-select:none from content areas. Allow users to copy text.",
+    "infinite_scroll_trap": "Ensure footer is reachable. Consider pagination or 'load more' buttons.",
+    # Frustration tier
     "circular_navigation": "Improve navigation flow to prevent users from going in circles.",
     "rage_click": "Ensure the element responds to clicks or remove interactive affordances.",
+    "scroll_rage": "Review page layout and content organization. Users may be struggling to find information.",
+    "form_abandonment": "Simplify forms, add progress indicators, and save partial data to prevent loss.",
+    "session_timeout": "Extend session duration or warn users before timeout. Save form data automatically.",
+    "slow_interaction": "Optimize JavaScript and reduce DOM manipulation. Add loading indicators for slow actions.",
+    "search_frustration": "Improve search relevance, add suggestions, and provide helpful 'no results' messaging.",
+    "cart_abandonment": "Simplify checkout flow, show clear pricing, and offer guest checkout option.",
+    "back_button_abuse": "Review navigation flow. Users may be lost or unable to find what they need.",
     "unmet_goal": "Review the user flow for this goal and remove friction points.",
 }
 

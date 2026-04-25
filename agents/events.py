@@ -10,11 +10,25 @@ Notice tier (passive UX friction):
 5. **js_error** — JavaScript console errors detected on the page.
 6. **broken_image** — images that failed to load (404 or broken src).
 7. **network_error** — failed network requests (API errors, timeouts).
+8. **error_message_visible** — visible error states on the page.
+9. **accessibility_failure** — missing alt text, poor contrast, keyboard traps.
+10. **mobile_tap_target** — tap targets <44px, horizontal scroll, viewport issues.
+11. **confusing_navigation** — breadcrumb depth >4, unclear CTAs.
+12. **modal_frustration** — intrusive overlays, hard-to-dismiss modals.
+13. **copy_paste_failure** — disabled text selection on content.
+14. **infinite_scroll_trap** — can't reach footer, scroll position lost.
 
 Frustration tier (active user struggle):
-8. **Circular navigation** — visiting A → B → A in the URL history.
-9. **Rage clicks** — ≥3 clicks on the same non-interactive element within 1.5 s.
-10. **Unmet goal** — the agent's goal was not reached before timeout / give-up.
+15. **Circular navigation** — visiting A → B → A in the URL history.
+16. **Rage clicks** — ≥3 clicks on the same non-interactive element within 1.5 s.
+17. **scroll_rage** — rapid up/down scroll events (>5 direction changes in 3s).
+18. **form_abandonment** — form focus → page exit without submit.
+19. **session_timeout** — session expiry modals/redirects detected.
+20. **slow_interaction** — button click → DOM change latency >500ms.
+21. **search_frustration** — zero results, repeated searches, no feedback.
+22. **cart_abandonment** — cart page → exit without checkout.
+23. **back_button_abuse** — >3 back navigations in sequence.
+24. **Unmet goal** — the agent's goal was not reached before timeout / give-up.
 """
 
 from __future__ import annotations
@@ -37,6 +51,7 @@ class EventSeverity(Enum):
 
 
 EVENT_SEVERITY: dict[str, EventSeverity] = {
+    # Notice tier
     "slow_load": EventSeverity.MEDIUM,
     "dead_end": EventSeverity.HIGH,
     "long_dwell": EventSeverity.LOW,
@@ -44,8 +59,23 @@ EVENT_SEVERITY: dict[str, EventSeverity] = {
     "js_error": EventSeverity.HIGH,
     "broken_image": EventSeverity.MEDIUM,
     "network_error": EventSeverity.HIGH,
+    "error_message_visible": EventSeverity.MEDIUM,
+    "accessibility_failure": EventSeverity.HIGH,
+    "mobile_tap_target": EventSeverity.MEDIUM,
+    "confusing_navigation": EventSeverity.MEDIUM,
+    "modal_frustration": EventSeverity.MEDIUM,
+    "copy_paste_failure": EventSeverity.LOW,
+    "infinite_scroll_trap": EventSeverity.MEDIUM,
+    # Frustration tier
     "circular_navigation": EventSeverity.MEDIUM,
     "rage_click": EventSeverity.HIGH,
+    "scroll_rage": EventSeverity.MEDIUM,
+    "form_abandonment": EventSeverity.HIGH,
+    "session_timeout": EventSeverity.HIGH,
+    "slow_interaction": EventSeverity.MEDIUM,
+    "search_frustration": EventSeverity.MEDIUM,
+    "cart_abandonment": EventSeverity.HIGH,
+    "back_button_abuse": EventSeverity.MEDIUM,
     "unmet_goal": EventSeverity.CRITICAL,
 }
 
@@ -95,6 +125,12 @@ class EventDetector:
         self.click_log: list[tuple[float, str]] = []  # (timestamp, selector)
         self.events: list[FrustrationEvent] = []
         self.last_action_time: float = time.time()
+        # New tracking state for expanded friction patterns
+        self.scroll_log: list[tuple[float, str]] = []  # (timestamp, direction)
+        self.back_nav_count: int = 0  # Sequential back navigations
+        self.form_focus_url: str | None = None  # URL where form was focused
+        self.search_queries: list[str] = []  # Recent search queries
+        self.cart_visited: bool = False  # Whether cart page was visited
 
     @property
     def RAGE_CLICK_THRESHOLD(self) -> int:
@@ -115,6 +151,26 @@ class EventDetector:
     def LONG_DWELL_THRESHOLD_S(self) -> float:
         """Time without action threshold in seconds."""
         return self.thresholds.long_dwell_threshold_s
+
+    @property
+    def SCROLL_RAGE_THRESHOLD(self) -> int:
+        """Number of direction changes to trigger scroll rage."""
+        return self.thresholds.scroll_rage_direction_changes
+
+    @property
+    def SCROLL_RAGE_WINDOW_S(self) -> float:
+        """Time window for scroll rage detection in seconds."""
+        return self.thresholds.scroll_rage_window_s
+
+    @property
+    def SLOW_INTERACTION_THRESHOLD_MS(self) -> float:
+        """Click to DOM change latency threshold in milliseconds."""
+        return self.thresholds.slow_interaction_threshold_ms
+
+    @property
+    def BACK_BUTTON_ABUSE_THRESHOLD(self) -> int:
+        """Number of sequential back navigations to trigger abuse detection."""
+        return self.thresholds.back_button_abuse_threshold
 
     # ── Notice-tier detectors ──────────────────────────────────────────
 
@@ -353,6 +409,306 @@ class EventDetector:
             timestamp=time.time(),
             description=f"Unmet goal ({reason}): {goal}",
             details={"goal": goal, "reason": reason},
+        )
+        self.events.append(evt)
+        return evt
+
+    # ── New friction pattern detectors ────────────────────────────────────
+
+    def record_form_abandonment(
+        self, url: str, form_selector: str = ""
+    ) -> FrustrationEvent:
+        """Emit a *form_abandonment* event when user leaves page with focused form."""
+        evt = FrustrationEvent(
+            kind="form_abandonment",
+            timestamp=time.time(),
+            description=f"Form abandonment: user left page without submitting form",
+            url=url,
+            details={"form_selector": form_selector},
+        )
+        self.events.append(evt)
+        self.form_focus_url = None
+        return evt
+
+    def record_form_focus(self, url: str) -> None:
+        """Track that a form field was focused on this URL."""
+        self.form_focus_url = url
+
+    def check_form_abandonment(self, new_url: str) -> FrustrationEvent | None:
+        """Check if navigating away from a page with focused form."""
+        if self.form_focus_url and self.form_focus_url != new_url:
+            return self.record_form_abandonment(self.form_focus_url)
+        return None
+
+    def record_scroll_rage(
+        self, url: str, direction: str
+    ) -> FrustrationEvent | None:
+        """Record a scroll event; returns event if scroll rage detected.
+
+        Args:
+            url: Current page URL.
+            direction: "up" or "down".
+        """
+        now = time.time()
+        self.scroll_log.append((now, direction))
+
+        cutoff = now - self.SCROLL_RAGE_WINDOW_S
+        recent = [(t, d) for t, d in self.scroll_log if t >= cutoff]
+
+        # Count direction changes
+        direction_changes = 0
+        for i in range(1, len(recent)):
+            if recent[i][1] != recent[i - 1][1]:
+                direction_changes += 1
+
+        if direction_changes >= self.SCROLL_RAGE_THRESHOLD:
+            evt = FrustrationEvent(
+                kind="scroll_rage",
+                timestamp=now,
+                description=(
+                    f"Scroll rage: {direction_changes} direction changes "
+                    f"within {self.SCROLL_RAGE_WINDOW_S}s"
+                ),
+                url=url,
+                details={"direction_changes": direction_changes},
+            )
+            self.events.append(evt)
+            self.scroll_log = []  # Reset to avoid duplicate firing
+            return evt
+        return None
+
+    def record_error_message(
+        self, url: str, message: str, selector: str = ""
+    ) -> FrustrationEvent:
+        """Emit an *error_message_visible* event when error state is detected."""
+        evt = FrustrationEvent(
+            kind="error_message_visible",
+            timestamp=time.time(),
+            description=f"Error message visible: {message[:100]}",
+            url=url,
+            details={"message": message, "selector": selector},
+        )
+        self.events.append(evt)
+        return evt
+
+    def record_session_timeout(
+        self, url: str, reason: str = "session expired"
+    ) -> FrustrationEvent:
+        """Emit a *session_timeout* event when session expiry is detected."""
+        evt = FrustrationEvent(
+            kind="session_timeout",
+            timestamp=time.time(),
+            description=f"Session timeout: {reason}",
+            url=url,
+            details={"reason": reason},
+        )
+        self.events.append(evt)
+        return evt
+
+    def record_accessibility_failure(
+        self,
+        url: str,
+        issue_type: str,
+        element_selector: str = "",
+        details: dict[str, object] | None = None,
+    ) -> FrustrationEvent:
+        """Emit an *accessibility_failure* event.
+
+        Args:
+            url: Page URL.
+            issue_type: Type of issue (e.g., "missing_alt", "poor_contrast", "keyboard_trap").
+            element_selector: CSS selector for the problematic element.
+            details: Additional details about the issue.
+        """
+        evt = FrustrationEvent(
+            kind="accessibility_failure",
+            timestamp=time.time(),
+            description=f"Accessibility issue: {issue_type}",
+            url=url,
+            details={
+                "issue_type": issue_type,
+                "selector": element_selector,
+                **(details or {}),
+            },
+        )
+        self.events.append(evt)
+        return evt
+
+    def record_mobile_issue(
+        self,
+        url: str,
+        issue_type: str,
+        element_selector: str = "",
+        details: dict[str, object] | None = None,
+    ) -> FrustrationEvent:
+        """Emit a *mobile_tap_target* event for mobile UX issues.
+
+        Args:
+            url: Page URL.
+            issue_type: Type of issue (e.g., "small_tap_target", "horizontal_scroll", "viewport").
+            element_selector: CSS selector for the problematic element.
+            details: Additional details (e.g., actual size).
+        """
+        evt = FrustrationEvent(
+            kind="mobile_tap_target",
+            timestamp=time.time(),
+            description=f"Mobile issue: {issue_type}",
+            url=url,
+            details={
+                "issue_type": issue_type,
+                "selector": element_selector,
+                **(details or {}),
+            },
+        )
+        self.events.append(evt)
+        return evt
+
+    def record_slow_interaction(
+        self, url: str, latency_ms: float, action: str = "click"
+    ) -> FrustrationEvent | None:
+        """Emit a *slow_interaction* event if action latency exceeds threshold."""
+        if latency_ms <= self.SLOW_INTERACTION_THRESHOLD_MS:
+            return None
+        evt = FrustrationEvent(
+            kind="slow_interaction",
+            timestamp=time.time(),
+            description=(
+                f"Slow interaction: {action} took {latency_ms:.0f}ms "
+                f"(threshold {self.SLOW_INTERACTION_THRESHOLD_MS:.0f}ms)"
+            ),
+            url=url,
+            details={"latency_ms": latency_ms, "action": action},
+        )
+        self.events.append(evt)
+        return evt
+
+    def record_confusing_navigation(
+        self, url: str, reason: str, details: dict[str, object] | None = None
+    ) -> FrustrationEvent:
+        """Emit a *confusing_navigation* event for navigation UX issues."""
+        evt = FrustrationEvent(
+            kind="confusing_navigation",
+            timestamp=time.time(),
+            description=f"Confusing navigation: {reason}",
+            url=url,
+            details={"reason": reason, **(details or {})},
+        )
+        self.events.append(evt)
+        return evt
+
+    def record_modal_frustration(
+        self, url: str, modal_type: str, selector: str = ""
+    ) -> FrustrationEvent:
+        """Emit a *modal_frustration* event for intrusive modals."""
+        evt = FrustrationEvent(
+            kind="modal_frustration",
+            timestamp=time.time(),
+            description=f"Modal frustration: {modal_type}",
+            url=url,
+            details={"modal_type": modal_type, "selector": selector},
+        )
+        self.events.append(evt)
+        return evt
+
+    def record_search_frustration(
+        self, url: str, reason: str, query: str = ""
+    ) -> FrustrationEvent:
+        """Emit a *search_frustration* event for search UX issues."""
+        if query:
+            self.search_queries.append(query)
+        evt = FrustrationEvent(
+            kind="search_frustration",
+            timestamp=time.time(),
+            description=f"Search frustration: {reason}",
+            url=url,
+            details={"reason": reason, "query": query, "recent_queries": self.search_queries[-5:]},
+        )
+        self.events.append(evt)
+        return evt
+
+    def record_cart_abandonment(self, url: str) -> FrustrationEvent:
+        """Emit a *cart_abandonment* event when user leaves cart without checkout."""
+        evt = FrustrationEvent(
+            kind="cart_abandonment",
+            timestamp=time.time(),
+            description="Cart abandonment: user left cart page without completing checkout",
+            url=url,
+            details={},
+        )
+        self.events.append(evt)
+        self.cart_visited = False
+        return evt
+
+    def record_cart_visit(self) -> None:
+        """Track that the cart page was visited."""
+        self.cart_visited = True
+
+    def check_cart_abandonment(self, new_url: str) -> FrustrationEvent | None:
+        """Check if leaving cart page without checkout."""
+        if self.cart_visited and not self._is_checkout_url(new_url):
+            # Only trigger if not going to checkout
+            if not self._is_cart_url(new_url):
+                return self.record_cart_abandonment(new_url)
+        return None
+
+    def _is_cart_url(self, url: str) -> bool:
+        """Check if URL appears to be a cart page."""
+        cart_patterns = ["cart", "basket", "bag", "shopping-cart"]
+        url_lower = url.lower()
+        return any(p in url_lower for p in cart_patterns)
+
+    def _is_checkout_url(self, url: str) -> bool:
+        """Check if URL appears to be a checkout page."""
+        checkout_patterns = ["checkout", "payment", "order", "purchase", "pay"]
+        url_lower = url.lower()
+        return any(p in url_lower for p in checkout_patterns)
+
+    def record_back_button(self, url: str) -> FrustrationEvent | None:
+        """Record a back navigation; returns event if abuse detected."""
+        self.back_nav_count += 1
+        if self.back_nav_count >= self.BACK_BUTTON_ABUSE_THRESHOLD:
+            evt = FrustrationEvent(
+                kind="back_button_abuse",
+                timestamp=time.time(),
+                description=(
+                    f"Back button abuse: {self.back_nav_count} sequential back navigations"
+                ),
+                url=url,
+                details={"count": self.back_nav_count},
+            )
+            self.events.append(evt)
+            self.back_nav_count = 0  # Reset
+            return evt
+        return None
+
+    def reset_back_button_count(self) -> None:
+        """Reset back button counter (call on forward navigation)."""
+        self.back_nav_count = 0
+
+    def record_copy_paste_failure(
+        self, url: str, selector: str = ""
+    ) -> FrustrationEvent:
+        """Emit a *copy_paste_failure* event when text selection is blocked."""
+        evt = FrustrationEvent(
+            kind="copy_paste_failure",
+            timestamp=time.time(),
+            description="Copy/paste blocked: text selection disabled on content",
+            url=url,
+            details={"selector": selector},
+        )
+        self.events.append(evt)
+        return evt
+
+    def record_infinite_scroll_trap(
+        self, url: str, reason: str = "footer unreachable"
+    ) -> FrustrationEvent:
+        """Emit an *infinite_scroll_trap* event."""
+        evt = FrustrationEvent(
+            kind="infinite_scroll_trap",
+            timestamp=time.time(),
+            description=f"Infinite scroll trap: {reason}",
+            url=url,
+            details={"reason": reason},
         )
         self.events.append(evt)
         return evt

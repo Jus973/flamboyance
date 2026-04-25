@@ -36,6 +36,9 @@ class PersonaSchema(BaseModel):
     max_actions: int = Field(default=50, ge=1)
     viewport: tuple[int, int] = Field(default=(1280, 720))
     prefers_visible_text: bool = False
+    focus_areas: list[str] = Field(default_factory=list)
+    frustration_triggers: list[str] = Field(default_factory=list)
+    detection_weights: dict[str, float] = Field(default_factory=dict)
 
     @field_validator("viewport", mode="before")
     @classmethod
@@ -46,6 +49,15 @@ class PersonaSchema(BaseModel):
                 raise ValueError("viewport dimensions must be >= 1")
             return (int(w), int(h))
         raise ValueError("viewport must be [width, height]")
+
+    @field_validator("detection_weights", mode="before")
+    @classmethod
+    def coerce_detection_weights(cls, v: Any) -> dict[str, float]:
+        if isinstance(v, dict):
+            return {str(k): float(val) for k, val in v.items()}
+        if isinstance(v, list):
+            return {str(item[0]): float(item[1]) for item in v}
+        raise ValueError("detection_weights must be a dict or list of [key, value] pairs")
 
     def to_persona(self) -> Persona:
         return Persona(
@@ -58,6 +70,9 @@ class PersonaSchema(BaseModel):
             max_actions=self.max_actions,
             viewport=self.viewport,
             prefers_visible_text=self.prefers_visible_text,
+            focus_areas=tuple(self.focus_areas),
+            frustration_triggers=tuple(self.frustration_triggers),
+            detection_weights=tuple(self.detection_weights.items()),
         )
 
 
