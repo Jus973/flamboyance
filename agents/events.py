@@ -91,6 +91,7 @@ class EventDetector:
             details={"dwell_seconds": dwell_s},
         )
         self.events.append(evt)
+        self.touch()
         return evt
 
     def touch(self) -> None:

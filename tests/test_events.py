@@ -160,3 +160,12 @@ class TestLongDwell:
         with patch("agents.events.time.time", return_value=old_time + 5):
             d.touch()
         assert d.last_action_time == old_time + 5
+
+    def test_long_dwell_resets_timer_after_firing(self) -> None:
+        d = EventDetector()
+        evt = d.record_long_dwell("http://example.com", 15.0)
+        assert evt is not None
+        # After firing, the timer should be reset so the next check
+        # does not immediately re-fire (prevents duplicate flooding).
+        dwell_since_reset = time.time() - d.last_action_time
+        assert dwell_since_reset < 1.0
