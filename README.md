@@ -1,5 +1,7 @@
 # Flamboyance
 
+![Flamboyance Banner](banner%20picture.png)
+
 **Playwright-driven synthetic personas** that browse a web app, record UX friction, and expose tools via **MCP** plus a **VS Code / Windsurf** sidebar.
 
 ```
@@ -16,12 +18,77 @@
 | Path | Purpose |
 | --- | --- |
 | `agents/` | Personas, `runner_local`, `runner_mutation`, single-agent `agent` module, event detection, Markdown reports. |
-| `mcp/` | `python -m mcp` — FastMCP server (`run_simulation`, `get_live_feed`, `get_report`, `stop_simulation`, `run_mutation_test_tool`). |
+| `flamboyance_mcp/` | `python -m flamboyance_mcp` — FastMCP server (`run_simulation`, `get_live_feed`, `get_report`, `stop_simulation`, `run_mutation_test_tool`). |
 | `extension/` | TypeScript VS Code extension ("UX Friction Monitor"). |
 | `docker/` | `Dockerfile.agent` + `docker-compose.yml` for containerized agents / MCP HTTP. |
 | `tests/` | `pytest` for agent report/persona/events. |
 
 **Python dependencies** are declared in [`pyproject.toml`](./pyproject.toml) (`playwright`, `mcp[cli]`, `pydantic`). **`requirements.txt`** only points at that file.
+
+---
+
+## How It Works
+
+```mermaid
+flowchart TD
+    subgraph Input
+        A[Target URL] --> B[Runner]
+        C[Personas<br/>built-in or custom JSON] --> B
+        D[CLI Flags<br/>--llm, --parallel, etc.] --> B
+    end
+
+    subgraph Runner ["runner_local.py"]
+        B --> E{Execution Mode}
+        E -->|Sequential| F[Run agents one-by-one]
+        E -->|Parallel| G[Run all agents concurrently]
+        E -->|Batched| H[Run N agents at a time]
+    end
+
+    subgraph Agent ["agent.py - Per Persona"]
+        F & G & H --> I[Launch Playwright Browser]
+        I --> J[Navigate to URL]
+        J --> K{Navigation Mode}
+        K -->|Heuristic| L[Random click exploration]
+        K -->|LLM Vision| M[Screenshot → LLM → Action]
+        L & M --> N[EventDetector]
+    end
+
+    subgraph Detection ["events.py"]
+        N --> O[Detect Friction Events]
+        O --> P[rage_click]
+        O --> Q[slow_load]
+        O --> R[dead_end]
+        O --> S[broken_image]
+        O --> T[js_error / network_error]
+        O --> U[long_dwell / scroll_rage]
+    end
+
+    subgraph Output
+        P & Q & R & S & T & U --> V[AgentResult]
+        V --> W[generate_report]
+        W --> X[Markdown Report<br/>with screenshots]
+    end
+
+    subgraph MCP ["MCP Server"]
+        Y[run_simulation] --> B
+        Z[get_live_feed] --> B
+        AA[get_report] --> W
+        AB[stop_simulation] --> B
+    end
+
+    subgraph Extension ["VS Code / Windsurf"]
+        AC[Sidebar UI] --> Y & Z & AA & AB
+    end
+```
+
+### Flow Summary
+
+1. **Input** — User provides a target URL, selects personas (or uses defaults), and sets execution options
+2. **Runner** — `runner_local.py` orchestrates execution (sequential, parallel, or batched)
+3. **Agent** — Each persona launches a Playwright browser and navigates using heuristics or LLM vision
+4. **Detection** — `EventDetector` monitors for UX friction patterns (rage clicks, slow loads, dead ends, etc.)
+5. **Output** — Results are aggregated into a Markdown report with annotated screenshots
+6. **MCP/Extension** — Tools exposed via MCP for IDE integration (Cascade, sidebar)
 
 ---
 
@@ -96,10 +163,32 @@ python -m agents.agent --url http://localhost:5173 --persona frustrated_exec --l
 
 ### MCP Server
 
+The MCP server exposes Flamboyance tools to AI assistants (Cascade, Claude, etc.) via the Model Context Protocol.
+
+**Prerequisites:**
 ```bash
-python -m mcp.server              # stdio (e.g. Cascade)
-python -m mcp.server --http --port 8765   # HTTP for the extension sidebar
+cd flamboyance
+pip install -e .
 ```
+
+**Start the server:**
+```bash
+# Stdio transport (for Cascade / AI assistants)
+python -m mcp.server
+
+# HTTP transport (for extension sidebar or remote access)
+python -m mcp.server --http
+python -m mcp.server --http --port 9000  # custom port
+```
+
+**Available tools:**
+| Tool | Description |
+|------|-------------|
+| `run_simulation` | Start UX friction test against a URL |
+| `get_live_feed` | Poll real-time agent status |
+| `get_report` | Generate Markdown friction report |
+| `stop_simulation` | Cancel a running simulation |
+| `run_mutation_test_tool` | Test with UI mutations (hidden/disabled elements) |
 
 ## VS Code / Windsurf Extension
 

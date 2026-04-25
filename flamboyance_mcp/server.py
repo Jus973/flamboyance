@@ -30,10 +30,15 @@ from mcp.server.fastmcp import FastMCP
 
 log = logging.getLogger(__name__)
 
-mcp = FastMCP(
-    "Flamboyance UX-Friction",
-    description="Spawn synthetic browser agents to detect UX friction in web apps.",
-)
+def create_mcp(host: str = "127.0.0.1", port: int = 8765) -> FastMCP:
+    return FastMCP(
+        "Flamboyance UX-Friction",
+        instructions="Spawn synthetic browser agents to detect UX friction in web apps.",
+        host=host,
+        port=port,
+    )
+
+mcp = create_mcp()
 
 # Background tasks keyed by run_id so we can cancel them.
 _tasks: dict[str, asyncio.Task[RunState]] = {}
@@ -275,10 +280,14 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Flamboyance MCP Server")
     parser.add_argument("--http", action="store_true", help="Run HTTP transport on port 8765")
     parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument("--host", type=str, default="0.0.0.0")
     args = parser.parse_args()
 
     if args.http:
-        mcp.run(transport="streamable-http", host="0.0.0.0", port=args.port)
+        # Reconfigure the module-level mcp instance for HTTP
+        mcp._host = args.host
+        mcp._port = args.port
+        mcp.run(transport="streamable-http")
     else:
         mcp.run(transport="stdio")
 
