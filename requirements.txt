@@ -1,5 +1,6 @@
-# Runtime dependencies (intentionally minimal — pure stdlib orchestrator).
-
-# Optional development dependencies:
-# pytest>=7
-# pytest-asyncio>=0.23
+# Python dependencies live in pyproject.toml.
+#
+#   pip install -e .
+#   pip install -e ".[dev]"    # pytest, pytest-asyncio
+#
+# The VS Code extension under extension/ uses npm; see extension/package.json.

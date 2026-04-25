@@ -1,123 +1,142 @@
 # Flamboyance
 
-A Spark-style **master / worker / reducer** orchestrator for parallelizing
-LLM coding tasks against a single git repo. Built on `asyncio` and
-`git worktree`, with an optional **Groq** backend (Llama 3.3 70B) for real
-LLM calls.
+This repository is a **monorepo** with two related tracks:
 
-The design follows [`orchestrator_spec.md`](./orchestrator_spec.md):
+1. **Parallel coding orchestrator** (`orchestrator/`) — Spark-style master / worker / reducer over **git worktrees** and **asyncio**, with optional **Groq** (Llama 3.3 70B). Spec: [`orchestrator_spec.md`](./orchestrator_spec.md).
+2. **UX friction agents** (`agents/`, `mcp/`, `extension/`, `docker/`) — **Playwright**-driven synthetic personas that browse a web app, record friction, and expose tools via **MCP** plus a **VS Code** sidebar.
 
 ```
-                  ┌──────────────────────────────────────┐
-                  │            Master (Driver)           │
-                  │  scan → build DAG → check deps       │
-                  └──────────────┬───────────────────────┘
-                                 │ asyncio.gather
-            ┌────────────────────┼────────────────────┐
-            ▼                    ▼                    ▼
-   ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
-   │ Worktree A      │  │ Worktree B      │  │ Worktree C      │
-   │ Worker (LLM)    │  │ Worker (LLM)    │  │ Worker (LLM)    │
-   │ files_to_edit ⊂ │  │ files_to_edit ⊂ │  │ files_to_edit ⊂ │
-   │ context_files   │  │ context_files   │  │ context_files   │
-   └────────┬────────┘  └────────┬────────┘  └────────┬────────┘
-            └────────────────────┼────────────────────┘
-                                 ▼
-                    ┌─────────────────────────────┐
-                    │      Reducer (Integrator)   │
-                    │  merge --no-ff each branch  │
-                    │  auto-resolve safe hunks    │
-                    └─────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│  orchestrator/     git worktrees · context mapper · merge back  │
+├─────────────────────────────────────────────────────────────────┤
+│  agents/           Playwright personas · local runner · reports   │
+│  mcp/              FastMCP tools (stdio or HTTP)                  │
+│  extension/        VS Code webview + MCP client                  │
+│  docker/           Agent + MCP images (compose)                   │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-## Components
+## Layout
 
-| Module | Role |
+| Path | Purpose |
 | --- | --- |
-| `orchestrator/master.py` | Asyncio driver. Plans → Prepares → Executes → Reduces. |
-| `orchestrator/worktree.py` | Async wrapper around `git worktree` for parallel isolation. |
-| `orchestrator/context_mapper.py` | AST-based import graph + per-task minimum context set. |
-| `orchestrator/worker.py` | Worker loop + `LLMClient` protocol; §4 sandbox enforcement. |
-| `orchestrator/groq_llm.py` | Groq Chat Completions client (`llama-3.3-70b-versatile`). |
-| `orchestrator/reducer.py` | Merges branches; auto-resolves disjoint additive conflicts. |
-| `orchestrator/cli.py` | `discover`, `prepare`, `run`, `clean` subcommands. |
+| `orchestrator/` | CLI (`flamboyance`), master, worktrees, context mapper, worker + Groq, reducer. |
+| `agents/` | Personas, `runner_local`, single-agent `agent` module, event detection, Markdown reports. |
+| `mcp/` | `python -m mcp` — FastMCP server (`run_simulation`, `get_live_feed`, `get_report`, `stop_simulation`). |
+| `extension/` | TypeScript VS Code extension (“UX Friction Monitor”). |
+| `docker/` | `Dockerfile.agent` + `docker-compose.yml` for containerized agents / MCP HTTP. |
+| `examples/` | `sample_project/` (Python demo repo) and `smoke_test.sh` for the orchestrator. |
+| `tests/` | `pytest` for orchestrator helpers + agent report/persona/events. |
 
-## Install
+**Python dependencies** are declared in [`pyproject.toml`](./pyproject.toml) (`groq`, `playwright`, `mcp[cli]`, `pydantic`). **`requirements.txt`** only points at that file.
+
+---
+
+## 1. Parallel coding orchestrator
+
+High-level flow (see diagram in [`orchestrator_spec.md`](./orchestrator_spec.md)):
+
+- **Master** scans Python files, builds an import graph, finds refactor tasks (`# REFACTOR:` / `# TASK:` markers or fallbacks), and keeps only **independent** tasks (disjoint files, no import edge between edit sets).
+- **Workers** run in separate **git worktrees**; each receives `files_to_edit`, `context_files`, and an instruction. Edits outside the allowlist are rejected.
+- **Reducer** merges worker branches into the trunk with `git merge --no-ff` and **limited** programmatic conflict resolution.
+
+**Spec note:** the spec calls for a global linter/test step after merge; the current **reducer does not run** those commands — run your own CI or local `pytest` / `npm test` after a run.
+
+### Install
 
 ```bash
 git clone <this-repo>
 cd flamboyance
 python3 -m pip install -e .
-# or, without install:
+# or without install:
 PYTHONPATH=. python3 -m orchestrator --help
 ```
 
-## CLI
+### CLI
 
 ```bash
-# Print 3 independent refactor tasks the mapper finds in ./my-repo
 flamboyance --root ./my-repo discover -n 3
-
-# Just create the 3 worktrees and the per-task JSON manifests, then exit
 flamboyance --root ./my-repo prepare -n 3 --keep
-
-# Full pipeline: plan → 3 parallel worktrees → 3 parallel mock-LLM workers → reduce
 flamboyance --root ./my-repo run -n 3 --output report.json
 
-# Same pipeline with Groq (Llama 3.3 70B). Key must be in the environment only:
-export GROQ_API_KEY="gsk_..."   # never commit; rotate if exposed
+export GROQ_API_KEY="your-key-here"   # never commit; rotate if exposed
 flamboyance --root ./my-repo run -n 3 --llm groq --output report.json
-
-# Optional: override the default model id
 flamboyance --root ./my-repo run --llm groq --groq-model llama-3.3-70b-versatile
 
-# Tear down every flamboyance/* worktree git knows about in the repo
 flamboyance --root ./my-repo clean
 ```
 
-## End-to-end smoke test
+### Orchestrator smoke test
 
 ```bash
 ./examples/smoke_test.sh
 ```
 
-This stages the demo project under `examples/sample_project/` (which contains
-three `# REFACTOR:`-marked, mutually-independent modules) into a fresh tmp
-git repo and runs the full pipeline. You should see three commits land on
-`main`, one per Worker.
+Copies `examples/sample_project/` into a temp git repo and runs **mock** workers (default). Expect three worker commits merged into `main` when independence holds.
 
-## How "minimum context" works
+### Minimum context & independence
 
-`ContextMapper.context_for(graph, files_to_edit)` returns the smallest set of
-files a Worker needs to safely edit `files_to_edit`. It is the union of:
+- **Context:** direct importers + direct imports of edited files, plus a small “shared core” set (directory hints + high in-degree modules), capped (~12 files).
+- **Independence:** `ContextMapper.select_independent` enforces disjoint `files_to_edit` and **no Python import edge** between tasks (see spec §4).
 
-1. **Direct importers** of any edited file — so the LLM sees how its symbols
-   are called and won't break callsites.
-2. **Direct imports** of any edited file — so the LLM doesn't invent
-   signatures that don't exist.
-3. **Shared core context** — files in `types/`, `models/`, `schemas/`, etc.,
-   *or* highly-imported across the repo (top-N by in-degree).
+### Custom LLM
 
-The result is capped (default 12 files) so the prompt stays small.
+Implement `orchestrator.worker.LLMClient` and pass `Orchestrator(repo_root, llm=YourClient())`. **Groq** is implemented in `orchestrator/groq_llm.py` (JSON object mode; full file contents per path).
 
-## Independence guarantee (spec §4)
+---
 
-`ContextMapper.select_independent` picks a maximal set of candidates whose
-`files_to_edit` are (a) pairwise disjoint and (b) connected by no import
-edge. Anything else is dropped from the parallel batch — the Master refuses
-to race overlapping work.
+## 2. UX friction agents
 
-## Plugging in a real LLM
+Synthetic browser “personas” probe a URL (timeouts, dead ends, unmet goals) and emit a Markdown report.
 
-**Groq (built-in):** set `GROQ_API_KEY` and run with `--llm groq`. The client
-lives in `orchestrator/groq_llm.py`; it requests JSON object mode and must
-return every path in `files_to_edit` with full new file contents.
+### Local runner (sequential)
 
-**Custom provider:** `worker.LLMClient` is a `Protocol`. Implement:
-
-```python
-async def edit(self, *, task, worktree_root, file_contents, context_contents) -> dict[str, str]: ...
+```bash
+python -m agents.runner_local --url http://localhost:3000
 ```
 
-…and pass it to `Orchestrator(repo_root, llm=YourClient())`. The Worker
-sandbox will still reject any file outside `task.files_to_edit`.
+### Single agent (one persona)
+
+```bash
+python -m agents.agent --url http://localhost:3000 --persona frustrated_exec
+```
+
+### MCP server
+
+```bash
+python -m mcp.server              # stdio (e.g. Cascade)
+python -m mcp.server --http --port 8765   # HTTP for the extension sidebar
+```
+
+### VS Code extension
+
+```bash
+cd extension
+npm install
+npm run compile
+# Load the folder in VS Code; use “Run Simulation” from the command palette.
+```
+
+### Docker
+
+From `docker/`:
+
+```bash
+TARGET_URL=http://host.docker.internal:3000 docker compose up
+```
+
+Build context must include `orchestrator/`, `agents/`, and `mcp/` (see `Dockerfile.agent`). Compose defines several agent services plus an `mcp-server` on port **8765**.
+
+---
+
+## Testing
+
+```bash
+python3 -m pip install -e ".[dev]"
+PYTHONPATH=. python3 -m pytest tests/ -q
+```
+
+- **Orchestrator:** reducer merge helpers, context independence, worker sandbox, Groq JSON parsing.
+- **Agents:** report shape, persona/events helpers (`tests/test_report.py`, `tests/test_persona.py`, `tests/test_events.py`).
+
+End-to-end orchestration without API keys: `./examples/smoke_test.sh` (mock LLM). With Groq, set `GROQ_API_KEY` and add `--llm groq` to a `run` invocation against your own git repo.

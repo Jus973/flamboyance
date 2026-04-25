@@ -9,12 +9,14 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-COPY pyproject.toml requirements.txt ./
-RUN pip install --no-cache-dir -e ".[dev]" && \
-    playwright install --with-deps chromium
-
+# setuptools needs package sources on disk before editable install.
+COPY pyproject.toml ./
+COPY orchestrator/ orchestrator/
 COPY agents/ agents/
 COPY mcp/ mcp/
+
+RUN pip install --no-cache-dir -e ".[dev]" && \
+    playwright install --with-deps chromium
 
 ENV PYTHONUNBUFFERED=1
 
