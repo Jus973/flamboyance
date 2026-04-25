@@ -44,6 +44,7 @@ async def run_simulation(
     personas: list[str] | None = None,
     mode: str = "local",
     timeout: int = 60,
+    personas_file: str | None = None,
 ) -> dict[str, Any]:
     """Start a UX-friction simulation against *url*.
 
@@ -52,6 +53,7 @@ async def run_simulation(
         personas: List of persona names (default: all built-in personas).
         mode: Execution mode — ``"local"`` (sequential) or ``"docker"`` (parallel).
         timeout: Per-agent timeout in seconds.
+        personas_file: Optional path to a JSON file with custom persona definitions.
 
     Returns:
         ``{"run_id": "<uuid>"}``
@@ -62,7 +64,13 @@ async def run_simulation(
         log.info("Docker mode requested — delegating to local for now (run %s)", run_id)
 
     task = asyncio.create_task(
-        run_local(url, personas, timeout_s=float(timeout), run_id=run_id)
+        run_local(
+            url,
+            personas,
+            timeout_s=float(timeout),
+            run_id=run_id,
+            personas_file=personas_file,
+        )
     )
     _tasks[run_id] = task
 

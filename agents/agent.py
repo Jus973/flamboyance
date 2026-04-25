@@ -49,9 +49,17 @@ async def run_agent(
     *,
     timeout_s: float = 60.0,
     headless: bool = True,
-    max_actions: int = 50,
+    max_actions: int | None = None,
 ) -> AgentResult:
-    """Launch a Playwright browser and simulate the persona navigating *url*."""
+    """Launch a Playwright browser and simulate the persona navigating *url*.
+
+    Args:
+        url: Target URL to navigate.
+        persona: Persona controlling behavior (timeouts, viewport, action limits).
+        timeout_s: Overall session timeout in seconds.
+        headless: Run browser without visible UI.
+        max_actions: Override persona.max_actions if specified.
+    """
     try:
         from playwright.async_api import async_playwright
     except ImportError:
@@ -68,12 +76,13 @@ async def run_agent(
     result = AgentResult(persona=persona.name, status="done")
 
     timeout_ms = persona.page_load_timeout_ms
+    effective_max_actions = max_actions if max_actions is not None else persona.max_actions
 
     try:
         async with async_playwright() as pw:
             browser = await pw.chromium.launch(headless=headless)
             context = await browser.new_context(
-                viewport={"width": 1280, "height": 720}
+                viewport={"width": persona.viewport[0], "height": persona.viewport[1]}
             )
             page = await context.new_page()
             page.set_default_timeout(timeout_ms)
@@ -93,12 +102,12 @@ async def run_agent(
             actions_taken = 0
             gave_up = False
 
-            while actions_taken < max_actions:
+            while actions_taken < effective_max_actions:
                 elapsed = time.monotonic() - start
                 if elapsed >= timeout_s:
                     break
 
-                if persona.gives_up_early and elapsed > timeout_s * 0.4:
+                if persona.gives_up_early and elapsed > timeout_s * persona.early_exit_fraction:
                     gave_up = True
                     result.status = "gave_up"
                     break
@@ -199,12 +208,17 @@ async def _find_clickables(
                 continue
 
         selector = f"{tag}:nth-of-type({i + 1})"
+        text = ""
         try:
-            text = (await el.inner_text())[:40]
-            if text.strip():
-                selector = f"{tag}:has-text('{text.strip()}')"
+            text = (await el.inner_text())[:40].strip()
+            if text:
+                selector = f"{tag}:has-text('{text}')"
         except Exception:
             pass
+
+        # Personas who prefer visible text skip icon-only / unlabeled controls.
+        if persona.prefers_visible_text and not text:
+            continue
 
         elements.append({"selector": selector, "interactive": interactive})
 

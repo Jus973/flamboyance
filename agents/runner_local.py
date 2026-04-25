@@ -25,7 +25,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from .agent import AgentResult, run_agent
-from .persona import Persona, resolve_personas
+from .persona import DEFAULT_PERSONAS, Persona, resolve_personas
+from .persona_loader import load_personas_file, merge_personas
 from .report import generate_report
 
 log = logging.getLogger(__name__)
@@ -67,9 +68,31 @@ async def run_local(
     timeout_s: float = 60.0,
     headless: bool = True,
     run_id: str | None = None,
+    personas_file: str | Path | None = None,
 ) -> RunState:
-    """Run agents sequentially and return the completed RunState."""
-    personas = resolve_personas(persona_names)
+    """Run agents sequentially and return the completed RunState.
+
+    Args:
+        url: Target URL to test.
+        persona_names: Names of personas to run (None = all available).
+        timeout_s: Per-agent session timeout.
+        headless: Run browser without visible UI.
+        run_id: Optional run identifier (generated if not provided).
+        personas_file: Optional JSON file with custom persona definitions.
+    """
+    available = dict(DEFAULT_PERSONAS)
+    if personas_file:
+        custom = load_personas_file(personas_file)
+        available = merge_personas(custom, base=available, custom_overrides=True)
+
+    if persona_names:
+        personas = []
+        for name in persona_names:
+            if name not in available:
+                raise ValueError(f"Unknown persona {name!r}. Available: {sorted(available)}")
+            personas.append(available[name])
+    else:
+        personas = list(available.values())
     rid = run_id or str(uuid.uuid4())
     state = RunState(run_id=rid, url=url, personas=personas, status="running")
     _runs[rid] = state
@@ -111,6 +134,12 @@ def main() -> None:
     parser.add_argument(
         "--personas", nargs="*", default=None, help="Persona names (default: all)"
     )
+    parser.add_argument(
+        "--personas-file",
+        type=Path,
+        default=None,
+        help="JSON file with custom persona definitions",
+    )
     parser.add_argument("--timeout", type=float, default=60.0)
     parser.add_argument("--headless", action="store_true", default=True)
     parser.add_argument("--no-headless", dest="headless", action="store_false")
@@ -123,6 +152,7 @@ def main() -> None:
             args.personas,
             timeout_s=args.timeout,
             headless=args.headless,
+            personas_file=args.personas_file,
         )
     )
 
