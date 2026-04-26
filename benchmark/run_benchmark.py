@@ -77,13 +77,13 @@ def stop_app(proc: subprocess.Popen) -> None:
 
 async def run_flamboyance(url: str, timeout: int = 60) -> dict:
     """Run Flamboyance against a URL and return results."""
-    from agents.runner_local import run_local, RunState
+    from agents.runner_local import run_local
     
     run_id = f"benchmark-{int(time.time())}"
     
     state = await run_local(
         url,
-        personas=None,  # Use all personas
+        persona_names=None,  # Use all personas
         timeout_s=timeout,
         run_id=run_id,
         llm_mode=True,

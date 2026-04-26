@@ -393,3 +393,40 @@ python3 -m pytest tests/ -v
 ```
 
 Tests cover report shape, persona validation, frustration event detection, custom persona loading, and mutation scenarios (`tests/test_report.py`, `tests/test_persona.py`, `tests/test_events.py`, `tests/test_persona_loader.py`, `tests/test_mutations.py`).
+
+---
+
+## Benchmarking
+
+The `benchmark/` directory contains a reproducible benchmark suite for measuring UX friction detection accuracy.
+
+### Quick Start
+
+```bash
+# List available test apps
+python -m benchmark.run_benchmark --list
+
+# Run benchmark against all test apps
+python -m benchmark.run_benchmark
+
+# Run against a specific app
+python -m benchmark.run_benchmark --app buggy-checkout
+
+# Analyze results
+python -m benchmark.analyze
+```
+
+### Test Apps
+
+| App | Port | Issues | Description |
+|-----|------|--------|-------------|
+| `buggy-checkout` | 5180 | 8 | E-commerce checkout with broken flows |
+| `confusing-signup` | 5181 | 12 | Multi-step registration with dead ends |
+
+### Metrics
+
+- **Precision**: % of reported issues that are real problems
+- **Recall**: % of known issues that the tool detects
+- **F1 Score**: Harmonic mean of precision/recall
+
+See [`benchmark/README.md`](./benchmark/README.md) for full methodology.

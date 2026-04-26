@@ -1,0 +1,117 @@
+{
+  "app": "confusing-signup",
+  "port": 5181,
+  "annotator": "benchmark-suite",
+  "date": "2026-04-25",
+  "description": "Multi-step registration form with confusing UX patterns",
+  "issues": [
+    {
+      "id": "cs-001",
+      "type": "form_error",
+      "severity": "high",
+      "url_pattern": "/",
+      "description": "Password requirements only shown AFTER validation error, not before user types",
+      "selector": ".password-requirements",
+      "keywords": ["password", "requirements", "after", "error", "validation"]
+    },
+    {
+      "id": "cs-002",
+      "type": "form_error",
+      "severity": "medium",
+      "url_pattern": "/",
+      "description": "Error input border color (#ffcccc) is too similar to normal state - hard to see",
+      "selector": "input.error",
+      "keywords": ["error", "border", "contrast", "similar", "hard to see"]
+    },
+    {
+      "id": "cs-003",
+      "type": "form_error",
+      "severity": "high",
+      "url_pattern": "/",
+      "description": "Phone number validation is overly strict with no format hint shown to user",
+      "selector": "input[name='phone']",
+      "keywords": ["phone", "validation", "format", "strict", "no hint"]
+    },
+    {
+      "id": "cs-004",
+      "type": "dead_end",
+      "severity": "critical",
+      "url_pattern": "/",
+      "description": "Captcha is impossible to solve - distorted text cannot be read accurately",
+      "selector": ".captcha-image",
+      "keywords": ["captcha", "impossible", "distorted", "cannot", "solve"]
+    },
+    {
+      "id": "cs-005",
+      "type": "dead_end",
+      "severity": "critical",
+      "url_pattern": "/",
+      "description": "Error modal cannot be closed - no working close button or dismiss action",
+      "selector": ".modal-overlay",
+      "keywords": ["modal", "cannot close", "stuck", "no dismiss", "trapped"]
+    },
+    {
+      "id": "cs-006",
+      "type": "misleading_affordance",
+      "severity": "medium",
+      "url_pattern": "/",
+      "description": "Terms and Privacy links look like disabled text (gray color) instead of clickable links",
+      "selector": ".terms-link",
+      "keywords": ["terms", "privacy", "link", "gray", "disabled", "not clickable"]
+    },
+    {
+      "id": "cs-007",
+      "type": "dead_end",
+      "severity": "high",
+      "url_pattern": "/terms",
+      "description": "Terms of Service page shows infinite loading spinner - content never loads",
+      "selector": ".loading-spinner",
+      "keywords": ["terms", "loading", "infinite", "never loads", "dead end"]
+    },
+    {
+      "id": "cs-008",
+      "type": "dead_end",
+      "severity": "high",
+      "url_pattern": "/privacy",
+      "description": "Privacy Policy page shows infinite loading spinner - content never loads",
+      "selector": ".loading-spinner",
+      "keywords": ["privacy", "loading", "infinite", "never loads", "dead end"]
+    },
+    {
+      "id": "cs-009",
+      "type": "broken_feature",
+      "severity": "medium",
+      "url_pattern": "/",
+      "description": "Social login buttons (Google, Facebook) show error alert instead of working",
+      "selector": ".social-btn",
+      "keywords": ["social", "login", "google", "facebook", "unavailable", "error"]
+    },
+    {
+      "id": "cs-010",
+      "type": "random_failure",
+      "severity": "critical",
+      "url_pattern": "/",
+      "description": "Form submission randomly fails 70% of the time with generic error message",
+      "selector": null,
+      "keywords": ["submit", "random", "failure", "error", "try again"]
+    },
+    {
+      "id": "cs-011",
+      "type": "slow_load",
+      "severity": "medium",
+      "url_pattern": "/",
+      "description": "Form submission takes 4+ seconds with only a text change indicator",
+      "selector": null,
+      "keywords": ["slow", "submit", "4 seconds", "loading"]
+    },
+    {
+      "id": "cs-012",
+      "type": "misleading_affordance",
+      "severity": "low",
+      "url_pattern": "/",
+      "description": "Disabled submit button looks almost identical to enabled state",
+      "selector": ".btn:disabled",
+      "keywords": ["disabled", "button", "looks enabled", "confusing"]
+    }
+  ]
+}

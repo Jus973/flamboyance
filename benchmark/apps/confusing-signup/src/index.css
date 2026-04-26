@@ -1,0 +1,354 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  color: #333;
+}
+
+.container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.card {
+  background: white;
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.subtitle {
+  text-align: center;
+  color: #666;
+  margin-bottom: 30px;
+}
+
+.progress-bar {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 30px;
+  position: relative;
+}
+
+.progress-bar::before {
+  content: '';
+  position: absolute;
+  top: 15px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #ddd;
+  z-index: 0;
+}
+
+.step-indicator {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+  color: #999;
+  position: relative;
+  z-index: 1;
+}
+
+.step-indicator.active {
+  background: #667eea;
+  color: white;
+}
+
+.step-indicator.completed {
+  background: #27ae60;
+  color: white;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #333;
+}
+
+/* BUG: Required indicator is same color as label - hard to see */
+.form-group label .required {
+  color: #333;
+  font-size: 12px;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 14px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+/* BUG: Error state looks almost identical to normal state */
+.form-group input.error {
+  border-color: #ffcccc;
+}
+
+.error-text {
+  color: #ff6b6b;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+/* BUG: Success text is too light */
+.success-text {
+  color: #c8e6c9;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.btn {
+  display: inline-block;
+  padding: 14px 28px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: #667eea;
+  color: white;
+  width: 100%;
+}
+
+.btn-primary:hover {
+  background: #5a6fd6;
+}
+
+.btn-secondary {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.btn-secondary:hover {
+  background: #e0e0e0;
+}
+
+/* BUG: Disabled button looks clickable */
+.btn:disabled {
+  background: #a0a0ea;
+  cursor: pointer;
+}
+
+.btn-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.btn-row .btn {
+  flex: 1;
+}
+
+/* BUG: Link that looks like disabled text */
+.terms-link {
+  color: #ccc;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.checkbox-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+}
+
+.checkbox-group label {
+  font-size: 14px;
+  color: #666;
+}
+
+/* BUG: Password requirements shown AFTER error, not before */
+.password-requirements {
+  font-size: 12px;
+  color: #999;
+  margin-top: 10px;
+  padding: 10px;
+  background: #f9f9f9;
+  border-radius: 4px;
+}
+
+.password-requirements.show-after-error {
+  display: none;
+}
+
+.password-requirements.visible {
+  display: block;
+}
+
+/* BUG: Captcha that's impossible to solve */
+.captcha-box {
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.captcha-image {
+  font-family: 'Courier New', monospace;
+  font-size: 24px;
+  letter-spacing: 8px;
+  background: linear-gradient(45deg, #333, #666, #333);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-decoration: line-through;
+  transform: skewX(-10deg) rotate(5deg);
+  display: inline-block;
+  margin-bottom: 10px;
+}
+
+.social-login {
+  margin-top: 30px;
+  padding-top: 30px;
+  border-top: 1px solid #eee;
+}
+
+.social-login p {
+  text-align: center;
+  color: #999;
+  margin-bottom: 15px;
+}
+
+.social-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.social-btn {
+  flex: 1;
+  padding: 12px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.social-btn:hover {
+  border-color: #667eea;
+}
+
+/* BUG: Modal that can't be closed */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: white;
+  border-radius: 16px;
+  padding: 40px;
+  max-width: 400px;
+  text-align: center;
+}
+
+.modal h2 {
+  margin-bottom: 15px;
+}
+
+.modal p {
+  color: #666;
+  margin-bottom: 20px;
+}
+
+/* BUG: Close button is invisible */
+.modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: transparent;
+  border: none;
+  color: transparent;
+  cursor: default;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 20px auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.success-page {
+  text-align: center;
+}
+
+.success-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+}
+
+.login-link {
+  display: block;
+  margin-top: 20px;
+  color: #667eea;
+  text-decoration: none;
+}
+
+.login-link:hover {
+  text-decoration: underline;
+}
