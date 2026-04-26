@@ -49,6 +49,29 @@ mcp = create_mcp()
 _tasks: dict[str, asyncio.Task[RunState]] = {}
 
 
+async def _safe_run_local(run_id: str, **kwargs: Any) -> RunState:
+    """Wrapper around run_local with error handling for browser/agent failures."""
+    try:
+        return await run_local(**kwargs)
+    except asyncio.CancelledError:
+        log.info("Run %s was cancelled", run_id)
+        raise
+    except Exception as exc:
+        log.error("Run %s failed: %s", run_id, exc, exc_info=True)
+        # Create a failed RunState so get_status can report the error
+        from agents.persona import DEFAULT_PERSONAS
+        state = RunState(
+            run_id=run_id,
+            url=kwargs.get("url", "unknown"),
+            personas=list(DEFAULT_PERSONAS.values()),
+            status="error",
+        )
+        state._error = str(exc)
+        from agents.runner_local import _runs
+        _runs[run_id] = state
+        raise
+
+
 @mcp.tool()
 async def run_simulation(
     url: str,
@@ -87,11 +110,11 @@ async def run_simulation(
         log.info("Docker mode requested — delegating to local for now (run %s)", run_id)
 
     task = asyncio.create_task(
-        run_local(
-            validated_url,
-            personas,
-            timeout_s=validated_timeout,
+        _safe_run_local(
             run_id=run_id,
+            url=validated_url,
+            persona_names=personas,
+            timeout_s=validated_timeout,
             personas_file=personas_file,
             llm_mode=llm_mode,
             max_llm_calls=max_llm_calls,
@@ -134,7 +157,7 @@ async def run_flamboyance(
     
     Returns:
         ``{"run_id": "<uuid>", "status": "running", "config": {...}}`` on success,
-        or ``{"error": "message"}`` on validation failure.
+        or ``{"error": "message", "details": "..."}`` on validation/startup failure.
     
     Examples:
         - Default (LLM mode, batched): run_flamboyance(url="http://localhost:5173")
@@ -146,16 +169,16 @@ async def run_flamboyance(
         validated_timeout = validate_timeout(timeout)
     except ValidationError as e:
         log.warning("Validation failed: %s", e)
-        return {"error": str(e)}
+        return {"error": str(e), "details": "URL or timeout validation failed"}
 
     run_id = str(uuid.uuid4())
 
     task = asyncio.create_task(
-        run_local(
-            validated_url,
-            personas,
-            timeout_s=validated_timeout,
+        _safe_run_local(
             run_id=run_id,
+            url=validated_url,
+            persona_names=personas,
+            timeout_s=validated_timeout,
             personas_file=personas_file,
             llm_mode=llm_mode,
             max_llm_calls=max_llm_calls,
@@ -190,6 +213,7 @@ async def get_status(run_id: str) -> dict[str, Any]:
     Returns:
         While running: ``{"run_id": "...", "status": "running", "progress": "3/8 agents complete"}``
         On completion: ``{"run_id": "...", "status": "done", "summary": "<concise markdown>"}``
+        On error: ``{"run_id": "...", "status": "error", "error": "..."}``
         If not found: ``{"run_id": "...", "status": "not_found"}``
     """
     state = get_run(run_id)
@@ -203,6 +227,16 @@ async def get_status(run_id: str) -> dict[str, Any]:
             "run_id": run_id,
             "status": "running",
             "progress": f"{completed}/{total} agents complete",
+        }
+
+    # Handle error state
+    if state.status == "error":
+        error_msg = getattr(state, "_error", "Unknown error occurred")
+        return {
+            "run_id": run_id,
+            "status": "error",
+            "error": error_msg,
+            "details": "The simulation encountered an error. Check server logs for details.",
         }
 
     # Done or stopped - generate concise summary

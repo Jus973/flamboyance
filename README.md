@@ -183,11 +183,19 @@ python -m mcp.server --http --port 9000  # custom port
 ```
 
 **Available tools:**
+
+*Primary (recommended):*
 | Tool | Description |
 |------|-------------|
-| `run_simulation` | Start UX friction test against a URL |
-| `get_live_feed` | Poll real-time agent status |
-| `get_report` | Generate Markdown friction report |
+| `run_flamboyance` | Start UX friction test with sensible defaults (LLM mode, batched) |
+| `get_status` | Poll for progress/completion with concise summary |
+
+*Legacy/Advanced:*
+| Tool | Description |
+|------|-------------|
+| `run_simulation` | Start UX friction test (more configuration options) |
+| `get_live_feed` | Poll detailed real-time agent status |
+| `get_report` | Generate full Markdown friction report |
 | `stop_simulation` | Cancel a running simulation |
 | `run_mutation_test_tool` | Test with UI mutations (hidden/disabled elements) |
 
@@ -234,23 +242,31 @@ For direct MCP tool access in Cascade (without the sidebar):
    - **Linux**: `~/.config/windsurf/mcp_config.json`
    - **Windows**: `%APPDATA%\windsurf\mcp_config.json`
 
-2. Or merge into existing config:
+2. Or merge into existing config (use absolute path for reliability):
    ```json
    {
      "mcpServers": {
        "flamboyance": {
          "command": "python3",
-         "args": ["-m", "mcp.server"],
-         "cwd": "/path/to/flamboyance"
+         "args": ["-m", "flamboyance_mcp"],
+         "cwd": "/Users/yourname/path/to/flamboyance"
        }
      }
    }
    ```
+   
+   > **Note:** Replace `/Users/yourname/path/to/flamboyance` with the actual absolute path to your cloned repo. The `${workspaceFolder}` variable in `mcp_config.json` only works when the repo is open in Windsurf.
 
 3. Restart Windsurf — Cascade will have access to:
-   - `run_simulation` — Start UX friction test
-   - `get_live_feed` — Poll agent status
-   - `get_report` — Generate Markdown report
+
+   **Primary Tools (recommended):**
+   - `run_flamboyance` — Start UX friction test with sensible defaults
+   - `get_status` — Poll for progress/completion with concise summary
+
+   **Legacy Tools:**
+   - `run_simulation` — Start UX friction test (more options)
+   - `get_live_feed` — Poll detailed agent status
+   - `get_report` — Generate full Markdown report
    - `stop_simulation` — Cancel running test
    - `run_mutation_test_tool` — Test with UI mutations
 

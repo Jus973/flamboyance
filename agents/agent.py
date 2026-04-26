@@ -119,7 +119,29 @@ async def run_agent(
 
     try:
         async with async_playwright() as pw:
-            browser = await pw.chromium.launch(headless=headless)
+            # Launch browser with timeout to catch missing Chromium installation
+            try:
+                browser = await asyncio.wait_for(
+                    pw.chromium.launch(headless=headless),
+                    timeout=30.0,
+                )
+            except asyncio.TimeoutError:
+                return AgentResult(
+                    persona=persona.name,
+                    status="error",
+                    error="Browser launch timed out. Run `playwright install chromium` to install browser.",
+                    llm_mode=llm_mode,
+                )
+            except Exception as e:
+                error_msg = str(e)
+                if "executable doesn't exist" in error_msg.lower() or "chromium" in error_msg.lower():
+                    return AgentResult(
+                        persona=persona.name,
+                        status="error",
+                        error=f"Chromium not found. Run `playwright install chromium` to install. Details: {e}",
+                        llm_mode=llm_mode,
+                    )
+                raise
             context = await browser.new_context(
                 viewport={"width": persona.viewport[0], "height": persona.viewport[1]}
             )
@@ -416,9 +438,16 @@ async def run_agent(
         result.status = "error"
         result.error = f"Connection error: {exc}"
     except Exception as exc:
-        log.error("Unexpected error during agent run: %s", exc, exc_info=True)
-        result.status = "error"
-        result.error = str(exc)
+        error_str = str(exc).lower()
+        # Handle browser disconnection gracefully
+        if "browser" in error_str and ("closed" in error_str or "disconnected" in error_str):
+            log.warning("Browser disconnected for %s: %s", persona.name, exc)
+            result.status = "error"
+            result.error = f"Browser disconnected unexpectedly: {exc}"
+        else:
+            log.error("Unexpected error during agent run: %s", exc, exc_info=True)
+            result.status = "error"
+            result.error = str(exc)
 
     result.visited_urls = visited
     result.frustration_events = [

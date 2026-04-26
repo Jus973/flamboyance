@@ -1,0 +1,81 @@
+{
+  "app": "buggy-checkout",
+  "port": 5180,
+  "annotator": "benchmark-suite",
+  "date": "2026-04-25",
+  "description": "E-commerce checkout flow with intentional UX bugs",
+  "issues": [
+    {
+      "id": "bc-001",
+      "type": "hidden_element",
+      "severity": "critical",
+      "url_pattern": "/",
+      "description": "Shop Now CTA button is invisible (visibility: hidden) on homepage",
+      "selector": ".btn-hidden-cta",
+      "keywords": ["hidden", "invisible", "cta", "button", "shop now"]
+    },
+    {
+      "id": "bc-002",
+      "type": "broken_image",
+      "severity": "medium",
+      "url_pattern": "/products",
+      "description": "Laptop Stand product has broken image that fails to load",
+      "selector": ".broken-image",
+      "keywords": ["broken", "image", "not found", "laptop stand"]
+    },
+    {
+      "id": "bc-003",
+      "type": "dead_end",
+      "severity": "critical",
+      "url_pattern": "/support",
+      "description": "Support page has no actionable content - dead end with no way to get help",
+      "selector": null,
+      "keywords": ["support", "dead end", "unavailable", "no options"]
+    },
+    {
+      "id": "bc-004",
+      "type": "mobile_tap_target",
+      "severity": "medium",
+      "url_pattern": "/cart",
+      "description": "Remove item button is too small for mobile tap (4px padding)",
+      "selector": ".btn-tiny",
+      "keywords": ["tiny", "small", "tap", "mobile", "remove", "button"]
+    },
+    {
+      "id": "bc-005",
+      "type": "slow_load",
+      "severity": "high",
+      "url_pattern": "/checkout",
+      "description": "Checkout submission takes 5+ seconds with no progress indicator beyond spinner",
+      "selector": "#submit-order",
+      "keywords": ["slow", "loading", "5 seconds", "checkout", "submit"]
+    },
+    {
+      "id": "bc-006",
+      "type": "form_error",
+      "severity": "medium",
+      "url_pattern": "/checkout",
+      "description": "Error message has poor contrast (light red on light pink background)",
+      "selector": ".error-message",
+      "keywords": ["contrast", "error", "unreadable", "accessibility"]
+    },
+    {
+      "id": "bc-007",
+      "type": "random_failure",
+      "severity": "critical",
+      "url_pattern": "/checkout",
+      "description": "Payment randomly fails 50% of the time with unhelpful error message",
+      "selector": null,
+      "keywords": ["payment", "failed", "random", "error", "try again"]
+    },
+    {
+      "id": "bc-008",
+      "type": "misleading_affordance",
+      "severity": "low",
+      "url_pattern": "/support",
+      "description": "Email address looks like plain text but should be a clickable mailto link",
+      "selector": ".sneaky-link",
+      "keywords": ["email", "link", "text", "not clickable", "mailto"]
+    }
+  ]
+}
