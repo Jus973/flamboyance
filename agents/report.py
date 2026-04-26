@@ -186,6 +186,30 @@ def _group_events_by_kind(events: list[dict]) -> dict[str, list[dict]]:
     return dict(groups)
 
 
+def _dedupe_events(events: list[dict]) -> list[tuple[dict, int]]:
+    """Deduplicate events by (kind, description, url) and return with counts.
+
+    Returns:
+        List of (event, count) tuples, sorted by count descending.
+    """
+    seen: dict[tuple[str, str, str], tuple[dict, int]] = {}
+    for ev in events:
+        key = (
+            ev.get("kind", "unknown"),
+            ev.get("description", "")[:80],  # Truncate for grouping
+            ev.get("url", ""),
+        )
+        if key in seen:
+            seen[key] = (seen[key][0], seen[key][1] + 1)
+        else:
+            seen[key] = (ev, 1)
+    # Sort by count descending, then by severity
+    return sorted(
+        seen.values(),
+        key=lambda x: (-x[1], SEVERITY_ORDER.get(_get_severity(x[0]), 2)),
+    )
+
+
 def _count_events_by_severity(events: list[dict]) -> dict[str, int]:
     """Count events by severity level."""
     counts: dict[str, int] = {"critical": 0, "high": 0, "medium": 0, "low": 0}
@@ -391,27 +415,46 @@ def generate_report(state: RunState) -> str:
         lines.extend(_generate_recommendations(grouped_events))
         lines.append("")
 
-    # Events by Severity
+    # Events by Severity (deduplicated, capped)
     if all_events:
         lines.append("## Issues by Severity")
         lines.append("")
+
+        max_per_severity = 10  # Cap to keep reports scannable
 
         for severity in ["critical", "high", "medium", "low"]:
             sev_events = [e for e in all_events if _get_severity(e) == severity]
             if not sev_events:
                 continue
 
+            # Deduplicate events
+            deduped = _dedupe_events(sev_events)
+            total_unique = len(deduped)
+            total_raw = len(sev_events)
+
             emoji = SEVERITY_EMOJI.get(severity, "")
-            lines.append(f"### {emoji} {severity.title()} ({len(sev_events)})")
+            count_note = (
+                f" ({total_raw} total, {total_unique} unique)"
+                if total_raw != total_unique
+                else f" ({total_raw})"
+            )
+            lines.append(f"### {emoji} {severity.title()}{count_note}")
             lines.append("")
-            lines.append("| Event | Description | URL | Persona |")
-            lines.append("|-------|-------------|-----|---------|")
-            for ev in sev_events:
+            lines.append("| Event | Description | Count | URL |")
+            lines.append("|-------|-------------|-------|-----|")
+
+            shown = 0
+            for ev, count in deduped:
+                if shown >= max_per_severity:
+                    remaining = total_unique - shown
+                    lines.append(f"| ... | *{remaining} more unique issues* | | |")
+                    break
                 kind = ev.get("kind", "unknown")
-                desc = _escape_markdown(ev.get("description", ""))[:80]
-                url = _escape_markdown(ev.get("url", ""))[:40]
-                persona = ev.get("persona", "")
-                lines.append(f"| {kind} | {desc} | {url} | {persona} |")
+                desc = _escape_markdown(ev.get("description", ""))[:60]
+                url = _escape_markdown(ev.get("url", ""))[:35]
+                count_str = f"×{count}" if count > 1 else "1"
+                lines.append(f"| {kind} | {desc} | {count_str} | {url} |")
+                shown += 1
             lines.append("")
 
     # Agent Summary Table
@@ -454,15 +497,31 @@ def generate_report(state: RunState) -> str:
             lines.append("")
 
         if r.frustration_events:
-            sorted_events = _sort_events_by_severity(r.frustration_events)
-            lines.append("### Frustration Events")
+            # Deduplicate per-agent events for cleaner output
+            deduped = _dedupe_events(r.frustration_events)
+            total_raw = len(r.frustration_events)
+            total_unique = len(deduped)
+
+            count_note = (
+                f" ({total_raw} total, {total_unique} unique)" if total_raw != total_unique else ""
+            )
+            lines.append(f"### Frustration Events{count_note}")
             lines.append("")
-            for ev in sorted_events:
+
+            max_events = 15  # Cap per agent
+            shown = 0
+            for ev, count in deduped:
+                if shown >= max_events:
+                    remaining = total_unique - shown
+                    lines.append(f"- *...and {remaining} more unique issues*")
+                    break
                 kind = ev.get("kind", "unknown")
-                desc = _escape_markdown(ev.get("description", ""))
+                desc = _escape_markdown(ev.get("description", ""))[:80]
                 severity = _get_severity(ev)
                 emoji = SEVERITY_EMOJI.get(severity, "")
-                lines.append(f"- {emoji} **{kind}** ({severity}): {desc}")
+                count_str = f" (×{count})" if count > 1 else ""
+                lines.append(f"- {emoji} **{kind}** ({severity}): {desc}{count_str}")
+                shown += 1
             lines.append("")
 
         # LLM Action History (if available)

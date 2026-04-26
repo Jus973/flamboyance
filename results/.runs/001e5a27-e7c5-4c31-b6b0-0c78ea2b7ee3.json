@@ -1,0 +1,1268 @@
+{
+  "run_id": "001e5a27-e7c5-4c31-b6b0-0c78ea2b7ee3",
+  "url": "http://localhost:5173",
+  "status": "done",
+  "llm_mode": false,
+  "personas": [
+    {
+      "name": "anxious_newbie",
+      "patience": 0.3,
+      "tech_literacy": 0.3,
+      "goal": "Sign up for an account without getting confused",
+      "tags": [
+        "newbie",
+        "anxious",
+        "low-tech"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "signup",
+        "forms",
+        "error messages"
+      ],
+      "frustration_triggers": [
+        "unclear errors",
+        "too many fields",
+        "no progress indicator",
+        "unexpected behavior"
+      ],
+      "detection_weights": [
+        [
+          "form_abandonment",
+          2.0
+        ],
+        [
+          "error_message_visible",
+          2.0
+        ],
+        [
+          "back_button_abuse",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [
+        "/welcome",
+        "/dashboard",
+        "/account"
+      ],
+      "success_text_patterns": [
+        "account created",
+        "welcome",
+        "registration successful",
+        "signup complete"
+      ]
+    },
+    {
+      "name": "frustrated_exec",
+      "patience": 0.2,
+      "tech_literacy": 0.8,
+      "goal": "Complete a purchase flow quickly",
+      "tags": [
+        "executive",
+        "impatient"
+      ],
+      "early_exit_fraction": 0.3,
+      "max_actions": 15,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "speed",
+        "checkout",
+        "forms"
+      ],
+      "frustration_triggers": [
+        "slow loading",
+        "unnecessary steps",
+        "loading spinners",
+        "required fields"
+      ],
+      "detection_weights": [
+        [
+          "slow_interaction",
+          2.0
+        ],
+        [
+          "session_timeout",
+          1.5
+        ],
+        [
+          "slow_load",
+          1.5
+        ],
+        [
+          "modal_frustration",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [
+        "/checkout/confirmation",
+        "/order/confirm",
+        "/thank-you"
+      ],
+      "success_text_patterns": [
+        "order confirmed",
+        "thank you for your order",
+        "order #"
+      ]
+    },
+    {
+      "name": "non_tech_senior",
+      "patience": 0.5,
+      "tech_literacy": 0.2,
+      "goal": "Find and read account settings",
+      "tags": [
+        "senior",
+        "low-tech"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "labels",
+        "text size",
+        "navigation"
+      ],
+      "frustration_triggers": [
+        "small text",
+        "confusing labels",
+        "icon-only buttons",
+        "jargon"
+      ],
+      "detection_weights": [
+        [
+          "confusing_navigation",
+          2.0
+        ],
+        [
+          "scroll_rage",
+          1.5
+        ],
+        [
+          "back_button_abuse",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [
+        "/account/settings/",
+        "/settings/",
+        "/profile/settings/"
+      ],
+      "success_text_patterns": [
+        "account settings page",
+        "your preferences",
+        "notification preferences"
+      ]
+    }
+  ],
+  "results": [
+    {
+      "persona": "anxious_newbie",
+      "status": "gave_up",
+      "visited_urls": [
+        "http://localhost:5173",
+        "http://localhost:5173/cart",
+        "http://localhost:5173/",
+        "http://localhost:5173/cart",
+        "http://localhost:5173/",
+        "http://localhost:5173/product/5",
+        "http://localhost:5173/",
+        "http://localhost:5173/product/5",
+        "http://localhost:5173/"
+      ],
+      "frustration_events": [
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777195177.678169,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777195177.678733,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777195177.6790981,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777195177.6794271,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777195177.679744,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777195177.680084,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195180.731391,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195180.732022,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195180.732362,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195180.732679,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195180.733073,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195180.733382,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "cart_abandonment",
+          "description": "Cart abandonment: user left cart page without completing checkout",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195180.736753,
+          "severity": "high"
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5173/cart \u2192 http://localhost:5173/ \u2192 http://localhost:5173/cart",
+          "url": "http://localhost:5173/cart",
+          "timestamp": 1777195182.2543921,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5173/cart",
+            "http://localhost:5173/",
+            "http://localhost:5173/cart"
+          ]
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5173/ \u2192 http://localhost:5173/cart \u2192 http://localhost:5173/",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195189.556006,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5173/",
+            "http://localhost:5173/cart",
+            "http://localhost:5173/"
+          ]
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195189.563334,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195189.5637739,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195189.564088,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195189.5644102,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195189.5647109,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195189.565021,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "cart_abandonment",
+          "description": "Cart abandonment: user left cart page without completing checkout",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195189.56753,
+          "severity": "high"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1625723044792-44de16ccb4e9?w=600&h=600&fit=cro'",
+          "url": "http://localhost:5173/product/5",
+          "timestamp": 1777195191.4824152,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1625723044792-44de16ccb4e9?w=600&h=600&fit=crop&auto=format",
+          "selector": "img[alt=\"USB-C Hub 7-in-1\"]"
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5173/ \u2192 http://localhost:5173/product/5 \u2192 http://localhost:5173/",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195193.821964,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5173/",
+            "http://localhost:5173/product/5",
+            "http://localhost:5173/"
+          ]
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195193.8319008,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195193.832373,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195193.832723,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195193.833049,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195193.833375,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195193.833685,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5173/product/5 \u2192 http://localhost:5173/ \u2192 http://localhost:5173/product/5",
+          "url": "http://localhost:5173/product/5",
+          "timestamp": 1777195195.440852,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5173/product/5",
+            "http://localhost:5173/",
+            "http://localhost:5173/product/5"
+          ]
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5173/ \u2192 http://localhost:5173/product/5 \u2192 http://localhost:5173/",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195196.665787,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5173/",
+            "http://localhost:5173/product/5",
+            "http://localhost:5173/"
+          ]
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195196.673614,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195196.674079,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195196.6744032,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195196.6747122,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195196.6750321,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195196.67534,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (gave up): Sign up for an account without getting confused",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195196.67796,
+          "severity": "critical",
+          "goal": "Sign up for an account without getting confused",
+          "reason": "gave up"
+        }
+      ],
+      "elapsed_seconds": 24.634200250031427,
+      "error": null,
+      "llm_mode": false,
+      "llm_calls": 0,
+      "llm_tokens": 0,
+      "action_history": []
+    },
+    {
+      "persona": "frustrated_exec",
+      "status": "gave_up",
+      "visited_urls": [
+        "http://localhost:5173",
+        "http://localhost:5173/product/3",
+        "http://localhost:5173/"
+      ],
+      "frustration_events": [
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777195177.409348,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777195177.41055,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777195177.411359,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777195177.412065,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777195177.4129941,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777195177.413752,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195185.893527,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195185.89403,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195185.894363,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195185.894676,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195185.8949828,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195185.895686,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (gave up): Complete a purchase flow quickly",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195191.873534,
+          "severity": "critical",
+          "goal": "Complete a purchase flow quickly",
+          "reason": "gave up"
+        }
+      ],
+      "elapsed_seconds": 19.833798417123035,
+      "error": null,
+      "llm_mode": false,
+      "llm_calls": 0,
+      "llm_tokens": 0,
+      "action_history": []
+    },
+    {
+      "persona": "non_tech_senior",
+      "status": "done",
+      "visited_urls": [
+        "http://localhost:5173",
+        "http://localhost:5173/",
+        "http://localhost:5173/product/6",
+        "http://localhost:5173/cart",
+        "http://localhost:5173/",
+        "http://localhost:5173/product/2",
+        "http://localhost:5173/",
+        "http://localhost:5173/product/6",
+        "http://localhost:5173/checkout",
+        "http://localhost:5173/",
+        "http://localhost:5173/cart",
+        "http://localhost:5173/checkout",
+        "http://localhost:5173/"
+      ],
+      "frustration_events": [
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777195177.233645,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777195177.234169,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777195177.234505,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777195177.234818,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777195177.235122,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777195177.235429,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195181.021984,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195181.022905,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195181.0232818,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195181.02361,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195181.023927,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195181.0243552,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195189.5188532,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195189.5196888,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195189.520042,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195189.520401,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195189.5211542,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195189.522167,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "cart_abandonment",
+          "description": "Cart abandonment: user left cart page without completing checkout",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195189.531819,
+          "severity": "high"
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5173/ \u2192 http://localhost:5173/product/2 \u2192 http://localhost:5173/",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195192.937888,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5173/",
+            "http://localhost:5173/product/2",
+            "http://localhost:5173/"
+          ]
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195192.9470248,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195192.947915,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195192.948598,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195192.949068,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195192.949408,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195192.949718,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173/checkout",
+          "timestamp": 1777195201.4605591,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "input[name=\"email\"]",
+          "placeholder": "you@example.com"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173/checkout",
+          "timestamp": 1777195201.461115,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "input[name=\"firstName\"]",
+          "placeholder": ""
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173/checkout",
+          "timestamp": 1777195201.46144,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "input[name=\"lastName\"]",
+          "placeholder": ""
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173/checkout",
+          "timestamp": 1777195201.461749,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "input[name=\"address\"]",
+          "placeholder": "123 Main St"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173/checkout",
+          "timestamp": 1777195201.4620469,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "input[name=\"city\"]",
+          "placeholder": ""
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173/checkout",
+          "timestamp": 1777195201.462346,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "input[name=\"zipCode\"]",
+          "placeholder": ""
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173/checkout",
+          "timestamp": 1777195201.462639,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "input[name=\"cardNumber\"]",
+          "placeholder": "1234 5678 9012 3456"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173/checkout",
+          "timestamp": 1777195201.462935,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "input[name=\"expiry\"]",
+          "placeholder": "MM/YY"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173/checkout",
+          "timestamp": 1777195201.463226,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "input[name=\"cvv\"]",
+          "placeholder": "123"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195204.8151941,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195204.8160808,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195204.816649,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195204.817014,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195204.817343,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195204.8176582,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173/checkout",
+          "timestamp": 1777195212.3004942,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "input[name=\"email\"]",
+          "placeholder": "you@example.com"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173/checkout",
+          "timestamp": 1777195212.300964,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "input[name=\"firstName\"]",
+          "placeholder": ""
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173/checkout",
+          "timestamp": 1777195212.301304,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "input[name=\"lastName\"]",
+          "placeholder": ""
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173/checkout",
+          "timestamp": 1777195212.30161,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "input[name=\"address\"]",
+          "placeholder": "123 Main St"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173/checkout",
+          "timestamp": 1777195212.301909,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "input[name=\"city\"]",
+          "placeholder": ""
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173/checkout",
+          "timestamp": 1777195212.302203,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "input[name=\"zipCode\"]",
+          "placeholder": ""
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173/checkout",
+          "timestamp": 1777195212.302497,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "input[name=\"cardNumber\"]",
+          "placeholder": "1234 5678 9012 3456"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173/checkout",
+          "timestamp": 1777195212.3027892,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "input[name=\"expiry\"]",
+          "placeholder": "MM/YY"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173/checkout",
+          "timestamp": 1777195212.303082,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "input[name=\"cvv\"]",
+          "placeholder": "123"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195230.178446,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195230.1789272,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195230.179264,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195230.1795819,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195230.179893,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195230.180199,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "cart_abandonment",
+          "description": "Cart abandonment: user left cart page without completing checkout",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195230.183158,
+          "severity": "high"
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (timeout): Find and read account settings",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777195236.508362,
+          "severity": "critical",
+          "goal": "Find and read account settings",
+          "reason": "timeout"
+        }
+      ],
+      "elapsed_seconds": 64.47640120796859,
+      "error": null,
+      "llm_mode": false,
+      "llm_calls": 0,
+      "llm_tokens": 0,
+      "action_history": []
+    }
+  ],
+  "created_at": "2026-04-26T09:19:32.082864+00:00",
+  "updated_at": "2026-04-26T09:20:36.585493+00:00"
+}

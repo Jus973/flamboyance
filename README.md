@@ -138,6 +138,20 @@ python -m agents.runner_local --url http://localhost:5173 --llm --batch-size 3 -
 | `--parallel` | Run all heuristic agents in parallel |
 | `--batch-size N` | Run agents in parallel batches of N |
 | `--full` | Run both heuristic and LLM modes |
+| `--quick` | Quick demo mode (2 personas, 30s timeout, ~45s total) |
+
+### Quick Demo
+
+```bash
+# Pre-flight check (run before demos)
+./scripts/demo-check.sh http://localhost:5173
+
+# Quick demo (~45 seconds, LLM mode)
+python -m agents.runner_local --url http://localhost:5173 --llm --quick
+
+# Instant demo (heuristic mode, no API key needed)
+python -m agents.runner_local --url http://localhost:5173 --quick
+```
 
 ### Single Agent
 

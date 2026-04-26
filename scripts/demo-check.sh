@@ -116,17 +116,32 @@ else
     ERRORS=$((ERRORS + 1))
 fi
 
+# 9. Check target URL (if provided)
+if [ -n "$1" ]; then
+    echo -n "9. Target URL reachable... "
+    if curl -s --head --connect-timeout 3 "$1" > /dev/null 2>&1; then
+        echo -e "${GREEN}✓${NC} $1"
+    else
+        echo -e "${RED}✗${NC} $1 not reachable"
+        ERRORS=$((ERRORS + 1))
+    fi
+fi
+
 echo ""
 echo "========================================="
 if [ $ERRORS -eq 0 ]; then
     echo -e "${GREEN}✓ All checks passed! Ready for demo.${NC}"
     echo ""
-    echo "Quick test commands:"
-    echo "  # Heuristic mode (no API key needed):"
-    echo "  python -m agents.runner_local --url http://localhost:3000 --batch-size 2"
+    echo "Quick demo commands:"
     echo ""
-    echo "  # LLM mode (requires GROQ_API_KEY):"
-    echo "  python -m agents.runner_local --url http://localhost:3000 --llm --batch-size 2"
+    echo "  # Quick demo mode (fastest, 2 personas, ~45s):"
+    echo "  python -m agents.runner_local --url <YOUR_URL> --llm --quick"
+    echo ""
+    echo "  # Heuristic mode (no API key needed, instant):"
+    echo "  python -m agents.runner_local --url <YOUR_URL> --batch-size 4"
+    echo ""
+    echo "  # Full LLM mode (all personas, ~3-5 min):"
+    echo "  python -m agents.runner_local --url <YOUR_URL> --llm --batch-size 2"
     exit 0
 else
     echo -e "${RED}✗ $ERRORS check(s) failed. Fix issues above before demo.${NC}"

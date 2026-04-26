@@ -160,7 +160,8 @@ async def run_flamboyance(
     llm_mode: bool = True,
     batch_size: int | None = 1,
     headless: bool = True,
-    max_llm_calls: int | None = 30,
+    max_llm_calls: int | None = 20,
+    quick: bool = False,
 ) -> dict[str, Any]:
     """Run a UX friction test on a website.
 
@@ -177,8 +178,9 @@ async def run_flamboyance(
             Set to higher values (e.g., 3) for parallel execution.
         headless: If True (default), run browser without visible UI.
             Set to False to show browser windows for debugging.
-        max_llm_calls: Maximum LLM API calls per agent (default: 30).
+        max_llm_calls: Maximum LLM API calls per agent (default: 20).
             Only applies when llm_mode=True.
+        quick: If True, use quick demo mode (2 personas, 30s timeout, 15 LLM calls).
 
     Returns:
         ``{"run_id": "<uuid>", "status": "running", "config": {...}}`` on success,
@@ -187,11 +189,20 @@ async def run_flamboyance(
     Examples:
         - Default (LLM mode, batched): run_flamboyance(url="http://localhost:5173")
         - Fast heuristic mode: run_flamboyance(url="...", llm_mode=False, batch_size=4)
+        - Quick demo: run_flamboyance(url="...", quick=True)
         - Debug mode: run_flamboyance(url="...", headless=False)
     """
     # Kill any zombie browser/agent processes before starting
     _kill_zombie_browser_processes()
-    
+
+    # Quick demo mode overrides
+    if quick:
+        personas = ["frustrated_exec", "power_user"]
+        timeout = 30
+        max_llm_calls = 15
+        batch_size = 2
+        log.info("Quick demo mode: 2 personas, 30s timeout, 15 LLM calls")
+
     try:
         validated_url = validate_url(url, allow_localhost=True)
         validated_timeout = validate_timeout(timeout)
@@ -495,13 +506,13 @@ async def run_mutation_test_tool(
 
 def _kill_zombie_flamboyance_processes() -> int:
     """Kill any existing flamboyance_mcp processes (except self).
-    
+
     Returns:
         Number of processes killed.
     """
     my_pid = os.getpid()
     killed = 0
-    
+
     try:
         result = subprocess.run(
             ["pgrep", "-f", "flamboyance_mcp"],
@@ -524,13 +535,13 @@ def _kill_zombie_flamboyance_processes() -> int:
         pass
     except Exception as e:
         log.warning("Error killing zombie processes: %s", e)
-    
+
     return killed
 
 
 def _kill_zombie_browser_processes() -> int:
     """Kill orphaned Chromium/Playwright browser processes from previous runs.
-    
+
     Returns:
         Number of processes killed.
     """
@@ -540,7 +551,7 @@ def _kill_zombie_browser_processes() -> int:
         "chromium.*playwright",
         "Chromium.*--remote-debugging",
     ]
-    
+
     for pattern in patterns:
         try:
             result = subprocess.run(
@@ -563,7 +574,7 @@ def _kill_zombie_browser_processes() -> int:
             pass
         except Exception:
             pass
-    
+
     return killed
 
 

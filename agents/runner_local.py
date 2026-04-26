@@ -582,7 +582,20 @@ def main() -> None:
         action="store_true",
         help="Run both heuristic (parallel) and LLM (sequential) modes",
     )
+    parser.add_argument(
+        "--quick",
+        action="store_true",
+        help="Quick demo mode: 2 personas, 30s timeout, 15 LLM calls max",
+    )
     args = parser.parse_args()
+
+    # Quick demo mode overrides
+    if args.quick:
+        args.personas = ["frustrated_exec", "power_user"]
+        args.timeout = 30.0
+        args.max_llm_calls = 15
+        args.batch_size = 2
+        log.info("Quick demo mode: 2 personas, 30s timeout, 15 LLM calls, batch=2")
 
     if args.full:
         # Run both modes

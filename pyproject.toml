@@ -78,6 +78,7 @@ ignore = [
     "ARG001", # unused function argument
     "SIM105", # contextlib.suppress preference
     "SIM108", # ternary operator preference
+    "SIM113", # enumerate preference (manual index clearer here)
     "SIM117", # nested with statements
 ]
 
