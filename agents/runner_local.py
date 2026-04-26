@@ -328,51 +328,6 @@ def cleanup_old_state_files(max_age_hours: int = 24) -> int:
     return cleaned
 
 
-def _calculate_window_positions(
-    count: int, headless: bool, screen_width: int = 2560, screen_height: int = 1440
-) -> list[tuple[int, int]] | None:
-    """Calculate window positions for side-by-side browser display.
-
-    Args:
-        count: Number of windows to position.
-        headless: If True, return None (no positioning needed).
-        screen_width: Assumed screen width in pixels.
-        screen_height: Assumed screen height in pixels.
-
-    Returns:
-        List of (x, y) positions, or None if headless.
-    """
-    if headless or count <= 1:
-        return None
-
-    # Calculate grid layout
-    # For 2-3 windows: horizontal row
-    # For 4+: 2x2 or 2x3 grid
-    if count <= 3:
-        cols = count
-        rows = 1
-    elif count <= 6:
-        cols = 3
-        rows = 2
-    else:
-        cols = 4
-        rows = (count + 3) // 4
-
-    # Window size (with some padding)
-    window_width = screen_width // cols
-    window_height = screen_height // rows
-
-    positions = []
-    for i in range(count):
-        col = i % cols
-        row = i // cols
-        x = col * window_width
-        y = row * window_height
-        positions.append((x, y))
-
-    return positions
-
-
 async def run_local(
     url: str,
     persona_names: list[str] | None = None,
@@ -430,9 +385,6 @@ async def run_local(
             total_batches = (len(personas) + batch_size - 1) // batch_size
             log.info("=== Batch %d/%d: %s ===", batch_num, total_batches, [p.name for p in batch])
 
-            # Calculate window positions for side-by-side display (when not headless)
-            window_positions = _calculate_window_positions(len(batch), headless)
-
             tasks = [
                 run_agent(
                     url,
@@ -441,9 +393,8 @@ async def run_local(
                     headless=headless,
                     llm_mode=llm_mode,
                     max_llm_calls=max_llm_calls,
-                    window_position=window_positions[idx] if window_positions else None,
                 )
-                for idx, persona in enumerate(batch)
+                for persona in batch
             ]
             results = await asyncio.gather(*tasks, return_exceptions=True)
             for persona, result in zip(batch, results, strict=True):

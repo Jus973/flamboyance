@@ -61,7 +61,6 @@ async def run_agent(
     max_actions: int | None = None,
     llm_mode: bool = False,
     max_llm_calls: int | None = None,
-    window_position: tuple[int, int] | None = None,
 ) -> AgentResult:
     """Launch a Playwright browser and simulate the persona navigating *url*.
 
@@ -73,7 +72,6 @@ async def run_agent(
         max_actions: Override persona.max_actions if specified.
         llm_mode: If True, use LLM vision model to decide actions instead of random.
         max_llm_calls: Maximum LLM API calls per session (default from config).
-        window_position: Optional (x, y) screen position for the browser window.
     """
     try:
         url = validate_url(url, allow_localhost=True)
@@ -121,16 +119,10 @@ async def run_agent(
 
     try:
         async with async_playwright() as pw:
-            # Build launch args for window positioning
-            launch_args: list[str] = []
-            if window_position and not headless:
-                x, y = window_position
-                launch_args.append(f"--window-position={x},{y}")
-
             # Launch browser with timeout to catch missing Chromium installation
             try:
                 browser = await asyncio.wait_for(
-                    pw.chromium.launch(headless=headless, args=launch_args if launch_args else None),
+                    pw.chromium.launch(headless=headless),
                     timeout=30.0,
                 )
             except asyncio.TimeoutError:

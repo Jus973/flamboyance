@@ -63,9 +63,24 @@ async def _safe_run_local(run_id: str, **kwargs: Any) -> RunState:
     )
     _runs[run_id] = state
     
+    # Yield to event loop before starting heavy work - prevents MCP stalling
+    await asyncio.sleep(0)
+    
+    # Extract timeout for overall run protection (default 10 min max)
+    timeout_s = kwargs.get("timeout_s", 60)
+    max_run_timeout = max(timeout_s * len(kwargs.get("persona_names") or []) + 120, 600)
+    
     try:
-        result = await run_local(run_id=run_id, **kwargs)
+        result = await asyncio.wait_for(
+            run_local(run_id=run_id, **kwargs),
+            timeout=max_run_timeout,
+        )
         return result
+    except asyncio.TimeoutError:
+        log.error("Run %s timed out after %ds", run_id, max_run_timeout)
+        state.status = "error"
+        state._error = f"Run timed out after {max_run_timeout}s"
+        return state
     except asyncio.CancelledError:
         log.info("Run %s was cancelled", run_id)
         state.status = "stopped"
@@ -128,6 +143,9 @@ async def run_simulation(
         )
     )
     _tasks[run_id] = task
+
+    # Yield control to event loop to prevent stalling
+    await asyncio.sleep(0)
 
     return {"run_id": run_id, "llm_mode": llm_mode}
 
@@ -194,6 +212,9 @@ async def run_flamboyance(
         )
     )
     _tasks[run_id] = task
+
+    # Yield control to event loop to prevent stalling
+    await asyncio.sleep(0)
 
     config = {
         "llm_mode": llm_mode,
