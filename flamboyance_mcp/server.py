@@ -23,6 +23,9 @@ from __future__ import annotations
 import argparse
 import asyncio
 import logging
+import os
+import signal
+import subprocess
 import uuid
 from typing import Any
 
@@ -186,6 +189,9 @@ async def run_flamboyance(
         - Fast heuristic mode: run_flamboyance(url="...", llm_mode=False, batch_size=4)
         - Debug mode: run_flamboyance(url="...", headless=False)
     """
+    # Kill any zombie browser/agent processes before starting
+    _kill_zombie_browser_processes()
+    
     try:
         validated_url = validate_url(url, allow_localhost=True)
         validated_timeout = validate_timeout(timeout)
@@ -487,6 +493,80 @@ async def run_mutation_test_tool(
     }
 
 
+def _kill_zombie_flamboyance_processes() -> int:
+    """Kill any existing flamboyance_mcp processes (except self).
+    
+    Returns:
+        Number of processes killed.
+    """
+    my_pid = os.getpid()
+    killed = 0
+    
+    try:
+        result = subprocess.run(
+            ["pgrep", "-f", "flamboyance_mcp"],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode == 0:
+            pids = [int(p.strip()) for p in result.stdout.strip().split("\n") if p.strip()]
+            for pid in pids:
+                if pid != my_pid:
+                    try:
+                        os.kill(pid, signal.SIGTERM)
+                        killed += 1
+                        log.info("Killed zombie flamboyance process: %d", pid)
+                    except ProcessLookupError:
+                        pass
+                    except PermissionError:
+                        log.warning("Cannot kill process %d (permission denied)", pid)
+    except FileNotFoundError:
+        pass
+    except Exception as e:
+        log.warning("Error killing zombie processes: %s", e)
+    
+    return killed
+
+
+def _kill_zombie_browser_processes() -> int:
+    """Kill orphaned Chromium/Playwright browser processes from previous runs.
+    
+    Returns:
+        Number of processes killed.
+    """
+    killed = 0
+    patterns = [
+        "chromium.*--headless",
+        "chromium.*playwright",
+        "Chromium.*--remote-debugging",
+    ]
+    
+    for pattern in patterns:
+        try:
+            result = subprocess.run(
+                ["pgrep", "-f", pattern],
+                capture_output=True,
+                text=True,
+            )
+            if result.returncode == 0:
+                pids = [int(p.strip()) for p in result.stdout.strip().split("\n") if p.strip()]
+                for pid in pids:
+                    try:
+                        os.kill(pid, signal.SIGTERM)
+                        killed += 1
+                        log.info("Killed zombie browser process: %d", pid)
+                    except ProcessLookupError:
+                        pass
+                    except PermissionError:
+                        pass
+        except FileNotFoundError:
+            pass
+        except Exception:
+            pass
+    
+    return killed
+
+
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     parser = argparse.ArgumentParser(description="Flamboyance MCP Server")
@@ -494,6 +574,11 @@ def main() -> None:
     parser.add_argument("--port", type=int, default=8765)
     parser.add_argument("--host", type=str, default="0.0.0.0")
     args = parser.parse_args()
+
+    # Kill any zombie flamboyance processes from previous runs
+    zombies_killed = _kill_zombie_flamboyance_processes()
+    if zombies_killed > 0:
+        log.info("Killed %d zombie flamboyance process(es)", zombies_killed)
 
     # Clean up old state files and mark orphaned runs as interrupted
     cleaned = cleanup_old_state_files(max_age_hours=24)

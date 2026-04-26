@@ -1,0 +1,2299 @@
+{
+  "run_id": "a6aa4066-8446-4de5-aedd-9b08765dc507",
+  "url": "http://localhost:5173",
+  "status": "done",
+  "llm_mode": true,
+  "personas": [
+    {
+      "name": "frustrated_exec",
+      "patience": 0.2,
+      "tech_literacy": 0.8,
+      "goal": "Complete a purchase flow quickly",
+      "tags": [
+        "executive",
+        "impatient"
+      ],
+      "early_exit_fraction": 0.3,
+      "max_actions": 15,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "speed",
+        "checkout",
+        "forms"
+      ],
+      "frustration_triggers": [
+        "slow loading",
+        "unnecessary steps",
+        "loading spinners",
+        "required fields"
+      ],
+      "detection_weights": [
+        [
+          "slow_interaction",
+          2.0
+        ],
+        [
+          "session_timeout",
+          1.5
+        ],
+        [
+          "slow_load",
+          1.5
+        ],
+        [
+          "modal_frustration",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [
+        "/checkout/confirmation",
+        "/order/confirm",
+        "/thank-you"
+      ],
+      "success_text_patterns": [
+        "order confirmed",
+        "thank you for your order",
+        "order #"
+      ]
+    },
+    {
+      "name": "non_tech_senior",
+      "patience": 0.5,
+      "tech_literacy": 0.2,
+      "goal": "Find and read account settings",
+      "tags": [
+        "senior",
+        "low-tech"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "labels",
+        "text size",
+        "navigation"
+      ],
+      "frustration_triggers": [
+        "small text",
+        "confusing labels",
+        "icon-only buttons",
+        "jargon"
+      ],
+      "detection_weights": [
+        [
+          "confusing_navigation",
+          2.0
+        ],
+        [
+          "scroll_rage",
+          1.5
+        ],
+        [
+          "back_button_abuse",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [
+        "/account/settings/",
+        "/settings/",
+        "/profile/settings/"
+      ],
+      "success_text_patterns": [
+        "account settings page",
+        "your preferences",
+        "notification preferences"
+      ]
+    },
+    {
+      "name": "power_user",
+      "patience": 0.9,
+      "tech_literacy": 0.9,
+      "goal": "Navigate all features and check edge cases",
+      "tags": [
+        "expert",
+        "thorough"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "keyboard shortcuts",
+        "advanced features",
+        "edge cases"
+      ],
+      "frustration_triggers": [
+        "missing features",
+        "inconsistent behavior",
+        "no keyboard navigation"
+      ],
+      "detection_weights": [
+        [
+          "copy_paste_failure",
+          1.5
+        ],
+        [
+          "js_error",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [],
+      "success_text_patterns": []
+    },
+    {
+      "name": "casual_browser",
+      "patience": 0.5,
+      "tech_literacy": 0.5,
+      "goal": "Browse around and see what's available",
+      "tags": [
+        "casual",
+        "explorer"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 25,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "content",
+        "navigation",
+        "visual appeal"
+      ],
+      "frustration_triggers": [
+        "popups",
+        "aggressive CTAs",
+        "cluttered layout"
+      ],
+      "detection_weights": [
+        [
+          "modal_frustration",
+          2.0
+        ],
+        [
+          "scroll_rage",
+          1.5
+        ],
+        [
+          "infinite_scroll_trap",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [],
+      "success_text_patterns": []
+    },
+    {
+      "name": "anxious_newbie",
+      "patience": 0.3,
+      "tech_literacy": 0.3,
+      "goal": "Sign up for an account without getting confused",
+      "tags": [
+        "newbie",
+        "anxious",
+        "low-tech"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "signup",
+        "forms",
+        "error messages"
+      ],
+      "frustration_triggers": [
+        "unclear errors",
+        "too many fields",
+        "no progress indicator",
+        "unexpected behavior"
+      ],
+      "detection_weights": [
+        [
+          "form_abandonment",
+          2.0
+        ],
+        [
+          "error_message_visible",
+          2.0
+        ],
+        [
+          "back_button_abuse",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [
+        "/welcome",
+        "/dashboard",
+        "/account"
+      ],
+      "success_text_patterns": [
+        "account created",
+        "welcome",
+        "registration successful",
+        "signup complete"
+      ]
+    },
+    {
+      "name": "methodical_tester",
+      "patience": 0.95,
+      "tech_literacy": 0.6,
+      "goal": "Systematically check every link and form",
+      "tags": [
+        "qa",
+        "thorough",
+        "slow"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 100,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "links",
+        "forms",
+        "validation",
+        "error states"
+      ],
+      "frustration_triggers": [
+        "broken links",
+        "missing validation",
+        "inconsistent states"
+      ],
+      "detection_weights": [
+        [
+          "error_message_visible",
+          1.5
+        ],
+        [
+          "infinite_scroll_trap",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [],
+      "success_text_patterns": []
+    },
+    {
+      "name": "mobile_commuter",
+      "patience": 0.25,
+      "tech_literacy": 0.85,
+      "goal": "Quickly check order status while on the go",
+      "tags": [
+        "mobile",
+        "rushed",
+        "tech-savvy"
+      ],
+      "early_exit_fraction": 0.3,
+      "max_actions": 20,
+      "viewport": [
+        375,
+        667
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "mobile layout",
+        "touch targets",
+        "quick actions"
+      ],
+      "frustration_triggers": [
+        "small tap targets",
+        "horizontal scroll",
+        "desktop-only features",
+        "slow mobile load"
+      ],
+      "detection_weights": [
+        [
+          "mobile_tap_target",
+          2.0
+        ],
+        [
+          "slow_interaction",
+          1.5
+        ],
+        [
+          "slow_load",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [
+        "/order-status/",
+        "/orders/",
+        "/track/"
+      ],
+      "success_text_patterns": [
+        "order status:",
+        "tracking number",
+        "order #",
+        "delivery status"
+      ]
+    },
+    {
+      "name": "accessibility_user",
+      "patience": 0.7,
+      "tech_literacy": 0.35,
+      "goal": "Navigate using visible labels and clear affordances",
+      "tags": [
+        "a11y",
+        "needs-clarity"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": true,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "labels",
+        "contrast",
+        "focus indicators",
+        "screen reader"
+      ],
+      "frustration_triggers": [
+        "missing labels",
+        "icon-only buttons",
+        "poor contrast",
+        "no focus visible"
+      ],
+      "detection_weights": [
+        [
+          "accessibility_failure",
+          2.0
+        ],
+        [
+          "copy_paste_failure",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [],
+      "success_text_patterns": []
+    },
+    {
+      "name": "form_filler",
+      "patience": 0.4,
+      "tech_literacy": 0.5,
+      "goal": "Complete a multi-step form without errors",
+      "tags": [
+        "forms",
+        "data-entry"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "form validation",
+        "error messages",
+        "field labels",
+        "progress indicators"
+      ],
+      "frustration_triggers": [
+        "unclear errors",
+        "lost form data",
+        "confusing field labels",
+        "no progress indicator"
+      ],
+      "detection_weights": [
+        [
+          "form_abandonment",
+          2.0
+        ],
+        [
+          "error_message_visible",
+          2.0
+        ],
+        [
+          "session_timeout",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [],
+      "success_text_patterns": []
+    },
+    {
+      "name": "search_user",
+      "patience": 0.35,
+      "tech_literacy": 0.6,
+      "goal": "Find a specific product or information using search",
+      "tags": [
+        "search",
+        "goal-oriented"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "search functionality",
+        "filters",
+        "results relevance"
+      ],
+      "frustration_triggers": [
+        "zero results",
+        "irrelevant results",
+        "no search feedback",
+        "broken filters"
+      ],
+      "detection_weights": [
+        [
+          "search_frustration",
+          2.0
+        ],
+        [
+          "confusing_navigation",
+          1.5
+        ],
+        [
+          "infinite_scroll_trap",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [],
+      "success_text_patterns": []
+    },
+    {
+      "name": "checkout_user",
+      "patience": 0.3,
+      "tech_literacy": 0.7,
+      "goal": "Complete a purchase from cart to confirmation",
+      "tags": [
+        "checkout",
+        "purchase",
+        "goal-oriented"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "cart",
+        "checkout flow",
+        "payment forms",
+        "order confirmation"
+      ],
+      "frustration_triggers": [
+        "cart issues",
+        "payment errors",
+        "session timeout",
+        "unclear totals"
+      ],
+      "detection_weights": [
+        [
+          "cart_abandonment",
+          2.0
+        ],
+        [
+          "form_abandonment",
+          1.5
+        ],
+        [
+          "slow_interaction",
+          1.5
+        ],
+        [
+          "session_timeout",
+          2.0
+        ]
+      ],
+      "success_url_patterns": [
+        "/checkout/confirmation",
+        "/order/confirm",
+        "/thank-you",
+        "/checkout/"
+      ],
+      "success_text_patterns": [
+        "order confirmed",
+        "thank you",
+        "order #",
+        "confirmation"
+      ]
+    }
+  ],
+  "results": [
+    {
+      "persona": "frustrated_exec",
+      "status": "gave_up",
+      "visited_urls": [
+        "http://localhost:5173"
+      ],
+      "frustration_events": [
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193075.6141949,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Wireless Earbuds Pro\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&h=400&fit=crop'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193075.6148238,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Smart Watch Series X\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193075.615177,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Premium Laptop Stand\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193075.615496,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Mechanical Keyboard\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1625723044792-44de16ccb4e9?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193075.615812,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1625723044792-44de16ccb4e9?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"USB-C Hub 7-in-1\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193075.616123,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Noise Canceling Headphones\"]"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193075.6201532,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a.relative"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193075.6205618,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193075.6209202,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193075.621233,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193075.6215382,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193075.621836,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193075.622133,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193075.622433,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "input",
+          "placeholder": "Enter your email"
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (gave up): Complete a purchase flow quickly",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193075.736623,
+          "severity": "critical",
+          "goal": "Complete a purchase flow quickly",
+          "reason": "gave up"
+        }
+      ],
+      "elapsed_seconds": 0.9468068340793252,
+      "error": null,
+      "llm_mode": true,
+      "llm_calls": 0,
+      "llm_tokens": 0,
+      "action_history": [
+        {
+          "action": "give_up",
+          "target": "LLM error: Cannot connect to Ollama at http://localhost:11434. Is Ollama running? Start with: ollama serve",
+          "result": "gave up: LLM error: Cannot connect to Ollama at http://localhost:11434. Is Ollama running? Start with: ollama serve",
+          "url": "http://localhost:5173/"
+        }
+      ]
+    },
+    {
+      "persona": "non_tech_senior",
+      "status": "gave_up",
+      "visited_urls": [
+        "http://localhost:5173"
+      ],
+      "frustration_events": [
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193076.178838,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Wireless Earbuds Pro\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&h=400&fit=crop'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193076.179583,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Smart Watch Series X\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193076.179948,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Premium Laptop Stand\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193076.1802728,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Mechanical Keyboard\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1625723044792-44de16ccb4e9?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193076.180586,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1625723044792-44de16ccb4e9?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"USB-C Hub 7-in-1\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193076.180897,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Noise Canceling Headphones\"]"
+        },
+        {
+          "kind": "rage_decoy",
+          "description": "Rage decoy: element 'span:has-text('Shop Now')' looks clickable (cursor:pointer, button-like styling) but is not interactive",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193076.1845162,
+          "severity": "medium",
+          "selector": "span:has-text('Shop Now')",
+          "reason": "cursor:pointer, button-like styling",
+          "x": 156,
+          "y": 304
+        },
+        {
+          "kind": "rage_decoy",
+          "description": "Rage decoy: element 'span:has-text('Subscribe')' looks clickable (cursor:pointer, button-like styling) but is not interactive",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193076.1849852,
+          "severity": "medium",
+          "selector": "span:has-text('Subscribe')",
+          "reason": "cursor:pointer, button-like styling",
+          "x": 803,
+          "y": 1748
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193076.189142,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a.relative"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193076.1895611,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193076.189873,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193076.190175,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193076.190461,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193076.190756,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193076.1910431,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193076.191339,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "input",
+          "placeholder": "Enter your email"
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (gave up): Find and read account settings",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193076.788231,
+          "severity": "critical",
+          "goal": "Find and read account settings",
+          "reason": "gave up"
+        }
+      ],
+      "elapsed_seconds": 1.0517789169680327,
+      "error": null,
+      "llm_mode": true,
+      "llm_calls": 0,
+      "llm_tokens": 0,
+      "action_history": [
+        {
+          "action": "give_up",
+          "target": "LLM error: Cannot connect to Ollama at http://localhost:11434. Is Ollama running? Start with: ollama serve",
+          "result": "gave up: LLM error: Cannot connect to Ollama at http://localhost:11434. Is Ollama running? Start with: ollama serve",
+          "url": "http://localhost:5173/"
+        }
+      ]
+    },
+    {
+      "persona": "power_user",
+      "status": "gave_up",
+      "visited_urls": [
+        "http://localhost:5173"
+      ],
+      "frustration_events": [
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193077.249923,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Mechanical Keyboard\"]"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193077.260395,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a.relative"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193077.26099,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193077.261344,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193077.261656,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193077.261961,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193077.2622678,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193077.262571,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193077.262869,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "input",
+          "placeholder": "Enter your email"
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (gave up): Navigate all features and check edge cases",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193077.3504572,
+          "severity": "critical",
+          "goal": "Navigate all features and check edge cases",
+          "reason": "gave up"
+        }
+      ],
+      "elapsed_seconds": 0.5565977501682937,
+      "error": null,
+      "llm_mode": true,
+      "llm_calls": 0,
+      "llm_tokens": 0,
+      "action_history": [
+        {
+          "action": "give_up",
+          "target": "LLM error: Cannot connect to Ollama at http://localhost:11434. Is Ollama running? Start with: ollama serve",
+          "result": "gave up: LLM error: Cannot connect to Ollama at http://localhost:11434. Is Ollama running? Start with: ollama serve",
+          "url": "http://localhost:5173/"
+        }
+      ]
+    },
+    {
+      "persona": "casual_browser",
+      "status": "gave_up",
+      "visited_urls": [
+        "http://localhost:5173"
+      ],
+      "frustration_events": [
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193077.778382,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Wireless Earbuds Pro\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&h=400&fit=crop'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193077.778958,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Smart Watch Series X\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193077.779934,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Premium Laptop Stand\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193077.780254,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Mechanical Keyboard\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1625723044792-44de16ccb4e9?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193077.7805738,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1625723044792-44de16ccb4e9?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"USB-C Hub 7-in-1\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193077.7808902,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Noise Canceling Headphones\"]"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193077.785195,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a.relative"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193077.785544,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193077.785907,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193077.7862232,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193077.78652,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193077.786815,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193077.7871091,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193077.7873988,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "input",
+          "placeholder": "Enter your email"
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (gave up): Browse around and see what's available",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193077.8503418,
+          "severity": "critical",
+          "goal": "Browse around and see what's available",
+          "reason": "gave up"
+        }
+      ],
+      "elapsed_seconds": 0.49627145822159946,
+      "error": null,
+      "llm_mode": true,
+      "llm_calls": 0,
+      "llm_tokens": 0,
+      "action_history": [
+        {
+          "action": "give_up",
+          "target": "LLM error: Cannot connect to Ollama at http://localhost:11434. Is Ollama running? Start with: ollama serve",
+          "result": "gave up: LLM error: Cannot connect to Ollama at http://localhost:11434. Is Ollama running? Start with: ollama serve",
+          "url": "http://localhost:5173/"
+        }
+      ]
+    },
+    {
+      "persona": "anxious_newbie",
+      "status": "gave_up",
+      "visited_urls": [
+        "http://localhost:5173"
+      ],
+      "frustration_events": [
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193078.278382,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Wireless Earbuds Pro\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&h=400&fit=crop'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193078.279022,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Smart Watch Series X\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193078.2794409,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Premium Laptop Stand\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193078.279768,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Mechanical Keyboard\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1625723044792-44de16ccb4e9?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193078.280072,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1625723044792-44de16ccb4e9?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"USB-C Hub 7-in-1\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193078.280372,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Noise Canceling Headphones\"]"
+        },
+        {
+          "kind": "rage_decoy",
+          "description": "Rage decoy: element 'span:has-text('Shop Now')' looks clickable (cursor:pointer, button-like styling) but is not interactive",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193078.282849,
+          "severity": "medium",
+          "selector": "span:has-text('Shop Now')",
+          "reason": "cursor:pointer, button-like styling",
+          "x": 156,
+          "y": 304
+        },
+        {
+          "kind": "rage_decoy",
+          "description": "Rage decoy: element 'span:has-text('Subscribe')' looks clickable (cursor:pointer, button-like styling) but is not interactive",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193078.283274,
+          "severity": "medium",
+          "selector": "span:has-text('Subscribe')",
+          "reason": "cursor:pointer, button-like styling",
+          "x": 803,
+          "y": 1748
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193078.2874691,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a.relative"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193078.287936,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193078.2883048,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193078.2885919,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193078.288888,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193078.289172,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193078.289484,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193078.289783,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "input",
+          "placeholder": "Enter your email"
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (gave up): Sign up for an account without getting confused",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193078.389141,
+          "severity": "critical",
+          "goal": "Sign up for an account without getting confused",
+          "reason": "gave up"
+        }
+      ],
+      "elapsed_seconds": 0.5389396250247955,
+      "error": null,
+      "llm_mode": true,
+      "llm_calls": 0,
+      "llm_tokens": 0,
+      "action_history": [
+        {
+          "action": "give_up",
+          "target": "LLM error: Cannot connect to Ollama at http://localhost:11434. Is Ollama running? Start with: ollama serve",
+          "result": "gave up: LLM error: Cannot connect to Ollama at http://localhost:11434. Is Ollama running? Start with: ollama serve",
+          "url": "http://localhost:5173/"
+        }
+      ]
+    },
+    {
+      "persona": "methodical_tester",
+      "status": "gave_up",
+      "visited_urls": [
+        "http://localhost:5173"
+      ],
+      "frustration_events": [
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193078.827497,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Wireless Earbuds Pro\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&h=400&fit=crop'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193078.8281322,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Smart Watch Series X\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193078.8285701,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Premium Laptop Stand\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193078.828903,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Mechanical Keyboard\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1625723044792-44de16ccb4e9?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193078.82922,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1625723044792-44de16ccb4e9?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"USB-C Hub 7-in-1\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193078.8295329,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Noise Canceling Headphones\"]"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193078.8341792,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a.relative"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193078.834573,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193078.8349388,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193078.835246,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193078.835556,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193078.835865,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193078.8361611,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193078.836458,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "input",
+          "placeholder": "Enter your email"
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (gave up): Systematically check every link and form",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193078.901493,
+          "severity": "critical",
+          "goal": "Systematically check every link and form",
+          "reason": "gave up"
+        }
+      ],
+      "elapsed_seconds": 0.509746375028044,
+      "error": null,
+      "llm_mode": true,
+      "llm_calls": 0,
+      "llm_tokens": 0,
+      "action_history": [
+        {
+          "action": "give_up",
+          "target": "LLM error: Cannot connect to Ollama at http://localhost:11434. Is Ollama running? Start with: ollama serve",
+          "result": "gave up: LLM error: Cannot connect to Ollama at http://localhost:11434. Is Ollama running? Start with: ollama serve",
+          "url": "http://localhost:5173/"
+        }
+      ]
+    },
+    {
+      "persona": "mobile_commuter",
+      "status": "gave_up",
+      "visited_urls": [
+        "http://localhost:5173"
+      ],
+      "frustration_events": [
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.325019,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Wireless Earbuds Pro\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&h=400&fit=crop'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.325545,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Smart Watch Series X\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.3267782,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Premium Laptop Stand\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.327243,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Mechanical Keyboard\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1625723044792-44de16ccb4e9?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.3278332,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1625723044792-44de16ccb4e9?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"USB-C Hub 7-in-1\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.3282611,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Noise Canceling Headphones\"]"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.3340979,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a.relative"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.33515,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.335618,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.336137,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.336504,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.336844,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.337153,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.3374562,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "input",
+          "placeholder": "Enter your email"
+        },
+        {
+          "kind": "mobile_tap_target",
+          "description": "Mobile issue: horizontal_scroll",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.340681,
+          "severity": "medium",
+          "issue_type": "horizontal_scroll",
+          "selector": "body",
+          "content_width": 392,
+          "viewport_width": 375
+        },
+        {
+          "kind": "mobile_tap_target",
+          "description": "Mobile issue: small_tap_target",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.341067,
+          "severity": "medium",
+          "issue_type": "small_tap_target",
+          "selector": "a:has-text('Q\nQuickMart')",
+          "width": 136,
+          "height": 32,
+          "min_required": 44
+        },
+        {
+          "kind": "mobile_tap_target",
+          "description": "Mobile issue: small_tap_target",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.34137,
+          "severity": "medium",
+          "issue_type": "small_tap_target",
+          "selector": "a",
+          "width": 24,
+          "height": 24,
+          "min_required": 44
+        },
+        {
+          "kind": "mobile_tap_target",
+          "description": "Mobile issue: small_tap_target",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.341665,
+          "severity": "medium",
+          "issue_type": "small_tap_target",
+          "selector": "a:has-text('Wireless Earbuds Pro')",
+          "width": 311,
+          "height": 24,
+          "min_required": 44
+        },
+        {
+          "kind": "mobile_tap_target",
+          "description": "Mobile issue: small_tap_target",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.342143,
+          "severity": "medium",
+          "issue_type": "small_tap_target",
+          "selector": "button:has-text('Add to Cart')",
+          "width": 108,
+          "height": 36,
+          "min_required": 44
+        },
+        {
+          "kind": "mobile_tap_target",
+          "description": "Mobile issue: small_tap_target",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.342592,
+          "severity": "medium",
+          "issue_type": "small_tap_target",
+          "selector": "a:has-text('Smart Watch Series X')",
+          "width": 311,
+          "height": 24,
+          "min_required": 44
+        },
+        {
+          "kind": "mobile_tap_target",
+          "description": "Mobile issue: small_tap_target",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.342981,
+          "severity": "medium",
+          "issue_type": "small_tap_target",
+          "selector": "button:has-text('Add to Cart')",
+          "width": 108,
+          "height": 36,
+          "min_required": 44
+        },
+        {
+          "kind": "mobile_tap_target",
+          "description": "Mobile issue: small_tap_target",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.343308,
+          "severity": "medium",
+          "issue_type": "small_tap_target",
+          "selector": "a:has-text('Premium Laptop Stand')",
+          "width": 311,
+          "height": 24,
+          "min_required": 44
+        },
+        {
+          "kind": "mobile_tap_target",
+          "description": "Mobile issue: small_tap_target",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.3436348,
+          "severity": "medium",
+          "issue_type": "small_tap_target",
+          "selector": "button:has-text('Add to Cart')",
+          "width": 108,
+          "height": 36,
+          "min_required": 44
+        },
+        {
+          "kind": "mobile_tap_target",
+          "description": "Mobile issue: small_tap_target",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.343955,
+          "severity": "medium",
+          "issue_type": "small_tap_target",
+          "selector": "a:has-text('Mechanical Keyboard')",
+          "width": 311,
+          "height": 24,
+          "min_required": 44
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (gave up): Quickly check order status while on the go",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.407437,
+          "severity": "critical",
+          "goal": "Quickly check order status while on the go",
+          "reason": "gave up"
+        }
+      ],
+      "elapsed_seconds": 0.5048888749442995,
+      "error": null,
+      "llm_mode": true,
+      "llm_calls": 0,
+      "llm_tokens": 0,
+      "action_history": [
+        {
+          "action": "give_up",
+          "target": "LLM error: Cannot connect to Ollama at http://localhost:11434. Is Ollama running? Start with: ollama serve",
+          "result": "gave up: LLM error: Cannot connect to Ollama at http://localhost:11434. Is Ollama running? Start with: ollama serve",
+          "url": "http://localhost:5173/"
+        }
+      ]
+    },
+    {
+      "persona": "accessibility_user",
+      "status": "gave_up",
+      "visited_urls": [
+        "http://localhost:5173"
+      ],
+      "frustration_events": [
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.862248,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Wireless Earbuds Pro\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&h=400&fit=crop'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.86297,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Smart Watch Series X\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.863341,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Premium Laptop Stand\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.8636742,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Mechanical Keyboard\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1625723044792-44de16ccb4e9?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.8640692,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1625723044792-44de16ccb4e9?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"USB-C Hub 7-in-1\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.864439,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Noise Canceling Headphones\"]"
+        },
+        {
+          "kind": "rage_decoy",
+          "description": "Rage decoy: element 'span:has-text('Shop Now')' looks clickable (cursor:pointer, button-like styling) but is not interactive",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.866915,
+          "severity": "medium",
+          "selector": "span:has-text('Shop Now')",
+          "reason": "cursor:pointer, button-like styling",
+          "x": 156,
+          "y": 304
+        },
+        {
+          "kind": "rage_decoy",
+          "description": "Rage decoy: element 'span:has-text('Subscribe')' looks clickable (cursor:pointer, button-like styling) but is not interactive",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.867438,
+          "severity": "medium",
+          "selector": "span:has-text('Subscribe')",
+          "reason": "cursor:pointer, button-like styling",
+          "x": 803,
+          "y": 1748
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.871986,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a.relative"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.872469,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.8727949,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.873107,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.87341,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.873715,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.874012,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.8743098,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "input",
+          "placeholder": "Enter your email"
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (gave up): Navigate using visible labels and clear affordances",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193079.951911,
+          "severity": "critical",
+          "goal": "Navigate using visible labels and clear affordances",
+          "reason": "gave up"
+        }
+      ],
+      "elapsed_seconds": 0.5384817079175264,
+      "error": null,
+      "llm_mode": true,
+      "llm_calls": 0,
+      "llm_tokens": 0,
+      "action_history": [
+        {
+          "action": "give_up",
+          "target": "LLM error: Cannot connect to Ollama at http://localhost:11434. Is Ollama running? Start with: ollama serve",
+          "result": "gave up: LLM error: Cannot connect to Ollama at http://localhost:11434. Is Ollama running? Start with: ollama serve",
+          "url": "http://localhost:5173/"
+        }
+      ]
+    },
+    {
+      "persona": "form_filler",
+      "status": "gave_up",
+      "visited_urls": [
+        "http://localhost:5173"
+      ],
+      "frustration_events": [
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=cro'",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193080.380139,
+          "severity": "medium",
+          "image_src": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop",
+          "selector": "img[alt=\"Noise Canceling Headphones\"]"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193080.386143,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a.relative"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193080.386552,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193080.386872,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193080.3871949,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193080.387497,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193080.387799,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193080.388103,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193080.388395,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "input",
+          "placeholder": "Enter your email"
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (gave up): Complete a multi-step form without errors",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193080.504971,
+          "severity": "critical",
+          "goal": "Complete a multi-step form without errors",
+          "reason": "gave up"
+        }
+      ],
+      "elapsed_seconds": 0.5513746659271419,
+      "error": null,
+      "llm_mode": true,
+      "llm_calls": 0,
+      "llm_tokens": 0,
+      "action_history": [
+        {
+          "action": "give_up",
+          "target": "LLM error: Cannot connect to Ollama at http://localhost:11434. Is Ollama running? Start with: ollama serve",
+          "result": "gave up: LLM error: Cannot connect to Ollama at http://localhost:11434. Is Ollama running? Start with: ollama serve",
+          "url": "http://localhost:5173/"
+        }
+      ]
+    },
+    {
+      "persona": "search_user",
+      "status": "gave_up",
+      "visited_urls": [
+        "http://localhost:5173"
+      ],
+      "frustration_events": [
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193080.9498491,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a.relative"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193080.9505558,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193080.950905,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193080.9512231,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193080.951524,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193080.9518452,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193080.95215,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193080.9525702,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "input",
+          "placeholder": "Enter your email"
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (gave up): Find a specific product or information using search",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193081.060427,
+          "severity": "critical",
+          "goal": "Find a specific product or information using search",
+          "reason": "gave up"
+        }
+      ],
+      "elapsed_seconds": 0.5573661660309881,
+      "error": null,
+      "llm_mode": true,
+      "llm_calls": 0,
+      "llm_tokens": 0,
+      "action_history": [
+        {
+          "action": "give_up",
+          "target": "LLM error: Cannot connect to Ollama at http://localhost:11434. Is Ollama running? Start with: ollama serve",
+          "result": "gave up: LLM error: Cannot connect to Ollama at http://localhost:11434. Is Ollama running? Start with: ollama serve",
+          "url": "http://localhost:5173/"
+        }
+      ]
+    },
+    {
+      "persona": "checkout_user",
+      "status": "gave_up",
+      "visited_urls": [
+        "http://localhost:5173"
+      ],
+      "frustration_events": [
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193081.514945,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a.relative"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193081.515388,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193081.515701,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193081.516005,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193081.5163,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193081.516594,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193081.5168982,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "a"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193081.517198,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "input",
+          "placeholder": "Enter your email"
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (gave up): Complete a purchase from cart to confirmation",
+          "url": "http://localhost:5173",
+          "timestamp": 1777193081.600966,
+          "severity": "critical",
+          "goal": "Complete a purchase from cart to confirmation",
+          "reason": "gave up"
+        }
+      ],
+      "elapsed_seconds": 0.5328627920243889,
+      "error": null,
+      "llm_mode": true,
+      "llm_calls": 0,
+      "llm_tokens": 0,
+      "action_history": [
+        {
+          "action": "give_up",
+          "target": "LLM error: Cannot connect to Ollama at http://localhost:11434. Is Ollama running? Start with: ollama serve",
+          "result": "gave up: LLM error: Cannot connect to Ollama at http://localhost:11434. Is Ollama running? Start with: ollama serve",
+          "url": "http://localhost:5173/"
+        }
+      ]
+    }
+  ],
+  "created_at": "2026-04-26T08:44:34.793657+00:00",
+  "updated_at": "2026-04-26T08:44:41.622491+00:00"
+}
