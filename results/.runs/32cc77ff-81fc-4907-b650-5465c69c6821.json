@@ -1,7 +1,7 @@
 {
   "run_id": "32cc77ff-81fc-4907-b650-5465c69c6821",
   "url": "http://localhost:3000",
-  "status": "running",
+  "status": "interrupted",
   "llm_mode": true,
   "personas": [
     {
@@ -569,5 +569,5 @@
   ],
   "results": [],
   "created_at": "2026-04-26T04:02:44.961683+00:00",
-  "updated_at": "2026-04-26T04:02:44.961929+00:00"
+  "updated_at": "2026-04-26T05:28:10.615752+00:00"
 }

@@ -1,0 +1,1264 @@
+{
+  "run_id": "2e027be7-6d43-43f9-9ab0-7625374d053b",
+  "url": "http://localhost:5173",
+  "status": "done",
+  "llm_mode": false,
+  "personas": [
+    {
+      "name": "frustrated_exec",
+      "patience": 0.2,
+      "tech_literacy": 0.8,
+      "goal": "Complete a purchase flow quickly",
+      "tags": [
+        "executive",
+        "impatient"
+      ],
+      "early_exit_fraction": 0.3,
+      "max_actions": 15,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "speed",
+        "checkout",
+        "forms"
+      ],
+      "frustration_triggers": [
+        "slow loading",
+        "unnecessary steps",
+        "loading spinners",
+        "required fields"
+      ],
+      "detection_weights": [
+        [
+          "slow_interaction",
+          2.0
+        ],
+        [
+          "session_timeout",
+          1.5
+        ],
+        [
+          "slow_load",
+          1.5
+        ],
+        [
+          "modal_frustration",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [
+        "/checkout/confirmation",
+        "/order/confirm",
+        "/thank-you"
+      ],
+      "success_text_patterns": [
+        "order confirmed",
+        "thank you for your order",
+        "order #"
+      ]
+    },
+    {
+      "name": "non_tech_senior",
+      "patience": 0.5,
+      "tech_literacy": 0.2,
+      "goal": "Find and read account settings",
+      "tags": [
+        "senior",
+        "low-tech"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "labels",
+        "text size",
+        "navigation"
+      ],
+      "frustration_triggers": [
+        "small text",
+        "confusing labels",
+        "icon-only buttons",
+        "jargon"
+      ],
+      "detection_weights": [
+        [
+          "confusing_navigation",
+          2.0
+        ],
+        [
+          "scroll_rage",
+          1.5
+        ],
+        [
+          "back_button_abuse",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [
+        "/account/settings/",
+        "/settings/",
+        "/profile/settings/"
+      ],
+      "success_text_patterns": [
+        "account settings page",
+        "your preferences",
+        "notification preferences"
+      ]
+    },
+    {
+      "name": "power_user",
+      "patience": 0.9,
+      "tech_literacy": 0.9,
+      "goal": "Navigate all features and check edge cases",
+      "tags": [
+        "expert",
+        "thorough"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "keyboard shortcuts",
+        "advanced features",
+        "edge cases"
+      ],
+      "frustration_triggers": [
+        "missing features",
+        "inconsistent behavior",
+        "no keyboard navigation"
+      ],
+      "detection_weights": [
+        [
+          "copy_paste_failure",
+          1.5
+        ],
+        [
+          "js_error",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [],
+      "success_text_patterns": []
+    },
+    {
+      "name": "casual_browser",
+      "patience": 0.5,
+      "tech_literacy": 0.5,
+      "goal": "Browse around and see what's available",
+      "tags": [
+        "casual",
+        "explorer"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 25,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "content",
+        "navigation",
+        "visual appeal"
+      ],
+      "frustration_triggers": [
+        "popups",
+        "aggressive CTAs",
+        "cluttered layout"
+      ],
+      "detection_weights": [
+        [
+          "modal_frustration",
+          2.0
+        ],
+        [
+          "scroll_rage",
+          1.5
+        ],
+        [
+          "infinite_scroll_trap",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [],
+      "success_text_patterns": []
+    },
+    {
+      "name": "anxious_newbie",
+      "patience": 0.3,
+      "tech_literacy": 0.3,
+      "goal": "Sign up for an account without getting confused",
+      "tags": [
+        "newbie",
+        "anxious",
+        "low-tech"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "signup",
+        "forms",
+        "error messages"
+      ],
+      "frustration_triggers": [
+        "unclear errors",
+        "too many fields",
+        "no progress indicator",
+        "unexpected behavior"
+      ],
+      "detection_weights": [
+        [
+          "form_abandonment",
+          2.0
+        ],
+        [
+          "error_message_visible",
+          2.0
+        ],
+        [
+          "back_button_abuse",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [
+        "/welcome",
+        "/dashboard",
+        "/account"
+      ],
+      "success_text_patterns": [
+        "account created",
+        "welcome",
+        "registration successful",
+        "signup complete"
+      ]
+    },
+    {
+      "name": "methodical_tester",
+      "patience": 0.95,
+      "tech_literacy": 0.6,
+      "goal": "Systematically check every link and form",
+      "tags": [
+        "qa",
+        "thorough",
+        "slow"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 100,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "links",
+        "forms",
+        "validation",
+        "error states"
+      ],
+      "frustration_triggers": [
+        "broken links",
+        "missing validation",
+        "inconsistent states"
+      ],
+      "detection_weights": [
+        [
+          "error_message_visible",
+          1.5
+        ],
+        [
+          "infinite_scroll_trap",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [],
+      "success_text_patterns": []
+    },
+    {
+      "name": "mobile_commuter",
+      "patience": 0.25,
+      "tech_literacy": 0.85,
+      "goal": "Quickly check order status while on the go",
+      "tags": [
+        "mobile",
+        "rushed",
+        "tech-savvy"
+      ],
+      "early_exit_fraction": 0.3,
+      "max_actions": 20,
+      "viewport": [
+        375,
+        667
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "mobile layout",
+        "touch targets",
+        "quick actions"
+      ],
+      "frustration_triggers": [
+        "small tap targets",
+        "horizontal scroll",
+        "desktop-only features",
+        "slow mobile load"
+      ],
+      "detection_weights": [
+        [
+          "mobile_tap_target",
+          2.0
+        ],
+        [
+          "slow_interaction",
+          1.5
+        ],
+        [
+          "slow_load",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [
+        "/order-status/",
+        "/orders/",
+        "/track/"
+      ],
+      "success_text_patterns": [
+        "order status:",
+        "tracking number",
+        "order #",
+        "delivery status"
+      ]
+    },
+    {
+      "name": "accessibility_user",
+      "patience": 0.7,
+      "tech_literacy": 0.35,
+      "goal": "Navigate using visible labels and clear affordances",
+      "tags": [
+        "a11y",
+        "needs-clarity"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": true,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "labels",
+        "contrast",
+        "focus indicators",
+        "screen reader"
+      ],
+      "frustration_triggers": [
+        "missing labels",
+        "icon-only buttons",
+        "poor contrast",
+        "no focus visible"
+      ],
+      "detection_weights": [
+        [
+          "accessibility_failure",
+          2.0
+        ],
+        [
+          "copy_paste_failure",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [],
+      "success_text_patterns": []
+    },
+    {
+      "name": "form_filler",
+      "patience": 0.4,
+      "tech_literacy": 0.5,
+      "goal": "Complete a multi-step form without errors",
+      "tags": [
+        "forms",
+        "data-entry"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "form validation",
+        "error messages",
+        "field labels",
+        "progress indicators"
+      ],
+      "frustration_triggers": [
+        "unclear errors",
+        "lost form data",
+        "confusing field labels",
+        "no progress indicator"
+      ],
+      "detection_weights": [
+        [
+          "form_abandonment",
+          2.0
+        ],
+        [
+          "error_message_visible",
+          2.0
+        ],
+        [
+          "session_timeout",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [],
+      "success_text_patterns": []
+    },
+    {
+      "name": "search_user",
+      "patience": 0.35,
+      "tech_literacy": 0.6,
+      "goal": "Find a specific product or information using search",
+      "tags": [
+        "search",
+        "goal-oriented"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "search functionality",
+        "filters",
+        "results relevance"
+      ],
+      "frustration_triggers": [
+        "zero results",
+        "irrelevant results",
+        "no search feedback",
+        "broken filters"
+      ],
+      "detection_weights": [
+        [
+          "search_frustration",
+          2.0
+        ],
+        [
+          "confusing_navigation",
+          1.5
+        ],
+        [
+          "infinite_scroll_trap",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [],
+      "success_text_patterns": []
+    },
+    {
+      "name": "checkout_user",
+      "patience": 0.3,
+      "tech_literacy": 0.7,
+      "goal": "Complete a purchase from cart to confirmation",
+      "tags": [
+        "checkout",
+        "purchase",
+        "goal-oriented"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "cart",
+        "checkout flow",
+        "payment forms",
+        "order confirmation"
+      ],
+      "frustration_triggers": [
+        "cart issues",
+        "payment errors",
+        "session timeout",
+        "unclear totals"
+      ],
+      "detection_weights": [
+        [
+          "cart_abandonment",
+          2.0
+        ],
+        [
+          "form_abandonment",
+          1.5
+        ],
+        [
+          "slow_interaction",
+          1.5
+        ],
+        [
+          "session_timeout",
+          2.0
+        ]
+      ],
+      "success_url_patterns": [
+        "/checkout/confirmation",
+        "/order/confirm",
+        "/thank-you",
+        "/checkout/"
+      ],
+      "success_text_patterns": [
+        "order confirmed",
+        "thank you",
+        "order #",
+        "confirmation"
+      ]
+    }
+  ],
+  "results": [
+    {
+      "persona": "frustrated_exec",
+      "status": "done",
+      "visited_urls": [
+        "http://localhost:5173",
+        "http://localhost:5173/stress/hidden-menu/",
+        "http://localhost:5173/",
+        "http://localhost:5173/checkout/shipping/",
+        "http://localhost:5173/shop/"
+      ],
+      "frustration_events": [
+        {
+          "kind": "js_error",
+          "description": "JavaScript error: Failed to load resource: the server responded with a status of 404 (Not Found) (source: http://localhost:5173/favicon.ico)",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777183161.291546,
+          "severity": "high",
+          "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "source": "http://localhost:5173/favicon.ico",
+          "line": 0
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173/stress/hidden-menu/",
+          "timestamp": 1777183162.8884249,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "select",
+          "placeholder": ""
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173/stress/hidden-menu/",
+          "timestamp": 1777183162.889338,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "input",
+          "placeholder": ""
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (gave up): Complete a purchase flow quickly",
+          "url": "http://localhost:5173/shop/",
+          "timestamp": 1777183175.755732,
+          "severity": "critical",
+          "goal": "Complete a purchase flow quickly",
+          "reason": "gave up"
+        }
+      ],
+      "elapsed_seconds": 16.79516720911488,
+      "error": null,
+      "llm_mode": false,
+      "llm_calls": 0,
+      "llm_tokens": 0,
+      "action_history": []
+    },
+    {
+      "persona": "non_tech_senior",
+      "status": "done",
+      "visited_urls": [
+        "http://localhost:5173",
+        "http://localhost:5173/shop/"
+      ],
+      "frustration_events": [
+        {
+          "kind": "js_error",
+          "description": "JavaScript error: Failed to load resource: the server responded with a status of 404 (Not Found) (source: http://localhost:5173/favicon.ico)",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777183177.5550249,
+          "severity": "high",
+          "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "source": "http://localhost:5173/favicon.ico",
+          "line": 0
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (timeout): Find and read account settings",
+          "url": "http://localhost:5173/shop/",
+          "timestamp": 1777183236.0995588,
+          "severity": "critical",
+          "goal": "Find and read account settings",
+          "reason": "timeout"
+        }
+      ],
+      "elapsed_seconds": 60.3513596248813,
+      "error": null,
+      "llm_mode": false,
+      "llm_calls": 0,
+      "llm_tokens": 0,
+      "action_history": []
+    },
+    {
+      "persona": "power_user",
+      "status": "done",
+      "visited_urls": [
+        "http://localhost:5173",
+        "http://localhost:5173/cart/",
+        "http://localhost:5173/",
+        "http://localhost:5173/stress/edge-cases/",
+        "http://localhost:5173/",
+        "http://localhost:5173/account/settings/",
+        "http://localhost:5173/account/",
+        "http://localhost:5173/",
+        "http://localhost:5173/stress/slow/"
+      ],
+      "frustration_events": [
+        {
+          "kind": "js_error",
+          "description": "JavaScript error: Failed to load resource: the server responded with a status of 404 (Not Found) (source: http://localhost:5173/favicon.ico)",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777183237.9842188,
+          "severity": "high",
+          "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "source": "http://localhost:5173/favicon.ico",
+          "line": 0
+        },
+        {
+          "kind": "cart_abandonment",
+          "description": "Cart abandonment: user left cart page without completing checkout",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777183240.9447,
+          "severity": "high"
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5173/ \u2192 http://localhost:5173/stress/edge-cases/ \u2192 http://localhost:5173/",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777183242.989416,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5173/",
+            "http://localhost:5173/stress/edge-cases/",
+            "http://localhost:5173/"
+          ]
+        },
+        {
+          "kind": "dead_end",
+          "description": "Dead end: no clickable elements found on page",
+          "url": "http://localhost:5173/stress/slow/",
+          "timestamp": 1777183248.10553,
+          "severity": "high"
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (gave up): Navigate all features and check edge cases",
+          "url": "http://localhost:5173/stress/slow/",
+          "timestamp": 1777183248.1061518,
+          "severity": "critical",
+          "goal": "Navigate all features and check edge cases",
+          "reason": "gave up"
+        }
+      ],
+      "elapsed_seconds": 11.97715499997139,
+      "error": null,
+      "llm_mode": false,
+      "llm_calls": 0,
+      "llm_tokens": 0,
+      "action_history": []
+    },
+    {
+      "persona": "casual_browser",
+      "status": "done",
+      "visited_urls": [
+        "http://localhost:5173",
+        "http://localhost:5173/stress/circular/",
+        "http://localhost:5173/stress/circular/b/",
+        "http://localhost:5173/stress/circular/a/",
+        "http://localhost:5173/stress/circular/",
+        "http://localhost:5173/stress/circular/a/",
+        "http://localhost:5173/stress/circular/",
+        "http://localhost:5173/stress/circular/a/",
+        "http://localhost:5173/",
+        "http://localhost:5173/checkout/shipping/",
+        "http://localhost:5173/cart/",
+        "http://localhost:5173/shop/",
+        "http://localhost:5173/"
+      ],
+      "frustration_events": [
+        {
+          "kind": "js_error",
+          "description": "JavaScript error: Failed to load resource: the server responded with a status of 404 (Not Found) (source: http://localhost:5173/favicon.ico)",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777183249.861582,
+          "severity": "high",
+          "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "source": "http://localhost:5173/favicon.ico",
+          "line": 0
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5173/stress/circular/a/ \u2192 http://localhost:5173/stress/circular/ \u2192 http://localhost:5173/stress/circular/a/",
+          "url": "http://localhost:5173/stress/circular/a/",
+          "timestamp": 1777183255.255754,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5173/stress/circular/a/",
+            "http://localhost:5173/stress/circular/",
+            "http://localhost:5173/stress/circular/a/"
+          ]
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5173/stress/circular/ \u2192 http://localhost:5173/stress/circular/a/ \u2192 http://localhost:5173/stress/circular/",
+          "url": "http://localhost:5173/stress/circular/",
+          "timestamp": 1777183256.153693,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5173/stress/circular/",
+            "http://localhost:5173/stress/circular/a/",
+            "http://localhost:5173/stress/circular/"
+          ]
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5173/stress/circular/a/ \u2192 http://localhost:5173/stress/circular/ \u2192 http://localhost:5173/stress/circular/a/",
+          "url": "http://localhost:5173/stress/circular/a/",
+          "timestamp": 1777183257.077981,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5173/stress/circular/a/",
+            "http://localhost:5173/stress/circular/",
+            "http://localhost:5173/stress/circular/a/"
+          ]
+        },
+        {
+          "kind": "cart_abandonment",
+          "description": "Cart abandonment: user left cart page without completing checkout",
+          "url": "http://localhost:5173/shop/",
+          "timestamp": 1777183261.9512472,
+          "severity": "high"
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (gave up): Browse around and see what's available",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777183277.808585,
+          "severity": "critical",
+          "goal": "Browse around and see what's available",
+          "reason": "gave up"
+        }
+      ],
+      "elapsed_seconds": 29.710793792037293,
+      "error": null,
+      "llm_mode": false,
+      "llm_calls": 0,
+      "llm_tokens": 0,
+      "action_history": []
+    },
+    {
+      "persona": "anxious_newbie",
+      "status": "done",
+      "visited_urls": [
+        "http://localhost:5173",
+        "http://localhost:5173/stress/slow/"
+      ],
+      "frustration_events": [
+        {
+          "kind": "js_error",
+          "description": "JavaScript error: Failed to load resource: the server responded with a status of 404 (Not Found) (source: http://localhost:5173/favicon.ico)",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777183279.460758,
+          "severity": "high",
+          "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "source": "http://localhost:5173/favicon.ico",
+          "line": 0
+        },
+        {
+          "kind": "dead_end",
+          "description": "Dead end: no clickable elements found on page",
+          "url": "http://localhost:5173/stress/slow/",
+          "timestamp": 1777183282.347471,
+          "severity": "high"
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (gave up): Sign up for an account without getting confused",
+          "url": "http://localhost:5173/stress/slow/",
+          "timestamp": 1777183282.348274,
+          "severity": "critical",
+          "goal": "Sign up for an account without getting confused",
+          "reason": "gave up"
+        }
+      ],
+      "elapsed_seconds": 5.401393375126645,
+      "error": null,
+      "llm_mode": false,
+      "llm_calls": 0,
+      "llm_tokens": 0,
+      "action_history": []
+    },
+    {
+      "persona": "methodical_tester",
+      "status": "done",
+      "visited_urls": [
+        "http://localhost:5173",
+        "http://localhost:5173/stress/edge-cases/",
+        "http://localhost:5173/",
+        "http://localhost:5173/stress/rage-decoy/",
+        "http://localhost:5173/",
+        "http://localhost:5173/shop/",
+        "http://localhost:5173/",
+        "http://localhost:5173/stress/edge-cases/",
+        "http://localhost:5173/",
+        "http://localhost:5173/stress/broken-forms/",
+        "http://localhost:5173/",
+        "http://localhost:5173/stress/rage-decoy/",
+        "http://localhost:5173/",
+        "http://localhost:5173/stress/many-links/",
+        "http://localhost:5173/stress/many-links/#item-18",
+        "http://localhost:5173/stress/many-links/#item-16",
+        "http://localhost:5173/stress/many-links/#item-10",
+        "http://localhost:5173/stress/many-links/#item-11",
+        "http://localhost:5173/stress/many-links/#item-13",
+        "http://localhost:5173/",
+        "http://localhost:5173/stress/dead-end/"
+      ],
+      "frustration_events": [
+        {
+          "kind": "js_error",
+          "description": "JavaScript error: Failed to load resource: the server responded with a status of 404 (Not Found) (source: http://localhost:5173/favicon.ico)",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777183284.890226,
+          "severity": "high",
+          "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "source": "http://localhost:5173/favicon.ico",
+          "line": 0
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5173/ \u2192 http://localhost:5173/stress/rage-decoy/ \u2192 http://localhost:5173/",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777183290.853695,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5173/",
+            "http://localhost:5173/stress/rage-decoy/",
+            "http://localhost:5173/"
+          ]
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5173/ \u2192 http://localhost:5173/shop/ \u2192 http://localhost:5173/",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777183305.252647,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5173/",
+            "http://localhost:5173/shop/",
+            "http://localhost:5173/"
+          ]
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5173/ \u2192 http://localhost:5173/stress/edge-cases/ \u2192 http://localhost:5173/",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777183308.867284,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5173/",
+            "http://localhost:5173/stress/edge-cases/",
+            "http://localhost:5173/"
+          ]
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173/stress/broken-forms/",
+          "timestamp": 1777183310.078078,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "#contact-name",
+          "placeholder": "Enter your name"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173/stress/broken-forms/",
+          "timestamp": 1777183310.0789309,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "#contact-email",
+          "placeholder": "Enter your email"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173/stress/broken-forms/",
+          "timestamp": 1777183310.079415,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "#contact-message",
+          "placeholder": "Enter your message"
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5173/ \u2192 http://localhost:5173/stress/broken-forms/ \u2192 http://localhost:5173/",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777183320.075201,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5173/",
+            "http://localhost:5173/stress/broken-forms/",
+            "http://localhost:5173/"
+          ]
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5173/ \u2192 http://localhost:5173/stress/rage-decoy/ \u2192 http://localhost:5173/",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777183322.72014,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5173/",
+            "http://localhost:5173/stress/rage-decoy/",
+            "http://localhost:5173/"
+          ]
+        },
+        {
+          "kind": "dead_end",
+          "description": "Dead end: no clickable elements found on page",
+          "url": "http://localhost:5173/stress/dead-end/",
+          "timestamp": 1777183335.543089,
+          "severity": "high"
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (gave up): Systematically check every link and form",
+          "url": "http://localhost:5173/stress/dead-end/",
+          "timestamp": 1777183335.5444238,
+          "severity": "critical",
+          "goal": "Systematically check every link and form",
+          "reason": "gave up"
+        }
+      ],
+      "elapsed_seconds": 52.34673645789735,
+      "error": null,
+      "llm_mode": false,
+      "llm_calls": 0,
+      "llm_tokens": 0,
+      "action_history": []
+    },
+    {
+      "persona": "mobile_commuter",
+      "status": "done",
+      "visited_urls": [
+        "http://localhost:5173",
+        "http://localhost:5173/stress/slow/"
+      ],
+      "frustration_events": [
+        {
+          "kind": "js_error",
+          "description": "JavaScript error: Failed to load resource: the server responded with a status of 404 (Not Found) (source: http://localhost:5173/favicon.ico)",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777183337.320812,
+          "severity": "high",
+          "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "source": "http://localhost:5173/favicon.ico",
+          "line": 0
+        },
+        {
+          "kind": "mobile_tap_target",
+          "description": "Mobile issue: horizontal_scroll",
+          "url": "http://localhost:5173",
+          "timestamp": 1777183337.506439,
+          "severity": "medium",
+          "issue_type": "horizontal_scroll",
+          "selector": "body",
+          "content_width": 422,
+          "viewport_width": 375
+        },
+        {
+          "kind": "dead_end",
+          "description": "Dead end: no clickable elements found on page",
+          "url": "http://localhost:5173/stress/slow/",
+          "timestamp": 1777183339.4983969,
+          "severity": "high"
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (gave up): Quickly check order status while on the go",
+          "url": "http://localhost:5173/stress/slow/",
+          "timestamp": 1777183339.499359,
+          "severity": "critical",
+          "goal": "Quickly check order status while on the go",
+          "reason": "gave up"
+        }
+      ],
+      "elapsed_seconds": 3.930798290995881,
+      "error": null,
+      "llm_mode": false,
+      "llm_calls": 0,
+      "llm_tokens": 0,
+      "action_history": []
+    },
+    {
+      "persona": "accessibility_user",
+      "status": "done",
+      "visited_urls": [
+        "http://localhost:5173",
+        "http://localhost:5173/stress/hidden-menu/",
+        "http://localhost:5173/",
+        "http://localhost:5173/stress/dead-end/"
+      ],
+      "frustration_events": [
+        {
+          "kind": "js_error",
+          "description": "JavaScript error: Failed to load resource: the server responded with a status of 404 (Not Found) (source: http://localhost:5173/favicon.ico)",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777183341.150547,
+          "severity": "high",
+          "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "source": "http://localhost:5173/favicon.ico",
+          "line": 0
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173/stress/hidden-menu/",
+          "timestamp": 1777183342.963852,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "select",
+          "placeholder": ""
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173/stress/hidden-menu/",
+          "timestamp": 1777183342.964362,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "input",
+          "placeholder": ""
+        },
+        {
+          "kind": "dead_end",
+          "description": "Dead end: no clickable elements found on page",
+          "url": "http://localhost:5173/stress/dead-end/",
+          "timestamp": 1777183347.409096,
+          "severity": "high"
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (gave up): Navigate using visible labels and clear affordances",
+          "url": "http://localhost:5173/stress/dead-end/",
+          "timestamp": 1777183347.411267,
+          "severity": "critical",
+          "goal": "Navigate using visible labels and clear affordances",
+          "reason": "gave up"
+        }
+      ],
+      "elapsed_seconds": 7.943182792048901,
+      "error": null,
+      "llm_mode": false,
+      "llm_calls": 0,
+      "llm_tokens": 0,
+      "action_history": []
+    },
+    {
+      "persona": "form_filler",
+      "status": "done",
+      "visited_urls": [
+        "http://localhost:5173",
+        "http://localhost:5173/order-status/"
+      ],
+      "frustration_events": [
+        {
+          "kind": "js_error",
+          "description": "JavaScript error: Failed to load resource: the server responded with a status of 404 (Not Found) (source: http://localhost:5173/favicon.ico)",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777183349.136354,
+          "severity": "high",
+          "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "source": "http://localhost:5173/favicon.ico",
+          "line": 0
+        },
+        {
+          "kind": "dead_end",
+          "description": "Dead end: no clickable elements found on page",
+          "url": "http://localhost:5173/order-status/",
+          "timestamp": 1777183351.545901,
+          "severity": "high"
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (gave up): Complete a multi-step form without errors",
+          "url": "http://localhost:5173/order-status/",
+          "timestamp": 1777183351.5465941,
+          "severity": "critical",
+          "goal": "Complete a multi-step form without errors",
+          "reason": "gave up"
+        }
+      ],
+      "elapsed_seconds": 4.115053249988705,
+      "error": null,
+      "llm_mode": false,
+      "llm_calls": 0,
+      "llm_tokens": 0,
+      "action_history": []
+    },
+    {
+      "persona": "search_user",
+      "status": "done",
+      "visited_urls": [
+        "http://localhost:5173",
+        "http://localhost:5173/stress/long-dwell/",
+        "http://localhost:5173/stress/slow/"
+      ],
+      "frustration_events": [
+        {
+          "kind": "js_error",
+          "description": "JavaScript error: Failed to load resource: the server responded with a status of 404 (Not Found) (source: http://localhost:5173/favicon.ico)",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777183353.276238,
+          "severity": "high",
+          "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "source": "http://localhost:5173/favicon.ico",
+          "line": 0
+        },
+        {
+          "kind": "dead_end",
+          "description": "Dead end: no clickable elements found on page",
+          "url": "http://localhost:5173/stress/slow/",
+          "timestamp": 1777183357.035823,
+          "severity": "high"
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (gave up): Find a specific product or information using search",
+          "url": "http://localhost:5173/stress/slow/",
+          "timestamp": 1777183357.03675,
+          "severity": "critical",
+          "goal": "Find a specific product or information using search",
+          "reason": "gave up"
+        }
+      ],
+      "elapsed_seconds": 5.518364832969382,
+      "error": null,
+      "llm_mode": false,
+      "llm_calls": 0,
+      "llm_tokens": 0,
+      "action_history": []
+    },
+    {
+      "persona": "checkout_user",
+      "status": "done",
+      "visited_urls": [
+        "http://localhost:5173",
+        "http://localhost:5173/stress/edge-cases/",
+        "http://localhost:5173/",
+        "http://localhost:5173/stress/long-dwell/",
+        "http://localhost:5173/stress/slow/"
+      ],
+      "frustration_events": [
+        {
+          "kind": "js_error",
+          "description": "JavaScript error: Failed to load resource: the server responded with a status of 404 (Not Found) (source: http://localhost:5173/favicon.ico)",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777183358.754833,
+          "severity": "high",
+          "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "source": "http://localhost:5173/favicon.ico",
+          "line": 0
+        },
+        {
+          "kind": "dead_end",
+          "description": "Dead end: no clickable elements found on page",
+          "url": "http://localhost:5173/stress/slow/",
+          "timestamp": 1777183365.476694,
+          "severity": "high"
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (gave up): Complete a purchase from cart to confirmation",
+          "url": "http://localhost:5173/stress/slow/",
+          "timestamp": 1777183365.477385,
+          "severity": "critical",
+          "goal": "Complete a purchase from cart to confirmation",
+          "reason": "gave up"
+        }
+      ],
+      "elapsed_seconds": 8.440014415886253,
+      "error": null,
+      "llm_mode": false,
+      "llm_calls": 0,
+      "llm_tokens": 0,
+      "action_history": []
+    }
+  ],
+  "created_at": "2026-04-26T05:59:19.003476+00:00",
+  "updated_at": "2026-04-26T06:02:45.583857+00:00"
+}

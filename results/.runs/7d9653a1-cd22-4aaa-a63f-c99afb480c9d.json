@@ -1,0 +1,109 @@
+{
+  "run_id": "7d9653a1-cd22-4aaa-a63f-c99afb480c9d",
+  "url": "http://localhost:5173",
+  "status": "done",
+  "llm_mode": false,
+  "personas": [
+    {
+      "name": "non_tech_senior",
+      "patience": 0.5,
+      "tech_literacy": 0.2,
+      "goal": "Find and read account settings",
+      "tags": [
+        "senior",
+        "low-tech"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "labels",
+        "text size",
+        "navigation"
+      ],
+      "frustration_triggers": [
+        "small text",
+        "confusing labels",
+        "icon-only buttons",
+        "jargon"
+      ],
+      "detection_weights": [
+        [
+          "confusing_navigation",
+          2.0
+        ],
+        [
+          "scroll_rage",
+          1.5
+        ],
+        [
+          "back_button_abuse",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [
+        "/account/settings/",
+        "/settings/",
+        "/profile/settings/"
+      ],
+      "success_text_patterns": [
+        "account settings page",
+        "your preferences",
+        "notification preferences"
+      ]
+    }
+  ],
+  "results": [
+    {
+      "persona": "non_tech_senior",
+      "status": "done",
+      "visited_urls": [
+        "http://localhost:5173",
+        "http://localhost:5173/stress/slow/"
+      ],
+      "frustration_events": [
+        {
+          "kind": "js_error",
+          "description": "JavaScript error: Failed to load resource: the server responded with a status of 404 (Not Found) (source: http://localhost:5173/favicon.ico)",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777183259.996576,
+          "severity": "high",
+          "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "source": "http://localhost:5173/favicon.ico",
+          "line": 0
+        },
+        {
+          "kind": "dead_end",
+          "description": "Dead end: no clickable elements found on page",
+          "url": "http://localhost:5173/stress/slow/",
+          "timestamp": 1777183263.488159,
+          "severity": "high"
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (gave up): Find and read account settings",
+          "url": "http://localhost:5173/stress/slow/",
+          "timestamp": 1777183263.4887471,
+          "severity": "critical",
+          "goal": "Find and read account settings",
+          "reason": "gave up"
+        }
+      ],
+      "elapsed_seconds": 5.243329915916547,
+      "error": null,
+      "llm_mode": false,
+      "llm_calls": 0,
+      "llm_tokens": 0,
+      "action_history": []
+    }
+  ],
+  "created_at": "2026-04-26T06:00:58.293391+00:00",
+  "updated_at": "2026-04-26T06:01:03.538830+00:00"
+}

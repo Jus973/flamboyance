@@ -1,0 +1,99 @@
+{
+  "run_id": "15aaa08c-3585-4d47-82bf-e563615037e3",
+  "url": "http://localhost:5173",
+  "status": "done",
+  "llm_mode": false,
+  "personas": [
+    {
+      "name": "power_user",
+      "patience": 0.9,
+      "tech_literacy": 0.9,
+      "goal": "Navigate all features and check edge cases",
+      "tags": [
+        "expert",
+        "thorough"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "keyboard shortcuts",
+        "advanced features",
+        "edge cases"
+      ],
+      "frustration_triggers": [
+        "missing features",
+        "inconsistent behavior",
+        "no keyboard navigation"
+      ],
+      "detection_weights": [
+        [
+          "copy_paste_failure",
+          1.5
+        ],
+        [
+          "js_error",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [],
+      "success_text_patterns": []
+    }
+  ],
+  "results": [
+    {
+      "persona": "power_user",
+      "status": "done",
+      "visited_urls": [
+        "http://localhost:5173",
+        "http://localhost:5173/account/settings/",
+        "http://localhost:5173/account/",
+        "http://localhost:5173/",
+        "http://localhost:5173/order-status/"
+      ],
+      "frustration_events": [
+        {
+          "kind": "js_error",
+          "description": "JavaScript error: Failed to load resource: the server responded with a status of 404 (Not Found) (source: http://localhost:5173/favicon.ico)",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777182123.346907,
+          "severity": "high",
+          "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "source": "http://localhost:5173/favicon.ico",
+          "line": 0
+        },
+        {
+          "kind": "dead_end",
+          "description": "Dead end: no clickable elements found on page",
+          "url": "http://localhost:5173/order-status/",
+          "timestamp": 1777182129.032237,
+          "severity": "high"
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (gave up): Navigate all features and check edge cases",
+          "url": "http://localhost:5173/order-status/",
+          "timestamp": 1777182129.033011,
+          "severity": "critical",
+          "goal": "Navigate all features and check edge cases",
+          "reason": "gave up"
+        }
+      ],
+      "elapsed_seconds": 7.843085292028263,
+      "error": null,
+      "llm_mode": false,
+      "llm_calls": 0,
+      "llm_tokens": 0,
+      "action_history": []
+    }
+  ],
+  "created_at": "2026-04-26T05:42:01.261595+00:00",
+  "updated_at": "2026-04-26T05:42:09.108658+00:00"
+}

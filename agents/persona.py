@@ -64,12 +64,12 @@ class Persona:
     # Success indicators: URL patterns or page content that indicate goal completion
     success_url_patterns: tuple[str, ...] = field(default_factory=tuple)
     success_text_patterns: tuple[str, ...] = field(default_factory=tuple)
-    # Cognitive limitations (Phase C): Make agents behave more like real humans
+    # Cognitive limitations for "intentionally dumber" agents
     memory_depth: int = 5  # Max pages/actions retained in working memory
     dom_filter: tuple[str, ...] = field(default_factory=tuple)  # CSS selectors agent CAN see (empty=all)
     scroll_amnesia: bool = True  # Forget off-screen content after scroll
     tunnel_vision_ratio: float = 1.0  # Viewport crop ratio (1.0=full, 0.6=center 60%)
-    render_delay_ms: int = 0  # Screenshot delay after navigation (0=immediate)
+    render_delay_ms: int = 0  # Screenshot delay after navigation (captures before JS finishes)
     blind_patterns: tuple[str, ...] = field(default_factory=tuple)  # CSS selectors agent cannot see
 
     def __post_init__(self) -> None:
@@ -87,7 +87,6 @@ class Persona:
             raise ValueError(
                 f"viewport must be (width, height) with positive ints, got {self.viewport}"
             )
-        # Cognitive limitation validations
         if self.memory_depth < 1:
             raise ValueError(f"memory_depth must be >= 1, got {self.memory_depth}")
         if not 0.0 < self.tunnel_vision_ratio <= 1.0:
@@ -495,6 +494,9 @@ FORM_FILLER = Persona(
         ("error_message_visible", 2.0),
         ("session_timeout", 1.5),
     ),
+    # Cognitive limitations: Moderate memory, focuses on form fields
+    memory_depth=4,
+    tunnel_vision_ratio=0.85,  # Focuses on form area
 )
 
 SEARCH_USER = Persona(
@@ -515,6 +517,9 @@ SEARCH_USER = Persona(
         ("confusing_navigation", 1.5),
         ("infinite_scroll_trap", 1.5),
     ),
+    # Cognitive limitations: Impatient, focuses on search results area
+    memory_depth=3,
+    tunnel_vision_ratio=0.9,  # Focuses on results
 )
 
 CHECKOUT_USER = Persona(
@@ -533,6 +538,9 @@ CHECKOUT_USER = Persona(
     ),
     success_url_patterns=("/checkout/confirmation", "/order/confirm", "/thank-you", "/checkout/"),
     success_text_patterns=("order confirmed", "thank you", "order #", "confirmation"),
+    # Cognitive limitations: Forgetful under purchase pressure, ignores upsells
+    memory_depth=3,
+    blind_patterns=(".upsell", ".cross-sell", ".recommended", ".also-bought"),
 )
 
 DEFAULT_PERSONAS: dict[str, Persona] = {

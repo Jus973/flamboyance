@@ -51,25 +51,32 @@ _tasks: dict[str, asyncio.Task[RunState]] = {}
 
 async def _safe_run_local(run_id: str, **kwargs: Any) -> RunState:
     """Wrapper around run_local with error handling for browser/agent failures."""
+    from agents.runner_local import _runs
+    from agents.persona import DEFAULT_PERSONAS
+    
+    # Pre-register the run so get_status can find it immediately
+    state = RunState(
+        run_id=run_id,
+        url=kwargs.get("url", "unknown"),
+        personas=[],  # Will be populated by run_local
+        status="running",
+    )
+    _runs[run_id] = state
+    
     try:
-        return await run_local(**kwargs)
+        result = await run_local(run_id=run_id, **kwargs)
+        return result
     except asyncio.CancelledError:
         log.info("Run %s was cancelled", run_id)
-        raise
+        state.status = "stopped"
+        state._error = "Run was cancelled"
+        return state
     except Exception as exc:
         log.error("Run %s failed: %s", run_id, exc, exc_info=True)
-        # Create a failed RunState so get_status can report the error
-        from agents.persona import DEFAULT_PERSONAS
-        state = RunState(
-            run_id=run_id,
-            url=kwargs.get("url", "unknown"),
-            personas=list(DEFAULT_PERSONAS.values()),
-            status="error",
-        )
+        # Update the existing state with error info
+        state.status = "error"
         state._error = str(exc)
-        from agents.runner_local import _runs
-        _runs[run_id] = state
-        raise
+        return state  # Return instead of raise to prevent server crash
 
 
 @mcp.tool()
@@ -131,7 +138,7 @@ async def run_flamboyance(
     personas: list[str] | None = None,
     timeout: int = 60,
     llm_mode: bool = True,
-    batch_size: int | None = 3,
+    batch_size: int | None = 1,
     headless: bool = True,
     max_llm_calls: int | None = 30,
     personas_file: str | None = None,
@@ -147,8 +154,8 @@ async def run_flamboyance(
         timeout: Per-agent timeout in seconds (default: 60).
         llm_mode: If True (default), use LLM vision model for intelligent
             navigation. Set to False for fast heuristic-only mode (no API costs).
-        batch_size: Run agents in parallel batches of N (default: 3).
-            Set to None or 1 for sequential execution.
+        batch_size: Run agents in parallel batches of N (default: 1, sequential).
+            Set to higher values (e.g., 3) for parallel execution.
         headless: If True (default), run browser without visible UI.
             Set to False to show browser windows for debugging.
         max_llm_calls: Maximum LLM API calls per agent (default: 30).
@@ -212,59 +219,74 @@ async def get_status(run_id: str) -> dict[str, Any]:
     
     Returns:
         While running: ``{"run_id": "...", "status": "running", "progress": "3/8 agents complete"}``
-        On completion: ``{"run_id": "...", "status": "done", "summary": "<concise markdown>"}``
+        On completion: ``{"run_id": "...", "status": "done", "markdown": "<concise summary>"}``
         On error: ``{"run_id": "...", "status": "error", "error": "..."}``
         If not found: ``{"run_id": "...", "status": "not_found"}``
+    
+    When status is "done", the markdown field contains a UX friction summary.
+    Please render this markdown directly to the user instead of showing raw JSON.
     """
-    state = get_run(run_id)
-    if state is None:
-        return {"run_id": run_id, "status": "not_found"}
+    try:
+        state = get_run(run_id)
+        if state is None:
+            return {"run_id": run_id, "status": "not_found"}
 
-    if state.status == "running":
-        completed = len(state.results)
-        total = len(state.personas)
+        if state.status == "running":
+            completed = len(state.results)
+            total = len(state.personas) if state.personas else 0
+            return {
+                "run_id": run_id,
+                "status": "running",
+                "progress": f"{completed}/{total} agents complete",
+            }
+
+        # Handle error state
+        if state.status == "error":
+            error_msg = getattr(state, "_error", "Unknown error occurred")
+            return {
+                "run_id": run_id,
+                "status": "error",
+                "error": error_msg,
+                "details": "The simulation encountered an error. Check server logs for details.",
+            }
+
+        # Handle interrupted state (server restarted mid-run)
+        if state.status == "interrupted":
+            completed = len(state.results)
+            total = len(state.personas) if state.personas else 0
+            return {
+                "run_id": run_id,
+                "status": "interrupted",
+                "progress": f"{completed}/{total} agents completed before interruption",
+                "details": "The simulation was interrupted (server restarted). Partial results may be available via get_report().",
+            }
+
+        # Done or stopped - generate concise summary
+        try:
+            summary = generate_concise_summary(state)
+        except Exception as e:
+            log.warning("Failed to generate summary: %s", e)
+            summary = f"Completed with {len(state.results)} agents"
+        
+        # Also save the full report
+        try:
+            path = save_report(state)
+            log.info("report saved to %s", path)
+        except Exception as exc:
+            log.warning("could not save report: %s", exc)
+
         return {
             "run_id": run_id,
-            "status": "running",
-            "progress": f"{completed}/{total} agents complete",
+            "status": state.status,
+            "markdown": summary,  # Use "markdown" key for better Cascade display
         }
-
-    # Handle error state
-    if state.status == "error":
-        error_msg = getattr(state, "_error", "Unknown error occurred")
+    except Exception as e:
+        log.error("get_status failed for %s: %s", run_id, e)
         return {
             "run_id": run_id,
             "status": "error",
-            "error": error_msg,
-            "details": "The simulation encountered an error. Check server logs for details.",
+            "error": f"Internal error: {e}",
         }
-
-    # Handle interrupted state (server restarted mid-run)
-    if state.status == "interrupted":
-        completed = len(state.results)
-        total = len(state.personas)
-        return {
-            "run_id": run_id,
-            "status": "interrupted",
-            "progress": f"{completed}/{total} agents completed before interruption",
-            "details": "The simulation was interrupted (server restarted). Partial results may be available via get_report().",
-        }
-
-    # Done or stopped - generate concise summary
-    summary = generate_concise_summary(state)
-    
-    # Also save the full report
-    try:
-        path = save_report(state)
-        log.info("report saved to %s", path)
-    except Exception as exc:
-        log.warning("could not save report: %s", exc)
-
-    return {
-        "run_id": run_id,
-        "status": state.status,
-        "summary": summary,
-    }
 
 
 @mcp.tool()
@@ -321,10 +343,13 @@ async def get_report(run_id: str) -> dict[str, Any]:
 
     Returns:
         ``{"run_id": "...", "markdown": "..."}``
+        
+    The markdown field contains a full UX friction report that should be
+    displayed to the user. Please render this markdown directly in your response.
     """
     state = get_run(run_id)
     if state is None:
-        return {"run_id": run_id, "markdown": f"# Error\n\nRun `{run_id}` not found."}
+        return {"run_id": run_id, "error": f"Run `{run_id}` not found."}
 
     md = generate_report(state)
 

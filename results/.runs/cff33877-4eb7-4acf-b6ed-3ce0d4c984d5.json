@@ -1,0 +1,1177 @@
+{
+  "run_id": "cff33877-4eb7-4acf-b6ed-3ce0d4c984d5",
+  "url": "http://localhost:5173",
+  "status": "done",
+  "llm_mode": true,
+  "personas": [
+    {
+      "name": "frustrated_exec",
+      "patience": 0.2,
+      "tech_literacy": 0.8,
+      "goal": "Complete a purchase flow quickly",
+      "tags": [
+        "executive",
+        "impatient"
+      ],
+      "early_exit_fraction": 0.3,
+      "max_actions": 15,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "speed",
+        "checkout",
+        "forms"
+      ],
+      "frustration_triggers": [
+        "slow loading",
+        "unnecessary steps",
+        "loading spinners",
+        "required fields"
+      ],
+      "detection_weights": [
+        [
+          "slow_interaction",
+          2.0
+        ],
+        [
+          "session_timeout",
+          1.5
+        ],
+        [
+          "slow_load",
+          1.5
+        ],
+        [
+          "modal_frustration",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [
+        "/checkout/confirmation",
+        "/order/confirm",
+        "/thank-you"
+      ],
+      "success_text_patterns": [
+        "order confirmed",
+        "thank you for your order",
+        "order #"
+      ]
+    },
+    {
+      "name": "non_tech_senior",
+      "patience": 0.5,
+      "tech_literacy": 0.2,
+      "goal": "Find and read account settings",
+      "tags": [
+        "senior",
+        "low-tech"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "labels",
+        "text size",
+        "navigation"
+      ],
+      "frustration_triggers": [
+        "small text",
+        "confusing labels",
+        "icon-only buttons",
+        "jargon"
+      ],
+      "detection_weights": [
+        [
+          "confusing_navigation",
+          2.0
+        ],
+        [
+          "scroll_rage",
+          1.5
+        ],
+        [
+          "back_button_abuse",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [
+        "/account/settings/",
+        "/settings/",
+        "/profile/settings/"
+      ],
+      "success_text_patterns": [
+        "account settings page",
+        "your preferences",
+        "notification preferences"
+      ]
+    },
+    {
+      "name": "power_user",
+      "patience": 0.9,
+      "tech_literacy": 0.9,
+      "goal": "Navigate all features and check edge cases",
+      "tags": [
+        "expert",
+        "thorough"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "keyboard shortcuts",
+        "advanced features",
+        "edge cases"
+      ],
+      "frustration_triggers": [
+        "missing features",
+        "inconsistent behavior",
+        "no keyboard navigation"
+      ],
+      "detection_weights": [
+        [
+          "copy_paste_failure",
+          1.5
+        ],
+        [
+          "js_error",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [],
+      "success_text_patterns": []
+    },
+    {
+      "name": "casual_browser",
+      "patience": 0.5,
+      "tech_literacy": 0.5,
+      "goal": "Browse around and see what's available",
+      "tags": [
+        "casual",
+        "explorer"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 25,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "content",
+        "navigation",
+        "visual appeal"
+      ],
+      "frustration_triggers": [
+        "popups",
+        "aggressive CTAs",
+        "cluttered layout"
+      ],
+      "detection_weights": [
+        [
+          "modal_frustration",
+          2.0
+        ],
+        [
+          "scroll_rage",
+          1.5
+        ],
+        [
+          "infinite_scroll_trap",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [],
+      "success_text_patterns": []
+    },
+    {
+      "name": "anxious_newbie",
+      "patience": 0.3,
+      "tech_literacy": 0.3,
+      "goal": "Sign up for an account without getting confused",
+      "tags": [
+        "newbie",
+        "anxious",
+        "low-tech"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "signup",
+        "forms",
+        "error messages"
+      ],
+      "frustration_triggers": [
+        "unclear errors",
+        "too many fields",
+        "no progress indicator",
+        "unexpected behavior"
+      ],
+      "detection_weights": [
+        [
+          "form_abandonment",
+          2.0
+        ],
+        [
+          "error_message_visible",
+          2.0
+        ],
+        [
+          "back_button_abuse",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [
+        "/welcome",
+        "/dashboard",
+        "/account"
+      ],
+      "success_text_patterns": [
+        "account created",
+        "welcome",
+        "registration successful",
+        "signup complete"
+      ]
+    },
+    {
+      "name": "methodical_tester",
+      "patience": 0.95,
+      "tech_literacy": 0.6,
+      "goal": "Systematically check every link and form",
+      "tags": [
+        "qa",
+        "thorough",
+        "slow"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 100,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "links",
+        "forms",
+        "validation",
+        "error states"
+      ],
+      "frustration_triggers": [
+        "broken links",
+        "missing validation",
+        "inconsistent states"
+      ],
+      "detection_weights": [
+        [
+          "error_message_visible",
+          1.5
+        ],
+        [
+          "infinite_scroll_trap",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [],
+      "success_text_patterns": []
+    },
+    {
+      "name": "mobile_commuter",
+      "patience": 0.25,
+      "tech_literacy": 0.85,
+      "goal": "Quickly check order status while on the go",
+      "tags": [
+        "mobile",
+        "rushed",
+        "tech-savvy"
+      ],
+      "early_exit_fraction": 0.3,
+      "max_actions": 20,
+      "viewport": [
+        375,
+        667
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "mobile layout",
+        "touch targets",
+        "quick actions"
+      ],
+      "frustration_triggers": [
+        "small tap targets",
+        "horizontal scroll",
+        "desktop-only features",
+        "slow mobile load"
+      ],
+      "detection_weights": [
+        [
+          "mobile_tap_target",
+          2.0
+        ],
+        [
+          "slow_interaction",
+          1.5
+        ],
+        [
+          "slow_load",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [
+        "/order-status/",
+        "/orders/",
+        "/track/"
+      ],
+      "success_text_patterns": [
+        "order status:",
+        "tracking number",
+        "order #",
+        "delivery status"
+      ]
+    },
+    {
+      "name": "accessibility_user",
+      "patience": 0.7,
+      "tech_literacy": 0.35,
+      "goal": "Navigate using visible labels and clear affordances",
+      "tags": [
+        "a11y",
+        "needs-clarity"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": true,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "labels",
+        "contrast",
+        "focus indicators",
+        "screen reader"
+      ],
+      "frustration_triggers": [
+        "missing labels",
+        "icon-only buttons",
+        "poor contrast",
+        "no focus visible"
+      ],
+      "detection_weights": [
+        [
+          "accessibility_failure",
+          2.0
+        ],
+        [
+          "copy_paste_failure",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [],
+      "success_text_patterns": []
+    },
+    {
+      "name": "form_filler",
+      "patience": 0.4,
+      "tech_literacy": 0.5,
+      "goal": "Complete a multi-step form without errors",
+      "tags": [
+        "forms",
+        "data-entry"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "form validation",
+        "error messages",
+        "field labels",
+        "progress indicators"
+      ],
+      "frustration_triggers": [
+        "unclear errors",
+        "lost form data",
+        "confusing field labels",
+        "no progress indicator"
+      ],
+      "detection_weights": [
+        [
+          "form_abandonment",
+          2.0
+        ],
+        [
+          "error_message_visible",
+          2.0
+        ],
+        [
+          "session_timeout",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [],
+      "success_text_patterns": []
+    },
+    {
+      "name": "search_user",
+      "patience": 0.35,
+      "tech_literacy": 0.6,
+      "goal": "Find a specific product or information using search",
+      "tags": [
+        "search",
+        "goal-oriented"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "search functionality",
+        "filters",
+        "results relevance"
+      ],
+      "frustration_triggers": [
+        "zero results",
+        "irrelevant results",
+        "no search feedback",
+        "broken filters"
+      ],
+      "detection_weights": [
+        [
+          "search_frustration",
+          2.0
+        ],
+        [
+          "confusing_navigation",
+          1.5
+        ],
+        [
+          "infinite_scroll_trap",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [],
+      "success_text_patterns": []
+    },
+    {
+      "name": "checkout_user",
+      "patience": 0.3,
+      "tech_literacy": 0.7,
+      "goal": "Complete a purchase from cart to confirmation",
+      "tags": [
+        "checkout",
+        "purchase",
+        "goal-oriented"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "cart",
+        "checkout flow",
+        "payment forms",
+        "order confirmation"
+      ],
+      "frustration_triggers": [
+        "cart issues",
+        "payment errors",
+        "session timeout",
+        "unclear totals"
+      ],
+      "detection_weights": [
+        [
+          "cart_abandonment",
+          2.0
+        ],
+        [
+          "form_abandonment",
+          1.5
+        ],
+        [
+          "slow_interaction",
+          1.5
+        ],
+        [
+          "session_timeout",
+          2.0
+        ]
+      ],
+      "success_url_patterns": [
+        "/checkout/confirmation",
+        "/order/confirm",
+        "/thank-you",
+        "/checkout/"
+      ],
+      "success_text_patterns": [
+        "order confirmed",
+        "thank you",
+        "order #",
+        "confirmation"
+      ]
+    }
+  ],
+  "results": [
+    {
+      "persona": "frustrated_exec",
+      "status": "gave_up",
+      "visited_urls": [
+        "http://localhost:5173",
+        "http://localhost:5173/"
+      ],
+      "frustration_events": [
+        {
+          "kind": "js_error",
+          "description": "JavaScript error: Failed to load resource: the server responded with a status of 404 (Not Found) (source: http://localhost:5173/favicon.ico)",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777182592.892859,
+          "severity": "high",
+          "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "source": "http://localhost:5173/favicon.ico",
+          "line": 0
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (gave up): Complete a purchase flow quickly",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777182621.315448,
+          "severity": "critical",
+          "goal": "Complete a purchase flow quickly",
+          "reason": "gave up"
+        }
+      ],
+      "elapsed_seconds": 31.158164083957672,
+      "error": null,
+      "llm_mode": true,
+      "llm_calls": 1,
+      "llm_tokens": 30,
+      "action_history": [
+        {
+          "action": "click",
+          "target": [
+            460,
+            490
+          ],
+          "result": "clicked at (460, 490)",
+          "url": "http://localhost:5173/"
+        }
+      ]
+    },
+    {
+      "persona": "non_tech_senior",
+      "status": "done",
+      "visited_urls": [
+        "http://localhost:5173",
+        "http://localhost:5173/"
+      ],
+      "frustration_events": [
+        {
+          "kind": "js_error",
+          "description": "JavaScript error: Failed to load resource: the server responded with a status of 404 (Not Found) (source: http://localhost:5173/favicon.ico)",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777182592.8913841,
+          "severity": "high",
+          "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "source": "http://localhost:5173/favicon.ico",
+          "line": 0
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (timeout): Find and read account settings",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777182654.1416671,
+          "severity": "critical",
+          "goal": "Find and read account settings",
+          "reason": "timeout"
+        }
+      ],
+      "elapsed_seconds": 63.94019225006923,
+      "error": null,
+      "llm_mode": true,
+      "llm_calls": 2,
+      "llm_tokens": 66,
+      "action_history": [
+        {
+          "action": "click",
+          "target": [
+            450,
+            360
+          ],
+          "result": "clicked at (450, 360)",
+          "url": "http://localhost:5173/"
+        },
+        {
+          "action": "click",
+          "target": [
+            480,
+            430
+          ],
+          "result": "clicked at (480, 430)",
+          "url": "http://localhost:5173/"
+        }
+      ]
+    },
+    {
+      "persona": "power_user",
+      "status": "done",
+      "visited_urls": [
+        "http://localhost:5173",
+        "http://localhost:5173/",
+        "http://localhost:5173/account/"
+      ],
+      "frustration_events": [
+        {
+          "kind": "js_error",
+          "description": "JavaScript error: Failed to load resource: the server responded with a status of 404 (Not Found) (source: http://localhost:5173/favicon.ico)",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777182592.894298,
+          "severity": "high",
+          "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "source": "http://localhost:5173/favicon.ico",
+          "line": 0
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (timeout): Navigate all features and check edge cases",
+          "url": "http://localhost:5173/account/",
+          "timestamp": 1777182665.667802,
+          "severity": "critical",
+          "goal": "Navigate all features and check edge cases",
+          "reason": "timeout"
+        }
+      ],
+      "elapsed_seconds": 75.44635383295827,
+      "error": null,
+      "llm_mode": true,
+      "llm_calls": 3,
+      "llm_tokens": 100,
+      "action_history": [
+        {
+          "action": "click",
+          "target": [
+            640,
+            360
+          ],
+          "result": "clicked at (640, 360)",
+          "url": "http://localhost:5173/"
+        },
+        {
+          "action": "click",
+          "target": [
+            520,
+            487
+          ],
+          "result": "clicked at (520, 487)",
+          "url": "http://localhost:5173/account/"
+        },
+        {
+          "action": "click",
+          "target": [
+            396,
+            180
+          ],
+          "result": "clicked at (396, 180)",
+          "url": "http://localhost:5173/account/"
+        }
+      ]
+    },
+    {
+      "persona": "casual_browser",
+      "status": "done",
+      "visited_urls": [
+        "http://localhost:5173",
+        "http://localhost:5173/",
+        "http://localhost:5173/checkout/shipping/"
+      ],
+      "frustration_events": [
+        {
+          "kind": "js_error",
+          "description": "JavaScript error: Failed to load resource: the server responded with a status of 404 (Not Found) (source: http://localhost:5173/favicon.ico)",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777182668.437522,
+          "severity": "high",
+          "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "source": "http://localhost:5173/favicon.ico",
+          "line": 0
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (timeout): Browse around and see what's available",
+          "url": "http://localhost:5173/checkout/shipping/",
+          "timestamp": 1777182747.7744918,
+          "severity": "critical",
+          "goal": "Browse around and see what's available",
+          "reason": "timeout"
+        }
+      ],
+      "elapsed_seconds": 82.28692791680805,
+      "error": null,
+      "llm_mode": true,
+      "llm_calls": 3,
+      "llm_tokens": 102,
+      "action_history": [
+        {
+          "action": "click",
+          "target": [
+            400,
+            365
+          ],
+          "result": "clicked at (400, 365)",
+          "url": "http://localhost:5173/"
+        },
+        {
+          "action": "click",
+          "target": [
+            280,
+            197
+          ],
+          "result": "clicked at (280, 197)",
+          "url": "http://localhost:5173/checkout/shipping/"
+        },
+        {
+          "action": "click",
+          "target": [
+            400,
+            365
+          ],
+          "result": "clicked at (400, 365)",
+          "url": "http://localhost:5173/checkout/shipping/"
+        }
+      ]
+    },
+    {
+      "persona": "anxious_newbie",
+      "status": "gave_up",
+      "visited_urls": [
+        "http://localhost:5173",
+        "http://localhost:5173/"
+      ],
+      "frustration_events": [
+        {
+          "kind": "js_error",
+          "description": "JavaScript error: Failed to load resource: the server responded with a status of 404 (Not Found) (source: http://localhost:5173/favicon.ico)",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777182668.49873,
+          "severity": "high",
+          "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "source": "http://localhost:5173/favicon.ico",
+          "line": 0
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (gave up): Sign up for an account without getting confused",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777182696.530677,
+          "severity": "critical",
+          "goal": "Sign up for an account without getting confused",
+          "reason": "gave up"
+        }
+      ],
+      "elapsed_seconds": 30.906848292099312,
+      "error": null,
+      "llm_mode": true,
+      "llm_calls": 1,
+      "llm_tokens": 34,
+      "action_history": [
+        {
+          "action": "click",
+          "target": [
+            460,
+            539
+          ],
+          "result": "clicked at (460, 539)",
+          "url": "http://localhost:5173/"
+        }
+      ]
+    },
+    {
+      "persona": "methodical_tester",
+      "status": "done",
+      "visited_urls": [
+        "http://localhost:5173",
+        "http://localhost:5173/"
+      ],
+      "frustration_events": [
+        {
+          "kind": "js_error",
+          "description": "JavaScript error: Failed to load resource: the server responded with a status of 404 (Not Found) (source: http://localhost:5173/favicon.ico)",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777182668.439928,
+          "severity": "high",
+          "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "source": "http://localhost:5173/favicon.ico",
+          "line": 0
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (timeout): Systematically check every link and form",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777182733.51156,
+          "severity": "critical",
+          "goal": "Systematically check every link and form",
+          "reason": "timeout"
+        }
+      ],
+      "elapsed_seconds": 68.00189370894805,
+      "error": null,
+      "llm_mode": true,
+      "llm_calls": 2,
+      "llm_tokens": 61,
+      "action_history": [
+        {
+          "action": "click",
+          "target": [
+            320,
+            180
+          ],
+          "result": "clicked at (320, 180)",
+          "url": "http://localhost:5173/"
+        },
+        {
+          "action": "type",
+          "target": "user@example.com",
+          "result": "typed 'user@example.com'",
+          "url": "http://localhost:5173/"
+        }
+      ]
+    },
+    {
+      "persona": "mobile_commuter",
+      "status": "gave_up",
+      "visited_urls": [
+        "http://localhost:5173",
+        "http://localhost:5173/"
+      ],
+      "frustration_events": [
+        {
+          "kind": "js_error",
+          "description": "JavaScript error: Failed to load resource: the server responded with a status of 404 (Not Found) (source: http://localhost:5173/favicon.ico)",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777182750.709004,
+          "severity": "high",
+          "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "source": "http://localhost:5173/favicon.ico",
+          "line": 0
+        },
+        {
+          "kind": "mobile_tap_target",
+          "description": "Mobile issue: horizontal_scroll",
+          "url": "http://localhost:5173",
+          "timestamp": 1777182751.7726321,
+          "severity": "medium",
+          "issue_type": "horizontal_scroll",
+          "selector": "body",
+          "content_width": 422,
+          "viewport_width": 375
+        },
+        {
+          "kind": "mobile_tap_target",
+          "description": "Mobile issue: horizontal_scroll",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777182766.2215428,
+          "severity": "medium",
+          "issue_type": "horizontal_scroll",
+          "selector": "body",
+          "content_width": 422,
+          "viewport_width": 375
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (gave up): Quickly check order status while on the go",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777182766.233993,
+          "severity": "critical",
+          "goal": "Quickly check order status while on the go",
+          "reason": "gave up"
+        }
+      ],
+      "elapsed_seconds": 18.31203441694379,
+      "error": null,
+      "llm_mode": true,
+      "llm_calls": 1,
+      "llm_tokens": 32,
+      "action_history": [
+        {
+          "action": "click",
+          "target": [
+            110,
+            187
+          ],
+          "result": "clicked at (110, 187)",
+          "url": "http://localhost:5173/"
+        }
+      ]
+    },
+    {
+      "persona": "accessibility_user",
+      "status": "done",
+      "visited_urls": [
+        "http://localhost:5173",
+        "http://localhost:5173/"
+      ],
+      "frustration_events": [
+        {
+          "kind": "js_error",
+          "description": "JavaScript error: Failed to load resource: the server responded with a status of 404 (Not Found) (source: http://localhost:5173/favicon.ico)",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777182750.6721869,
+          "severity": "high",
+          "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "source": "http://localhost:5173/favicon.ico",
+          "line": 0
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (timeout): Navigate using visible labels and clear affordances",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777182830.4317892,
+          "severity": "critical",
+          "goal": "Navigate using visible labels and clear affordances",
+          "reason": "timeout"
+        }
+      ],
+      "elapsed_seconds": 82.4963791668415,
+      "error": null,
+      "llm_mode": true,
+      "llm_calls": 3,
+      "llm_tokens": 91,
+      "action_history": [
+        {
+          "action": "click",
+          "target": [
+            640,
+            360
+          ],
+          "result": "clicked at (640, 360)",
+          "url": "http://localhost:5173/"
+        },
+        {
+          "action": "click",
+          "target": [
+            640,
+            570
+          ],
+          "result": "clicked at (640, 570)",
+          "url": "http://localhost:5173/"
+        },
+        {
+          "action": "click",
+          "target": [
+            320,
+            180
+          ],
+          "result": "clicked at (320, 180)",
+          "url": "http://localhost:5173/"
+        }
+      ]
+    },
+    {
+      "persona": "form_filler",
+      "status": "done",
+      "visited_urls": [
+        "http://localhost:5173",
+        "http://localhost:5173/"
+      ],
+      "frustration_events": [
+        {
+          "kind": "js_error",
+          "description": "JavaScript error: Failed to load resource: the server responded with a status of 404 (Not Found) (source: http://localhost:5173/favicon.ico)",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777182750.681206,
+          "severity": "high",
+          "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "source": "http://localhost:5173/favicon.ico",
+          "line": 0
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (timeout): Complete a multi-step form without errors",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777182819.080174,
+          "severity": "critical",
+          "goal": "Complete a multi-step form without errors",
+          "reason": "timeout"
+        }
+      ],
+      "elapsed_seconds": 71.10217445809394,
+      "error": null,
+      "llm_mode": true,
+      "llm_calls": 2,
+      "llm_tokens": 57,
+      "action_history": [
+        {
+          "action": "click",
+          "target": [
+            640,
+            360
+          ],
+          "result": "clicked at (640, 360)",
+          "url": "http://localhost:5173/"
+        },
+        {
+          "action": "type",
+          "target": "text",
+          "result": "typed 'text'",
+          "url": "http://localhost:5173/"
+        }
+      ]
+    },
+    {
+      "persona": "search_user",
+      "status": "gave_up",
+      "visited_urls": [
+        "http://localhost:5173",
+        "http://localhost:5173/"
+      ],
+      "frustration_events": [
+        {
+          "kind": "js_error",
+          "description": "JavaScript error: Failed to load resource: the server responded with a status of 404 (Not Found) (source: http://localhost:5173/favicon.ico)",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777182832.496078,
+          "severity": "high",
+          "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "source": "http://localhost:5173/favicon.ico",
+          "line": 0
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (gave up): Find a specific product or information using search",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777182857.784786,
+          "severity": "critical",
+          "goal": "Find a specific product or information using search",
+          "reason": "gave up"
+        }
+      ],
+      "elapsed_seconds": 27.31940483301878,
+      "error": null,
+      "llm_mode": true,
+      "llm_calls": 1,
+      "llm_tokens": 31,
+      "action_history": [
+        {
+          "action": "click",
+          "target": [
+            320,
+            180
+          ],
+          "result": "clicked at (320, 180)",
+          "url": "http://localhost:5173/"
+        }
+      ]
+    },
+    {
+      "persona": "checkout_user",
+      "status": "gave_up",
+      "visited_urls": [
+        "http://localhost:5173",
+        "http://localhost:5173/"
+      ],
+      "frustration_events": [
+        {
+          "kind": "js_error",
+          "description": "JavaScript error: Failed to load resource: the server responded with a status of 404 (Not Found) (source: http://localhost:5173/favicon.ico)",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777182832.498063,
+          "severity": "high",
+          "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "source": "http://localhost:5173/favicon.ico",
+          "line": 0
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (gave up): Complete a purchase from cart to confirmation",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777182871.128587,
+          "severity": "critical",
+          "goal": "Complete a purchase from cart to confirmation",
+          "reason": "gave up"
+        }
+      ],
+      "elapsed_seconds": 40.65819308394566,
+      "error": null,
+      "llm_mode": true,
+      "llm_calls": 2,
+      "llm_tokens": 73,
+      "action_history": [
+        {
+          "action": "click",
+          "target": [
+            450,
+            360
+          ],
+          "result": "clicked at (450, 360)",
+          "url": "http://localhost:5173/"
+        },
+        {
+          "action": "click",
+          "target": [
+            278,
+            197
+          ],
+          "result": "clicked at (278, 197)",
+          "url": "http://localhost:5173/"
+        }
+      ]
+    }
+  ],
+  "created_at": "2026-04-26T05:49:50.266944+00:00",
+  "updated_at": "2026-04-26T05:54:31.201415+00:00"
+}

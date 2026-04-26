@@ -58,7 +58,40 @@ class RunState:
 _runs: dict[str, RunState] = {}
 
 # Directory for persisting run state to disk
-_STATE_DIR = Path("results/.runs")
+# Use absolute path relative to package root to avoid cwd issues with MCP server
+_PACKAGE_ROOT = Path(__file__).resolve().parent.parent
+_DEFAULT_RESULTS_DIR = _PACKAGE_ROOT / "results"
+
+# Fall back to temp directory if package dir is not writable (e.g., macOS sandbox)
+def _get_writable_results_dir() -> Path:
+    """Get a writable directory for results, with fallback to temp."""
+    import tempfile
+    
+    # Always try temp directory first for MCP server reliability
+    fallback = Path(tempfile.gettempdir()) / "flamboyance" / "results"
+    
+    try:
+        _DEFAULT_RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+        test_file = _DEFAULT_RESULTS_DIR / ".write_test"
+        test_file.touch()
+        test_file.unlink()
+        return _DEFAULT_RESULTS_DIR
+    except Exception:
+        # Any error: use temp directory
+        try:
+            fallback.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            pass
+        return fallback
+
+_RESULTS_DIR = _get_writable_results_dir()
+_STATE_DIR = _RESULTS_DIR / ".runs"
+
+# Ensure state dir exists at import time
+try:
+    _STATE_DIR.mkdir(parents=True, exist_ok=True)
+except Exception:
+    pass
 
 
 def _get_state_path(run_id: str) -> Path:
@@ -148,7 +181,11 @@ def _deserialize_result(data: dict[str, Any]) -> AgentResult:
 
 def _save_state(state: RunState, created_at: str | None = None) -> None:
     """Persist run state to disk using atomic write."""
-    _STATE_DIR.mkdir(parents=True, exist_ok=True)
+    try:
+        _STATE_DIR.mkdir(parents=True, exist_ok=True)
+    except Exception as e:
+        log.warning("Cannot create state dir %s: %s (state will not persist)", _STATE_DIR, e)
+        return  # Skip saving if we can't create the directory
     
     data = {
         "run_id": state.run_id,
@@ -168,7 +205,12 @@ def _save_state(state: RunState, created_at: str | None = None) -> None:
     state_path = _get_state_path(state.run_id)
     
     # Atomic write: write to temp file, then rename
-    fd, tmp_path = tempfile.mkstemp(dir=_STATE_DIR, suffix=".tmp")
+    try:
+        fd, tmp_path = tempfile.mkstemp(dir=_STATE_DIR, suffix=".tmp")
+    except Exception as e:
+        log.warning("Cannot create temp file in %s: %s (state will not persist)", _STATE_DIR, e)
+        return
+    
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
@@ -286,6 +328,51 @@ def cleanup_old_state_files(max_age_hours: int = 24) -> int:
     return cleaned
 
 
+def _calculate_window_positions(
+    count: int, headless: bool, screen_width: int = 2560, screen_height: int = 1440
+) -> list[tuple[int, int]] | None:
+    """Calculate window positions for side-by-side browser display.
+
+    Args:
+        count: Number of windows to position.
+        headless: If True, return None (no positioning needed).
+        screen_width: Assumed screen width in pixels.
+        screen_height: Assumed screen height in pixels.
+
+    Returns:
+        List of (x, y) positions, or None if headless.
+    """
+    if headless or count <= 1:
+        return None
+
+    # Calculate grid layout
+    # For 2-3 windows: horizontal row
+    # For 4+: 2x2 or 2x3 grid
+    if count <= 3:
+        cols = count
+        rows = 1
+    elif count <= 6:
+        cols = 3
+        rows = 2
+    else:
+        cols = 4
+        rows = (count + 3) // 4
+
+    # Window size (with some padding)
+    window_width = screen_width // cols
+    window_height = screen_height // rows
+
+    positions = []
+    for i in range(count):
+        col = i % cols
+        row = i // cols
+        x = col * window_width
+        y = row * window_height
+        positions.append((x, y))
+
+    return positions
+
+
 async def run_local(
     url: str,
     persona_names: list[str] | None = None,
@@ -343,6 +430,9 @@ async def run_local(
             total_batches = (len(personas) + batch_size - 1) // batch_size
             log.info("=== Batch %d/%d: %s ===", batch_num, total_batches, [p.name for p in batch])
 
+            # Calculate window positions for side-by-side display (when not headless)
+            window_positions = _calculate_window_positions(len(batch), headless)
+
             tasks = [
                 run_agent(
                     url,
@@ -351,8 +441,9 @@ async def run_local(
                     headless=headless,
                     llm_mode=llm_mode,
                     max_llm_calls=max_llm_calls,
+                    window_position=window_positions[idx] if window_positions else None,
                 )
-                for persona in batch
+                for idx, persona in enumerate(batch)
             ]
             results = await asyncio.gather(*tasks, return_exceptions=True)
             for persona, result in zip(batch, results, strict=True):
@@ -487,10 +578,21 @@ async def run_full(
     return heuristic_state, llm_state
 
 
-def save_report(state: RunState, output_dir: str | Path = "results") -> Path:
+def save_report(state: RunState, output_dir: str | Path | None = None) -> Path:
     """Generate and save a Markdown report to disk."""
-    out = Path(output_dir)
-    out.mkdir(parents=True, exist_ok=True)
+    # Default to writable results dir (with temp fallback for sandboxed environments)
+    if output_dir is None:
+        out = _RESULTS_DIR
+    else:
+        out = Path(output_dir)
+    try:
+        out.mkdir(parents=True, exist_ok=True)
+    except Exception as e:
+        # Fall back to temp directory
+        import tempfile
+        out = Path(tempfile.gettempdir()) / "flamboyance" / "results"
+        out.mkdir(parents=True, exist_ok=True)
+        log.warning("Using temp dir for report: %s (original failed: %s)", out, e)
     md = generate_report(state)
     # Use full run_id to preserve suffixes like "-heuristic" or "-llm"
     # Truncate UUID part to 8 chars but keep any suffix
