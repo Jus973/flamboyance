@@ -23,14 +23,13 @@ import os
 import sys
 import tempfile
 import uuid
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from .agent import AgentResult, run_agent
 from .persona import DEFAULT_PERSONAS, Persona
-from .persona_loader import load_personas_file, merge_personas
 from .report import generate_report
 
 log = logging.getLogger(__name__)
@@ -62,14 +61,15 @@ _runs: dict[str, RunState] = {}
 _PACKAGE_ROOT = Path(__file__).resolve().parent.parent
 _DEFAULT_RESULTS_DIR = _PACKAGE_ROOT / "results"
 
+
 # Fall back to temp directory if package dir is not writable (e.g., macOS sandbox)
 def _get_writable_results_dir() -> Path:
     """Get a writable directory for results, with fallback to temp."""
     import tempfile
-    
+
     # Always try temp directory first for MCP server reliability
     fallback = Path(tempfile.gettempdir()) / "flamboyance" / "results"
-    
+
     try:
         _DEFAULT_RESULTS_DIR.mkdir(parents=True, exist_ok=True)
         test_file = _DEFAULT_RESULTS_DIR / ".write_test"
@@ -83,6 +83,7 @@ def _get_writable_results_dir() -> Path:
         except Exception:
             pass
         return fallback
+
 
 _RESULTS_DIR = _get_writable_results_dir()
 _STATE_DIR = _RESULTS_DIR / ".runs"
@@ -99,7 +100,7 @@ def _get_state_path(run_id: str) -> Path:
     return _STATE_DIR / f"{run_id}.json"
 
 
-def _serialize_persona(persona: "Persona") -> dict[str, Any]:
+def _serialize_persona(persona: Persona) -> dict[str, Any]:
     """Serialize a Persona to a JSON-compatible dict."""
     return {
         "name": persona.name,
@@ -122,7 +123,7 @@ def _serialize_persona(persona: "Persona") -> dict[str, Any]:
     }
 
 
-def _deserialize_persona(data: dict[str, Any]) -> "Persona":
+def _deserialize_persona(data: dict[str, Any]) -> Persona:
     """Deserialize a Persona from a JSON-compatible dict."""
     return Persona(
         name=data["name"],
@@ -186,7 +187,7 @@ def _save_state(state: RunState, created_at: str | None = None) -> None:
     except Exception as e:
         log.warning("Cannot create state dir %s: %s (state will not persist)", _STATE_DIR, e)
         return  # Skip saving if we can't create the directory
-    
+
     data = {
         "run_id": state.run_id,
         "url": state.url,
@@ -197,20 +198,20 @@ def _save_state(state: RunState, created_at: str | None = None) -> None:
         "created_at": created_at or datetime.now(timezone.utc).isoformat(),
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
-    
+
     # Check for error attribute
     if hasattr(state, "_error"):
         data["error"] = state._error
-    
+
     state_path = _get_state_path(state.run_id)
-    
+
     # Atomic write: write to temp file, then rename
     try:
         fd, tmp_path = tempfile.mkstemp(dir=_STATE_DIR, suffix=".tmp")
     except Exception as e:
         log.warning("Cannot create temp file in %s: %s (state will not persist)", _STATE_DIR, e)
         return
-    
+
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
@@ -229,14 +230,14 @@ def _load_state(run_id: str) -> RunState | None:
     state_path = _get_state_path(run_id)
     if not state_path.exists():
         return None
-    
+
     try:
         with open(state_path, encoding="utf-8") as f:
             data = json.load(f)
-        
+
         personas = [_deserialize_persona(p) for p in data.get("personas", [])]
         results = [_deserialize_result(r) for r in data.get("results", [])]
-        
+
         state = RunState(
             run_id=data["run_id"],
             url=data["url"],
@@ -245,11 +246,11 @@ def _load_state(run_id: str) -> RunState | None:
             status=data.get("status", "done"),
             llm_mode=data.get("llm_mode", False),
         )
-        
+
         # Restore error attribute if present
         if "error" in data:
             state._error = data["error"]
-        
+
         return state
     except (json.JSONDecodeError, KeyError, TypeError) as e:
         log.warning("Failed to load state for %s: %s", run_id, e)
@@ -261,7 +262,7 @@ def get_run(run_id: str) -> RunState | None:
     # Check in-memory cache first
     if run_id in _runs:
         return _runs[run_id]
-    
+
     # Try loading from disk
     state = _load_state(run_id)
     if state is not None:
@@ -276,19 +277,19 @@ def all_runs() -> dict[str, RunState]:
 
 def cleanup_old_state_files(max_age_hours: int = 24) -> int:
     """Remove state files older than max_age_hours.
-    
+
     Also marks any 'running' state files as 'interrupted' since they
     represent orphaned runs from a previous server instance.
-    
+
     Returns:
         Number of files cleaned up.
     """
     if not _STATE_DIR.exists():
         return 0
-    
+
     cleaned = 0
     cutoff = datetime.now(timezone.utc).timestamp() - (max_age_hours * 3600)
-    
+
     for state_file in _STATE_DIR.glob("*.json"):
         try:
             # Check file modification time
@@ -298,16 +299,16 @@ def cleanup_old_state_files(max_age_hours: int = 24) -> int:
                 cleaned += 1
                 log.info("Cleaned up old state file: %s", state_file.name)
                 continue
-            
+
             # Check for orphaned running states
             with open(state_file, encoding="utf-8") as f:
                 data = json.load(f)
-            
+
             if data.get("status") == "running":
                 # Mark as interrupted since server restarted
                 data["status"] = "interrupted"
                 data["updated_at"] = datetime.now(timezone.utc).isoformat()
-                
+
                 # Atomic write
                 fd, tmp_path = tempfile.mkstemp(dir=_STATE_DIR, suffix=".tmp")
                 try:
@@ -321,10 +322,10 @@ def cleanup_old_state_files(max_age_hours: int = 24) -> int:
                     except OSError:
                         pass
                     raise
-                    
+
         except (json.JSONDecodeError, OSError) as e:
             log.warning("Error processing state file %s: %s", state_file.name, e)
-    
+
     return cleaned
 
 
@@ -335,7 +336,6 @@ async def run_local(
     timeout_s: float = 60.0,
     headless: bool = True,
     run_id: str | None = None,
-    personas_file: str | Path | None = None,
     llm_mode: bool = False,
     max_llm_calls: int | None = None,
     parallel: bool = False,
@@ -349,16 +349,12 @@ async def run_local(
         timeout_s: Per-agent session timeout.
         headless: Run browser without visible UI.
         run_id: Optional run identifier (generated if not provided).
-        personas_file: Optional JSON file with custom persona definitions.
         llm_mode: If True, use LLM vision model for navigation decisions.
         max_llm_calls: Maximum LLM API calls per agent session.
         parallel: If True, run heuristic agents in parallel for speed.
         batch_size: If set, run agents in batches of this size (parallel within batch).
     """
     available = dict(DEFAULT_PERSONAS)
-    if personas_file:
-        custom = load_personas_file(personas_file)
-        available = merge_personas(custom, base=available, custom_overrides=True)
 
     if persona_names:
         personas = []
@@ -476,7 +472,6 @@ async def run_full(
     timeout_s: float = 60.0,
     headless: bool = True,
     run_id: str | None = None,
-    personas_file: str | Path | None = None,
     max_llm_calls: int | None = None,
     heuristic_parallel: bool = True,
 ) -> tuple[RunState, RunState]:
@@ -490,7 +485,6 @@ async def run_full(
         timeout_s: Per-agent session timeout.
         headless: Run browser without visible UI.
         run_id: Optional base run identifier.
-        personas_file: Optional JSON file with custom persona definitions.
         max_llm_calls: Maximum LLM API calls per agent session.
         heuristic_parallel: If True, run heuristic agents in parallel.
 
@@ -507,7 +501,6 @@ async def run_full(
         timeout_s=timeout_s,
         headless=headless,
         run_id=f"{base_id}-heuristic",
-        personas_file=personas_file,
         llm_mode=False,
         parallel=heuristic_parallel,
     )
@@ -520,7 +513,6 @@ async def run_full(
         timeout_s=timeout_s,
         headless=headless,
         run_id=f"{base_id}-llm",
-        personas_file=personas_file,
         llm_mode=True,
         max_llm_calls=max_llm_calls,
         parallel=False,
@@ -541,6 +533,7 @@ def save_report(state: RunState, output_dir: str | Path | None = None) -> Path:
     except Exception as e:
         # Fall back to temp directory
         import tempfile
+
         out = Path(tempfile.gettempdir()) / "flamboyance" / "results"
         out.mkdir(parents=True, exist_ok=True)
         log.warning("Using temp dir for report: %s (original failed: %s)", out, e)
@@ -567,12 +560,6 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Run UX-friction agents locally")
     parser.add_argument("--url", required=True, help="Target URL")
     parser.add_argument("--personas", nargs="*", default=None, help="Persona names (default: all)")
-    parser.add_argument(
-        "--personas-file",
-        type=Path,
-        default=None,
-        help="JSON file with custom persona definitions",
-    )
     parser.add_argument("--timeout", type=float, default=60.0)
     parser.add_argument("--headless", action="store_true", default=True)
     parser.add_argument("--no-headless", dest="headless", action="store_false")
@@ -605,7 +592,6 @@ def main() -> None:
                 args.personas,
                 timeout_s=args.timeout,
                 headless=args.headless,
-                personas_file=args.personas_file,
                 max_llm_calls=args.max_llm_calls,
                 heuristic_parallel=True,
             )
@@ -639,7 +625,6 @@ def main() -> None:
                 args.personas,
                 timeout_s=args.timeout,
                 headless=args.headless,
-                personas_file=args.personas_file,
                 llm_mode=args.llm,
                 max_llm_calls=args.max_llm_calls,
                 parallel=args.parallel,

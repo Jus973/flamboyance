@@ -75,9 +75,9 @@ jobs:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
           if [ -n "${{ github.event.inputs.app }}" ]; then
-            python -m benchmark.run_benchmark --app "${{ github.event.inputs.app }}" --skip-start
+            python -m benchmark --app "${{ github.event.inputs.app }}" --skip-start
           else
-            python -m benchmark.run_benchmark --skip-start
+            python -m benchmark --skip-start
           fi
       
       - name: Generate analysis report

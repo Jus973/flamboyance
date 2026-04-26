@@ -26,14 +26,16 @@ import logging
 import uuid
 from typing import Any
 
+from mcp.server.fastmcp import FastMCP
+
 from agents.mutations import COMMON_SCENARIOS, MutationScenario
 from agents.report import generate_concise_summary, generate_report
 from agents.runner_local import RunState, cleanup_old_state_files, get_run, run_local, save_report
 from agents.runner_mutation import generate_mutation_report, run_mutation_test
 from agents.validation import ValidationError, validate_timeout, validate_url
-from mcp.server.fastmcp import FastMCP
 
 log = logging.getLogger(__name__)
+
 
 def create_mcp(host: str = "127.0.0.1", port: int = 8765) -> FastMCP:
     return FastMCP(
@@ -42,6 +44,7 @@ def create_mcp(host: str = "127.0.0.1", port: int = 8765) -> FastMCP:
         host=host,
         port=port,
     )
+
 
 mcp = create_mcp()
 
@@ -52,8 +55,7 @@ _tasks: dict[str, asyncio.Task[RunState]] = {}
 async def _safe_run_local(run_id: str, **kwargs: Any) -> RunState:
     """Wrapper around run_local with error handling for browser/agent failures."""
     from agents.runner_local import _runs
-    from agents.persona import DEFAULT_PERSONAS
-    
+
     # Pre-register the run so get_status can find it immediately
     state = RunState(
         run_id=run_id,
@@ -62,14 +64,14 @@ async def _safe_run_local(run_id: str, **kwargs: Any) -> RunState:
         status="running",
     )
     _runs[run_id] = state
-    
+
     # Yield to event loop before starting heavy work - prevents MCP stalling
     await asyncio.sleep(0)
-    
+
     # Extract timeout for overall run protection (default 10 min max)
     timeout_s = kwargs.get("timeout_s", 60)
     max_run_timeout = max(timeout_s * len(kwargs.get("persona_names") or []) + 120, 600)
-    
+
     try:
         result = await asyncio.wait_for(
             run_local(run_id=run_id, **kwargs),
@@ -100,7 +102,6 @@ async def run_simulation(
     personas: list[str] | None = None,
     mode: str = "local",
     timeout: int = 60,
-    personas_file: str | None = None,
     llm_mode: bool = False,
     max_llm_calls: int | None = None,
 ) -> dict[str, Any]:
@@ -111,7 +112,6 @@ async def run_simulation(
         personas: List of persona names (default: all built-in personas).
         mode: Execution mode — ``"local"`` (sequential) or ``"docker"`` (parallel).
         timeout: Per-agent timeout in seconds.
-        personas_file: Optional path to a JSON file with custom persona definitions.
         llm_mode: If True, use LLM vision model for intelligent navigation instead of random clicks.
         max_llm_calls: Maximum LLM API calls per agent session (default: 30).
 
@@ -137,7 +137,6 @@ async def run_simulation(
             url=validated_url,
             persona_names=personas,
             timeout_s=validated_timeout,
-            personas_file=personas_file,
             llm_mode=llm_mode,
             max_llm_calls=max_llm_calls,
         )
@@ -159,13 +158,12 @@ async def run_flamboyance(
     batch_size: int | None = 1,
     headless: bool = True,
     max_llm_calls: int | None = 30,
-    personas_file: str | None = None,
 ) -> dict[str, Any]:
     """Run a UX friction test on a website.
-    
+
     This is the primary tool for running Flamboyance tests. It provides
     sensible defaults and returns a run_id for status polling.
-    
+
     Args:
         url: Target web application URL.
         personas: List of persona names (default: all built-in personas).
@@ -178,12 +176,11 @@ async def run_flamboyance(
             Set to False to show browser windows for debugging.
         max_llm_calls: Maximum LLM API calls per agent (default: 30).
             Only applies when llm_mode=True.
-        personas_file: Optional path to JSON file with custom persona definitions.
-    
+
     Returns:
         ``{"run_id": "<uuid>", "status": "running", "config": {...}}`` on success,
         or ``{"error": "message", "details": "..."}`` on validation/startup failure.
-    
+
     Examples:
         - Default (LLM mode, batched): run_flamboyance(url="http://localhost:5173")
         - Fast heuristic mode: run_flamboyance(url="...", llm_mode=False, batch_size=4)
@@ -204,7 +201,6 @@ async def run_flamboyance(
             url=validated_url,
             persona_names=personas,
             timeout_s=validated_timeout,
-            personas_file=personas_file,
             llm_mode=llm_mode,
             max_llm_calls=max_llm_calls,
             headless=headless,
@@ -231,19 +227,19 @@ async def run_flamboyance(
 @mcp.tool()
 async def get_status(run_id: str) -> dict[str, Any]:
     """Get the status of a running or completed simulation.
-    
+
     Returns progress while running, or a concise summary when done.
     Use this to poll for completion after calling run_flamboyance.
-    
+
     Args:
         run_id: The simulation run ID returned by run_flamboyance or run_simulation.
-    
+
     Returns:
         While running: ``{"run_id": "...", "status": "running", "progress": "3/8 agents complete"}``
         On completion: ``{"run_id": "...", "status": "done", "markdown": "<concise summary>"}``
         On error: ``{"run_id": "...", "status": "error", "error": "..."}``
         If not found: ``{"run_id": "...", "status": "not_found"}``
-    
+
     When status is "done", the markdown field contains a UX friction summary.
     Please render this markdown directly to the user instead of showing raw JSON.
     """
@@ -288,7 +284,7 @@ async def get_status(run_id: str) -> dict[str, Any]:
         except Exception as e:
             log.warning("Failed to generate summary: %s", e)
             summary = f"Completed with {len(state.results)} agents"
-        
+
         # Also save the full report
         try:
             path = save_report(state)
@@ -364,7 +360,7 @@ async def get_report(run_id: str) -> dict[str, Any]:
 
     Returns:
         ``{"run_id": "...", "markdown": "..."}``
-        
+
     The markdown field contains a full UX friction report that should be
     displayed to the user. Please render this markdown directly in your response.
     """

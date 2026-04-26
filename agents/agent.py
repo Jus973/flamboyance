@@ -134,7 +134,10 @@ async def run_agent(
                 )
             except Exception as e:
                 error_msg = str(e)
-                if "executable doesn't exist" in error_msg.lower() or "chromium" in error_msg.lower():
+                if (
+                    "executable doesn't exist" in error_msg.lower()
+                    or "chromium" in error_msg.lower()
+                ):
                     return AgentResult(
                         persona=persona.name,
                         status="error",
@@ -293,7 +296,9 @@ async def run_agent(
                     if decision.action_type == "scroll" and persona.scroll_amnesia:
                         # Clear all stored screenshots - agent "forgets" previous views
                         page_screenshots.clear()
-                        log.debug("Scroll amnesia: cleared %d stored screenshots", len(page_screenshots))
+                        log.debug(
+                            "Scroll amnesia: cleared %d stored screenshots", len(page_screenshots)
+                        )
 
                     if decision.action_type == "done":
                         goal_complete = True
@@ -434,7 +439,9 @@ async def run_agent(
             timed_out = (time.monotonic() - start) >= timeout_s
             if not goal_complete:
                 final_url = visited[-1] if visited else url
-                detector.check_unmet_goal(persona.goal, reached=False, timed_out=timed_out, url=final_url)
+                detector.check_unmet_goal(
+                    persona.goal, reached=False, timed_out=timed_out, url=final_url
+                )
 
             if llm_driver:
                 stats = llm_driver.get_usage_stats()
@@ -598,6 +605,7 @@ async def _check_goal_completion(page: object, persona: Persona, current_url: st
     # Check URL patterns - match against URL path only
     if persona.success_url_patterns:
         from urllib.parse import urlparse
+
         parsed = urlparse(current_url)
         url_path = parsed.path.lower()
         for pattern in persona.success_url_patterns:

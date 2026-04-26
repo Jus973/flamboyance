@@ -64,6 +64,7 @@ def _apply_tunnel_vision(screenshot_b64: str, ratio: float, viewport: tuple[int,
         log.warning("Failed to apply tunnel vision: %s", e)
         return screenshot_b64
 
+
 ActionType = Literal["click", "type", "scroll", "back", "done", "give_up"]
 
 HISTORY_CONTEXT_SIZE = 5

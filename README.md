@@ -3,13 +3,12 @@ noun: a group of flamingos
 
 ![Flamboyance Banner](banner%20picture.png)
 
-**Playwright-driven synthetic personas** that browse a web app, record UX friction, and expose tools via **MCP** plus a **VS Code / Windsurf** sidebar.
+**Playwright-driven synthetic personas** that browse a web app, record UX friction, and expose tools via **MCP** for Cascade integration.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │  agents/           Playwright personas · local runner · reports │
-│  mcp/              FastMCP tools (stdio or HTTP)               │
-│  extension/        VS Code webview + MCP client                │
+│  flamboyance_mcp/  FastMCP tools (stdio or HTTP)               │
 │  docker/           Agent + MCP images (compose)                │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -20,11 +19,10 @@ noun: a group of flamingos
 | --- | --- |
 | `agents/` | Personas, `runner_local`, `runner_mutation`, single-agent `agent` module, event detection, Markdown reports. |
 | `flamboyance_mcp/` | `python -m flamboyance_mcp` — FastMCP server (`run_simulation`, `get_live_feed`, `get_report`, `stop_simulation`, `run_mutation_test_tool`). |
-| `extension/` | TypeScript VS Code extension ("UX Friction Monitor"). |
 | `docker/` | `Dockerfile.agent` + `docker-compose.yml` for containerized agents / MCP HTTP. |
 | `tests/` | `pytest` for agent report/persona/events. |
 
-**Python dependencies** are declared in [`pyproject.toml`](./pyproject.toml) (`playwright`, `mcp[cli]`, `pydantic`). **`requirements.txt`** only points at that file.
+**Python dependencies** are declared in [`pyproject.toml`](./pyproject.toml) (`playwright`, `mcp[cli]`, `pydantic`).
 
 ---
 
@@ -34,7 +32,7 @@ noun: a group of flamingos
 flowchart TD
     subgraph Input
         A[Target URL] --> B[Runner]
-        C[Personas<br/>built-in or custom JSON] --> B
+        C[Personas] --> B
         D[CLI Flags<br/>--llm, --parallel, etc.] --> B
     end
 
@@ -70,26 +68,21 @@ flowchart TD
         W --> X[Markdown Report<br/>with screenshots]
     end
 
-    subgraph MCP ["MCP Server"]
-        Y[run_simulation] --> B
-        Z[get_live_feed] --> B
+    subgraph MCP ["MCP Server (Cascade)"]
+        Y[run_flamboyance] --> B
+        Z[get_status] --> B
         AA[get_report] --> W
-        AB[stop_simulation] --> B
-    end
-
-    subgraph Extension ["VS Code / Windsurf"]
-        AC[Sidebar UI] --> Y & Z & AA & AB
     end
 ```
 
 ### Flow Summary
 
-1. **Input** — User provides a target URL, selects personas (or uses defaults), and sets execution options
+1. **Input** — Target URL, persona selection, execution options
 2. **Runner** — `runner_local.py` orchestrates execution (sequential, parallel, or batched)
 3. **Agent** — Each persona launches a Playwright browser and navigates using heuristics or LLM vision
 4. **Detection** — `EventDetector` monitors for UX friction patterns (rage clicks, slow loads, dead ends, etc.)
-5. **Output** — Results are aggregated into a Markdown report with annotated screenshots
-6. **MCP/Extension** — Tools exposed via MCP for IDE integration (Cascade, sidebar)
+5. **Output** — Results aggregated into a Markdown report with screenshots
+6. **MCP** — Tools exposed via MCP for Cascade integration
 
 ---
 
@@ -137,7 +130,6 @@ python -m agents.runner_local --url http://localhost:5173 --llm --batch-size 3 -
 |------|-------------|
 | `--url URL` | Target URL (required) |
 | `--personas NAME...` | Specific personas to run (default: all) |
-| `--personas-file FILE` | JSON file with custom personas |
 | `--timeout N` | Per-agent timeout in seconds (default: 60) |
 | `--no-headless` | Show browser window |
 | `--output DIR` | Save reports to directory (default: `results/`) |
@@ -162,120 +154,33 @@ python -m agents.agent --url http://localhost:5173 --persona frustrated_exec --l
 
 > **Note:** Single agent outputs JSON to stdout. Use `runner_local` to save reports to files.
 
-### MCP Server
+## Cascade Integration
 
-The MCP server exposes Flamboyance tools to AI assistants (Cascade, Claude, etc.) via the Model Context Protocol.
+Add to your Windsurf MCP config (`~/.windsurf/mcp_config.json` on macOS):
 
-**Prerequisites:**
-```bash
-cd flamboyance
-pip install -e .
+```json
+{
+  "mcpServers": {
+    "flamboyance": {
+      "command": "python3",
+      "args": ["-m", "flamboyance_mcp"],
+      "cwd": "/path/to/flamboyance"
+    }
+  }
+}
 ```
 
-**Start the server:**
-```bash
-# Stdio transport (for Cascade / AI assistants)
-python -m mcp.server
+Restart Windsurf — Cascade will have access to:
 
-# HTTP transport (for extension sidebar or remote access)
-python -m mcp.server --http
-python -m mcp.server --http --port 9000  # custom port
-```
-
-**Available tools:**
-
-*Primary (recommended):*
 | Tool | Description |
 |------|-------------|
-| `run_flamboyance` | Start UX friction test with sensible defaults (LLM mode, batched) |
-| `get_status` | Poll for progress/completion with concise summary |
+| `run_flamboyance` | Start UX friction test (LLM mode, batched) |
+| `get_status` | Poll for progress/completion |
+| `get_report` | Generate full Markdown report |
+| `stop_simulation` | Cancel running test |
+| `run_mutation_test_tool` | Test with UI mutations |
 
-*Legacy/Advanced:*
-| Tool | Description |
-|------|-------------|
-| `run_simulation` | Start UX friction test (more configuration options) |
-| `get_live_feed` | Poll detailed real-time agent status |
-| `get_report` | Generate full Markdown friction report |
-| `stop_simulation` | Cancel a running simulation |
-| `run_mutation_test_tool` | Test with UI mutations (hidden/disabled elements) |
-
-## VS Code / Windsurf Extension
-
-The extension works in both VS Code and Windsurf with two transport modes:
-
-| Transport | Description | Use Case |
-|-----------|-------------|----------|
-| **stdio** (default) | Spawns `python -m mcp.server` as child process | Local development |
-| **http** | Connects to running MCP server | Docker, remote servers |
-
-### Installation
-
-```bash
-cd extension
-npm install
-npm run compile
-```
-
-### Extension Settings
-
-Configure via VS Code/Windsurf settings:
-
-| Setting | Default | Description |
-|---------|---------|-------------|
-| `flamboyance.transport` | `"stdio"` | Transport mode: `"stdio"` or `"http"` |
-| `flamboyance.pythonPath` | `"python3"` | Python executable for stdio transport |
-| `flamboyance.httpUrl` | `"http://localhost:8765"` | MCP server URL for http transport |
-
-### Usage
-
-1. Open the Flamboyance sidebar (activity bar icon)
-2. Enter target URL and click "Run Simulation"
-3. Watch live agent status in the feed
-4. Click "Get Report" when done
-
-## Windsurf Cascade Integration
-
-For direct MCP tool access in Cascade (without the sidebar):
-
-1. Copy `mcp_config.json` to your Windsurf MCP config directory:
-   - **macOS**: `~/.windsurf/mcp_config.json`
-   - **Linux**: `~/.config/windsurf/mcp_config.json`
-   - **Windows**: `%APPDATA%\windsurf\mcp_config.json`
-
-2. Or merge into existing config (use absolute path for reliability):
-   ```json
-   {
-     "mcpServers": {
-       "flamboyance": {
-         "command": "python3",
-         "args": ["-m", "flamboyance_mcp"],
-         "cwd": "/Users/yourname/path/to/flamboyance"
-       }
-     }
-   }
-   ```
-   
-   > **Note:** Replace `/Users/yourname/path/to/flamboyance` with the actual absolute path to your cloned repo. The `${workspaceFolder}` variable in `mcp_config.json` only works when the repo is open in Windsurf.
-
-3. Restart Windsurf — Cascade will have access to:
-
-   **Primary Tools (recommended):**
-   - `run_flamboyance` — Start UX friction test with sensible defaults
-   - `get_status` — Poll for progress/completion with concise summary
-
-   **Legacy Tools:**
-   - `run_simulation` — Start UX friction test (more options)
-   - `get_live_feed` — Poll detailed agent status
-   - `get_report` — Generate full Markdown report
-   - `stop_simulation` — Cancel running test
-   - `run_mutation_test_tool` — Test with UI mutations
-
-### IDE Compatibility
-
-| IDE | Sidebar Extension | Cascade MCP Tools |
-|-----|-------------------|-------------------|
-| VS Code | ✅ (stdio or http) | ❌ (no Cascade) |
-| Windsurf | ✅ (stdio or http) | ✅ (via mcp_config.json) |
+---
 
 ## Docker
 
@@ -285,54 +190,26 @@ From `docker/`:
 TARGET_URL=http://host.docker.internal:3000 docker compose up
 ```
 
-Build context must include `agents/` and `mcp/` (see `Dockerfile.agent`). Compose defines several agent services plus an `mcp-server` on port **8765**.
+Build context must include `agents/` and `flamboyance_mcp/` (see `Dockerfile.agent`). Compose defines several agent services plus an `mcp-server` on port **8765**.
 
 ---
 
 ## Built-in Personas
 
-| Name | Patience | Tech Literacy | Special Behavior | Goal |
-|------|----------|---------------|------------------|------|
-| `frustrated_exec` | 0.2 | 0.8 | Early exit (30%) | Complete a purchase flow quickly |
-| `non_tech_senior` | 0.5 | 0.2 | Skips hidden menus | Find and read account settings |
-| `power_user` | 0.9 | 0.9 | — | Navigate all features and check edge cases |
-| `casual_browser` | 0.5 | 0.5 | — | Browse around and see what's available |
-| `anxious_newbie` | 0.3 | 0.3 | Early exit, skips hidden | Sign up without getting confused |
-| `methodical_tester` | 0.95 | 0.6 | 100 max actions | Systematically check every link and form |
-| `mobile_commuter` | 0.25 | 0.85 | Mobile viewport (375x667) | Quickly check order status on the go |
-| `accessibility_user` | 0.7 | 0.35 | Prefers visible text | Navigate using clear labels and affordances |
+| Name | Patience | Tech Literacy | Special Behavior |
+|------|----------|---------------|------------------|
+| `frustrated_exec` | 0.2 | 0.8 | Early exit (30%) |
+| `non_tech_senior` | 0.5 | 0.2 | Skips hidden menus |
+| `power_user` | 0.9 | 0.9 | — |
+| `casual_browser` | 0.5 | 0.5 | — |
+| `anxious_newbie` | 0.3 | 0.3 | Early exit, skips hidden |
+| `methodical_tester` | 0.95 | 0.6 | 100 max actions |
+| `mobile_commuter` | 0.25 | 0.85 | Mobile viewport (375x667) |
+| `accessibility_user` | 0.7 | 0.35 | Prefers visible text |
 
-**Derived behaviors:**
-- **Patience < 0.4** triggers early give-up (exits after `early_exit_fraction` of timeout)
-- **Tech literacy < 0.5** skips elements with `aria-expanded="false"` (collapsed menus)
-- **`prefers_visible_text`** skips icon-only / unlabeled buttons
+**Behaviors:** Patience < 0.4 triggers early exit; tech literacy < 0.5 skips collapsed menus.
 
-## Custom Personas
-
-Load personas from a JSON file without editing code:
-
-```bash
-python -m agents.runner_local --url http://localhost:3000 --personas-file my_personas.json
-```
-
-File format:
-
-```json
-{
-  "personas": [
-    {
-      "name": "my_custom",
-      "patience": 0.4,
-      "tech_literacy": 0.7,
-      "goal": "Test the checkout flow",
-      "viewport": [375, 667],
-      "prefers_visible_text": true
-    }
-  ]
-}
-```
-
-Custom personas merge with built-ins; same-name entries override.
+---
 
 ## Mutation Testing
 
@@ -347,41 +224,7 @@ python -m agents.runner_mutation --url http://localhost:3000 \
   --mutation '{"name": "custom", "hide": ["#checkout-btn"], "disable": [".nav"]}'
 ```
 
-### Built-in Mutation Scenarios
-
-| Name | Effect |
-|------|--------|
-| `broken_checkout` | Hides checkout buttons |
-| `no_nav` | Removes navigation elements |
-| `slow_submit` | Adds 3s delay to form submissions |
-| `disabled_forms` | Disables all form inputs |
-| `hidden_cta` | Hides call-to-action buttons |
-
-### MCP Tool
-
-The `run_mutation_test_tool` MCP tool allows mutation testing via Cascade:
-
-```python
-# Example: Test with hidden checkout button
-await run_mutation_test_tool(
-    url="http://localhost:3000",
-    mutations={"name": "test", "hide": ["#checkout-btn"]},
-    personas=["frustrated_exec"],
-    llm_mode=True,
-)
-```
-
-### Mutation Schema
-
-```python
-MutationScenario(
-    name="example",
-    hide=["#selector"],           # visibility: hidden
-    disable=[".selector"],        # pointer-events: none
-    remove=["nav"],               # remove from DOM
-    delay_clicks={"button": 3000} # delay clicks by ms
-)
-```
+**Built-in scenarios:** `broken_checkout`, `no_nav`, `slow_submit`, `disabled_forms`, `hidden_cta`
 
 ---
 
@@ -392,41 +235,14 @@ python3 -m pip install -e ".[dev]"
 python3 -m pytest tests/ -v
 ```
 
-Tests cover report shape, persona validation, frustration event detection, custom persona loading, and mutation scenarios (`tests/test_report.py`, `tests/test_persona.py`, `tests/test_events.py`, `tests/test_persona_loader.py`, `tests/test_mutations.py`).
-
 ---
 
 ## Benchmarking
 
-The `benchmark/` directory contains a reproducible benchmark suite for measuring UX friction detection accuracy.
-
-### Quick Start
-
 ```bash
-# List available test apps
-python -m benchmark.run_benchmark --list
-
-# Run benchmark against all test apps
-python -m benchmark.run_benchmark
-
-# Run against a specific app
-python -m benchmark.run_benchmark --app buggy-checkout
-
-# Analyze results
-python -m benchmark.analyze
+python -m benchmark.run_benchmark --list      # List test apps
+python -m benchmark.run_benchmark             # Run all
+python -m benchmark.analyze                   # Analyze results
 ```
 
-### Test Apps
-
-| App | Port | Issues | Description |
-|-----|------|--------|-------------|
-| `buggy-checkout` | 5180 | 8 | E-commerce checkout with broken flows |
-| `confusing-signup` | 5181 | 12 | Multi-step registration with dead ends |
-
-### Metrics
-
-- **Precision**: % of reported issues that are real problems
-- **Recall**: % of known issues that the tool detects
-- **F1 Score**: Harmonic mean of precision/recall
-
-See [`benchmark/README.md`](./benchmark/README.md) for full methodology.
+See [`benchmark/README.md`](./benchmark/README.md) for methodology.

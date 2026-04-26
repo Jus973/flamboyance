@@ -28,7 +28,7 @@ dev = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["agents*", "mcp*", "llm*"]
+include = ["agents*", "flamboyance_mcp*", "llm*"]
 exclude = ["tests*"]
 
 [tool.pytest.ini_options]
@@ -36,7 +36,7 @@ asyncio_mode = "auto"
 addopts = [
     "--cov=agents",
     "--cov=llm",
-    "--cov=mcp",
+    "--cov=flamboyance_mcp",
     "--cov-report=term-missing",
     "--cov-report=xml",
     "--cov-fail-under=49",
@@ -44,7 +44,7 @@ addopts = [
 
 [tool.coverage.run]
 branch = true
-source = ["agents", "llm", "mcp"]
+source = ["agents", "llm", "flamboyance_mcp"]
 omit = ["*/__main__.py"]
 
 [tool.coverage.report]
@@ -76,7 +76,10 @@ ignore = [
     "E501",   # line too long (handled by formatter)
     "B008",   # function calls in argument defaults
     "ARG001", # unused function argument
+    "SIM105", # contextlib.suppress preference
+    "SIM108", # ternary operator preference
+    "SIM117", # nested with statements
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["agents", "llm", "mcp"]
+known-first-party = ["agents", "llm", "flamboyance_mcp"]

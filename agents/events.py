@@ -364,7 +364,7 @@ class EventDetector:
         self, selector: str, *, is_interactive: bool = True, url: str = ""
     ) -> FrustrationEvent | None:
         """Record a click; returns a FrustrationEvent if rage-click detected.
-        
+
         Args:
             selector: CSS selector or description of clicked element.
             is_interactive: Whether the element is actually interactive.
@@ -399,7 +399,7 @@ class EventDetector:
         self, goal: str, *, reached: bool, timed_out: bool, url: str = ""
     ) -> FrustrationEvent | None:
         """Call at end of agent run. Returns event if goal was not reached.
-        
+
         Args:
             goal: Description of the goal that was not met.
             reached: Whether the goal was reached.

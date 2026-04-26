@@ -66,7 +66,9 @@ class Persona:
     success_text_patterns: tuple[str, ...] = field(default_factory=tuple)
     # Cognitive limitations for "intentionally dumber" agents
     memory_depth: int = 5  # Max pages/actions retained in working memory
-    dom_filter: tuple[str, ...] = field(default_factory=tuple)  # CSS selectors agent CAN see (empty=all)
+    dom_filter: tuple[str, ...] = field(
+        default_factory=tuple
+    )  # CSS selectors agent CAN see (empty=all)
     scroll_amnesia: bool = True  # Forget off-screen content after scroll
     tunnel_vision_ratio: float = 1.0  # Viewport crop ratio (1.0=full, 0.6=center 60%)
     render_delay_ms: int = 0  # Screenshot delay after navigation (captures before JS finishes)
@@ -402,7 +404,12 @@ ANXIOUS_NEWBIE = Persona(
         ("back_button_abuse", 1.5),
     ),
     success_url_patterns=("/welcome", "/dashboard", "/account"),
-    success_text_patterns=("account created", "welcome", "registration successful", "signup complete"),
+    success_text_patterns=(
+        "account created",
+        "welcome",
+        "registration successful",
+        "signup complete",
+    ),
     # Cognitive limitations: Moderate memory, ignores popups/modals (closes them reflexively)
     memory_depth=3,
     blind_patterns=(".newsletter", ".popup", ".modal", "[role=dialog]"),

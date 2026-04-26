@@ -257,19 +257,19 @@ def _group_events_by_url(events: list[dict]) -> dict[str, list[dict]]:
 
 def generate_concise_summary(state: RunState, max_issues: int = 10) -> str:
     """Generate a concise, location-aware summary for Cascade consumption.
-    
+
     Produces ~20-40 lines of markdown grouped by URL, suitable for
     quick understanding of WHERE issues occur.
-    
+
     Args:
         state: Completed RunState with agent results.
         max_issues: Maximum number of issues to include (default 10).
-    
+
     Returns:
         Concise markdown summary string.
     """
     lines: list[str] = []
-    
+
     # Collect all events from all agents
     all_events: list[dict] = []
     for r in state.results:
@@ -277,15 +277,15 @@ def generate_concise_summary(state: RunState, max_issues: int = 10) -> str:
             ev_copy = dict(ev)
             ev_copy["persona"] = r.persona
             all_events.append(ev_copy)
-    
+
     # Header
     lines.append(f"## UX Friction Summary: {state.url}")
     lines.append("")
-    
+
     if not all_events:
         lines.append("✅ **No issues detected.** The user experience appears smooth.")
         return "\n".join(lines)
-    
+
     # Severity counts
     severity_counts = _count_events_by_severity(all_events)
     severity_parts = []
@@ -293,37 +293,37 @@ def generate_concise_summary(state: RunState, max_issues: int = 10) -> str:
         count = severity_counts[sev]
         if count > 0:
             severity_parts.append(f"{emoji} {count} {sev}")
-    
+
     lines.append(f"**Issues**: {' | '.join(severity_parts)}")
     lines.append("")
-    
+
     # Group by URL and sort by severity
     events_by_url = _group_events_by_url(all_events)
-    
+
     # Sort URLs by highest severity issue in each
     def url_severity_key(url_events_pair: tuple[str, list[dict]]) -> int:
         url, events = url_events_pair
         min_sev = min(SEVERITY_ORDER.get(_get_severity(e), 2) for e in events)
         return min_sev
-    
+
     sorted_urls = sorted(events_by_url.items(), key=url_severity_key)
-    
+
     lines.append("### Issues by Location")
     lines.append("")
-    
+
     issue_count = 0
     for url, events in sorted_urls:
         if issue_count >= max_issues:
             remaining = len(all_events) - issue_count
             lines.append(f"*...and {remaining} more issues*")
             break
-        
+
         sorted_events = _sort_events_by_severity(events)
-        
+
         # Truncate URL for display
         display_url = url if len(url) <= 60 else url[:57] + "..."
         lines.append(f"**{display_url}** ({len(events)} issue{'s' if len(events) != 1 else ''})")
-        
+
         for ev in sorted_events:
             if issue_count >= max_issues:
                 break
@@ -333,9 +333,9 @@ def generate_concise_summary(state: RunState, max_issues: int = 10) -> str:
             emoji = SEVERITY_EMOJI.get(severity, "")
             lines.append(f"- {emoji} **{kind}**: {desc}")
             issue_count += 1
-        
+
         lines.append("")
-    
+
     # Top 3 recommendations
     if all_events:
         lines.append("### Recommendations")
@@ -347,7 +347,7 @@ def generate_concise_summary(state: RunState, max_issues: int = 10) -> str:
             first_url = events[0].get("url", "")
             url_hint = f" (see {first_url[:40]})" if first_url else ""
             lines.append(f"{i}. {recommendation}{url_hint}")
-    
+
     return "\n".join(lines)
 
 

@@ -36,7 +36,6 @@ from .events import EventDetector
 from .llm_driver import ActionHistoryEntry, LLMDriver
 from .mutations import COMMON_SCENARIOS, MutationScenario, apply_mutations
 from .persona import DEFAULT_PERSONAS, Persona
-from .persona_loader import load_personas_file, merge_personas
 from .validation import ValidationError, validate_url
 
 log = logging.getLogger(__name__)
@@ -396,7 +395,9 @@ async def _run_agent_with_mutations(
             timed_out = (time.monotonic() - start) >= timeout_s
             if not goal_complete:
                 final_url = visited[-1] if visited else url
-                detector.check_unmet_goal(persona.goal, reached=False, timed_out=timed_out, url=final_url)
+                detector.check_unmet_goal(
+                    persona.goal, reached=False, timed_out=timed_out, url=final_url
+                )
 
             if llm_driver:
                 stats = llm_driver.get_usage_stats()
@@ -455,7 +456,6 @@ async def run_mutation_test(
     headless: bool = True,
     llm_mode: bool = False,
     max_llm_calls: int | None = None,
-    personas_file: str | Path | None = None,
 ) -> MutationTestResult:
     """Run persona agents against a page with UI elements mutated.
 
@@ -467,7 +467,6 @@ async def run_mutation_test(
         headless: Run browser without visible UI.
         llm_mode: If True, use LLM vision model for navigation.
         max_llm_calls: Maximum LLM API calls per agent session.
-        personas_file: Optional JSON file with custom persona definitions.
 
     Returns:
         MutationTestResult with results for each persona.
@@ -486,9 +485,6 @@ async def run_mutation_test(
 
     # Resolve personas
     available = dict(DEFAULT_PERSONAS)
-    if personas_file:
-        custom = load_personas_file(personas_file)
-        available = merge_personas(custom, base=available, custom_overrides=True)
 
     if persona_names:
         personas = []
@@ -618,12 +614,6 @@ def main() -> None:
         help=f"Mutation scenario name or JSON. Built-in: {list(COMMON_SCENARIOS.keys())}",
     )
     parser.add_argument("--personas", nargs="*", default=None, help="Persona names (default: all)")
-    parser.add_argument(
-        "--personas-file",
-        type=Path,
-        default=None,
-        help="JSON file with custom persona definitions",
-    )
     parser.add_argument("--timeout", type=float, default=60.0)
     parser.add_argument("--headless", action="store_true", default=True)
     parser.add_argument("--no-headless", dest="headless", action="store_false")
@@ -656,7 +646,6 @@ def main() -> None:
             headless=args.headless,
             llm_mode=args.llm,
             max_llm_calls=args.max_llm_calls,
-            personas_file=args.personas_file,
         )
     )
 

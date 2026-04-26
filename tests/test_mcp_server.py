@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -121,8 +120,8 @@ class TestGetStatus:
     @pytest.mark.asyncio
     async def test_get_status_running(self):
         """Running simulation returns progress."""
-        from agents.runner_local import RunState
         from agents.persona import DEFAULT_PERSONAS
+        from agents.runner_local import RunState
 
         mock_state = RunState(
             run_id="test-run-123",
@@ -142,13 +141,15 @@ class TestGetStatus:
     async def test_get_status_done_returns_summary(self):
         """Completed simulation returns concise summary."""
         from agents.agent import AgentResult
-        from agents.runner_local import RunState
         from agents.persona import DEFAULT_PERSONAS
+        from agents.runner_local import RunState
 
         mock_result = AgentResult(
             persona="frustrated_exec",
             status="done",
-            frustration_events=[{"kind": "slow_load", "description": "Page took 5s", "url": "http://test.com"}],
+            frustration_events=[
+                {"kind": "slow_load", "description": "Page took 5s", "url": "http://test.com"}
+            ],
         )
         mock_state = RunState(
             run_id="test-run-456",
@@ -163,8 +164,8 @@ class TestGetStatus:
                 result = await get_status(run_id="test-run-456")
 
         assert result["status"] == "done"
-        assert "summary" in result
-        assert isinstance(result["summary"], str)
+        assert "markdown" in result
+        assert isinstance(result["markdown"], str)
 
 
 class TestGetLiveFeed:
@@ -181,8 +182,8 @@ class TestGetLiveFeed:
     async def test_get_live_feed_with_results(self):
         """Returns agent status for each persona."""
         from agents.agent import AgentResult
-        from agents.runner_local import RunState
         from agents.persona import Persona
+        from agents.runner_local import RunState
 
         personas = [
             Persona(name="test1", patience=0.5, tech_literacy=0.5, goal="test"),
@@ -221,17 +222,17 @@ class TestGetReport:
 
     @pytest.mark.asyncio
     async def test_get_report_not_found(self):
-        """Unknown run_id returns error markdown."""
+        """Unknown run_id returns error."""
         result = await get_report(run_id="nonexistent")
-        assert "Error" in result["markdown"]
-        assert "not found" in result["markdown"]
+        assert "error" in result
+        assert "not found" in result["error"]
 
     @pytest.mark.asyncio
     async def test_get_report_generates_markdown(self):
         """Valid run_id returns markdown report."""
         from agents.agent import AgentResult
-        from agents.runner_local import RunState
         from agents.persona import DEFAULT_PERSONAS
+        from agents.runner_local import RunState
 
         mock_result = AgentResult(persona="frustrated_exec", status="done")
         mock_state = RunState(
@@ -262,8 +263,8 @@ class TestStopSimulation:
     @pytest.mark.asyncio
     async def test_stop_simulation_success(self):
         """Valid run_id cancels task and returns stopped=True."""
-        from agents.runner_local import RunState
         from agents.persona import DEFAULT_PERSONAS
+        from agents.runner_local import RunState
 
         mock_state = RunState(
             run_id="stop-test",
@@ -312,13 +313,18 @@ class TestConciseSummary:
     def test_concise_summary_under_50_lines(self):
         """Summary should be under 50 lines for Cascade readability."""
         from agents.agent import AgentResult
-        from agents.runner_local import RunState
         from agents.persona import DEFAULT_PERSONAS
         from agents.report import generate_concise_summary
+        from agents.runner_local import RunState
 
         # Create state with many events
         events = [
-            {"kind": "slow_load", "description": f"Page {i} took 5s", "url": f"http://test.com/page{i}", "severity": "medium"}
+            {
+                "kind": "slow_load",
+                "description": f"Page {i} took 5s",
+                "url": f"http://test.com/page{i}",
+                "severity": "medium",
+            }
             for i in range(20)
         ]
         mock_result = AgentResult(
@@ -342,14 +348,29 @@ class TestConciseSummary:
     def test_concise_summary_grouped_by_url(self):
         """Summary should group issues by URL."""
         from agents.agent import AgentResult
-        from agents.runner_local import RunState
         from agents.persona import DEFAULT_PERSONAS
         from agents.report import generate_concise_summary
+        from agents.runner_local import RunState
 
         events = [
-            {"kind": "slow_load", "description": "Page took 5s", "url": "http://test.com/page1", "severity": "high"},
-            {"kind": "rage_click", "description": "User clicked 5 times", "url": "http://test.com/page1", "severity": "high"},
-            {"kind": "dead_end", "description": "No navigation", "url": "http://test.com/page2", "severity": "medium"},
+            {
+                "kind": "slow_load",
+                "description": "Page took 5s",
+                "url": "http://test.com/page1",
+                "severity": "high",
+            },
+            {
+                "kind": "rage_click",
+                "description": "User clicked 5 times",
+                "url": "http://test.com/page1",
+                "severity": "high",
+            },
+            {
+                "kind": "dead_end",
+                "description": "No navigation",
+                "url": "http://test.com/page2",
+                "severity": "medium",
+            },
         ]
         mock_result = AgentResult(
             persona="frustrated_exec",
@@ -375,12 +396,17 @@ class TestConciseSummary:
     def test_concise_summary_includes_recommendations(self):
         """Summary should include actionable recommendations."""
         from agents.agent import AgentResult
-        from agents.runner_local import RunState
         from agents.persona import DEFAULT_PERSONAS
         from agents.report import generate_concise_summary
+        from agents.runner_local import RunState
 
         events = [
-            {"kind": "slow_load", "description": "Page took 5s", "url": "http://test.com", "severity": "high"},
+            {
+                "kind": "slow_load",
+                "description": "Page took 5s",
+                "url": "http://test.com",
+                "severity": "high",
+            },
         ]
         mock_result = AgentResult(
             persona="frustrated_exec",
@@ -404,9 +430,9 @@ class TestConciseSummary:
     def test_concise_summary_no_issues(self):
         """Summary should indicate when no issues found."""
         from agents.agent import AgentResult
-        from agents.runner_local import RunState
         from agents.persona import DEFAULT_PERSONAS
         from agents.report import generate_concise_summary
+        from agents.runner_local import RunState
 
         mock_result = AgentResult(
             persona="frustrated_exec",
@@ -433,8 +459,8 @@ class TestGetStatusErrorState:
     @pytest.mark.asyncio
     async def test_get_status_error_state(self):
         """Error state returns error message and details."""
-        from agents.runner_local import RunState
         from agents.persona import DEFAULT_PERSONAS
+        from agents.runner_local import RunState
 
         mock_state = RunState(
             run_id="error-test",
