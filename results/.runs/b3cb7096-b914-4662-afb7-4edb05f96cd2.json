@@ -1,0 +1,544 @@
+{
+  "run_id": "b3cb7096-b914-4662-afb7-4edb05f96cd2",
+  "url": "http://localhost:5174",
+  "status": "done",
+  "llm_mode": false,
+  "personas": [
+    {
+      "name": "frustrated_exec",
+      "patience": 0.2,
+      "tech_literacy": 0.8,
+      "goal": "Complete a purchase flow quickly",
+      "tags": [
+        "executive",
+        "impatient"
+      ],
+      "early_exit_fraction": 0.3,
+      "max_actions": 15,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "speed",
+        "checkout",
+        "forms"
+      ],
+      "frustration_triggers": [
+        "slow loading",
+        "unnecessary steps",
+        "loading spinners",
+        "required fields"
+      ],
+      "detection_weights": [
+        [
+          "slow_interaction",
+          2.0
+        ],
+        [
+          "session_timeout",
+          1.5
+        ],
+        [
+          "slow_load",
+          1.5
+        ],
+        [
+          "modal_frustration",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [
+        "/checkout/confirmation",
+        "/order/confirm",
+        "/thank-you"
+      ],
+      "success_text_patterns": [
+        "order confirmed",
+        "thank you for your order",
+        "order #"
+      ]
+    },
+    {
+      "name": "power_user",
+      "patience": 0.9,
+      "tech_literacy": 0.9,
+      "goal": "Navigate all features and check edge cases",
+      "tags": [
+        "expert",
+        "thorough"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "keyboard shortcuts",
+        "advanced features",
+        "edge cases"
+      ],
+      "frustration_triggers": [
+        "missing features",
+        "inconsistent behavior",
+        "no keyboard navigation"
+      ],
+      "detection_weights": [
+        [
+          "copy_paste_failure",
+          1.5
+        ],
+        [
+          "js_error",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [],
+      "success_text_patterns": []
+    }
+  ],
+  "results": [
+    {
+      "persona": "frustrated_exec",
+      "status": "gave_up",
+      "visited_urls": [
+        "http://localhost:5174",
+        "http://localhost:5174/support",
+        "http://localhost:5174/cart",
+        "http://localhost:5174/products",
+        "http://localhost:5174/",
+        "http://localhost:5174/products"
+      ],
+      "frustration_events": [
+        {
+          "kind": "js_error",
+          "description": "JavaScript error: Failed to load resource: the server responded with a status of 404 (Not Found) (source: http://localhost:5174/favicon.ico)",
+          "url": "http://localhost:5174/",
+          "timestamp": 1777198040.912996,
+          "severity": "high",
+          "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "source": "http://localhost:5174/favicon.ico",
+          "line": 0
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5174",
+          "timestamp": 1777198041.0948842,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "button.btn"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://picsum.photos/seed/headphones/400/300'",
+          "url": "http://localhost:5174/products",
+          "timestamp": 1777198044.0364869,
+          "severity": "medium",
+          "image_src": "https://picsum.photos/seed/headphones/400/300",
+          "selector": "img[alt=\"Wireless Headphones\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://picsum.photos/seed/watch/400/300'",
+          "url": "http://localhost:5174/products",
+          "timestamp": 1777198044.036986,
+          "severity": "medium",
+          "image_src": "https://picsum.photos/seed/watch/400/300",
+          "selector": "img[alt=\"Smart Watch\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://picsum.photos/seed/hub/400/300'",
+          "url": "http://localhost:5174/products",
+          "timestamp": 1777198044.0373278,
+          "severity": "medium",
+          "image_src": "https://picsum.photos/seed/hub/400/300",
+          "selector": "img[alt=\"USB-C Hub\"]"
+        },
+        {
+          "kind": "cart_abandonment",
+          "description": "Cart abandonment: user left cart page without completing checkout",
+          "url": "http://localhost:5174/products",
+          "timestamp": 1777198044.060719,
+          "severity": "high"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5174/",
+          "timestamp": 1777198046.373025,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "button.btn"
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5174/products \u2192 http://localhost:5174/ \u2192 http://localhost:5174/products",
+          "url": "http://localhost:5174/products",
+          "timestamp": 1777198047.132333,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5174/products",
+            "http://localhost:5174/",
+            "http://localhost:5174/products"
+          ]
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (gave up): Complete a purchase flow quickly",
+          "url": "http://localhost:5174/products",
+          "timestamp": 1777198047.901403,
+          "severity": "critical",
+          "goal": "Complete a purchase flow quickly",
+          "reason": "gave up"
+        }
+      ],
+      "elapsed_seconds": 9.815964459208772,
+      "error": null,
+      "llm_mode": false,
+      "llm_calls": 0,
+      "llm_tokens": 0,
+      "action_history": []
+    },
+    {
+      "persona": "power_user",
+      "status": "done",
+      "visited_urls": [
+        "http://localhost:5174",
+        "http://localhost:5174/support",
+        "http://localhost:5174/",
+        "http://localhost:5174/products",
+        "http://localhost:5174/",
+        "http://localhost:5174/cart",
+        "http://localhost:5174/",
+        "http://localhost:5174/support",
+        "http://localhost:5174/",
+        "http://localhost:5174/support",
+        "http://localhost:5174/cart",
+        "http://localhost:5174/products",
+        "http://localhost:5174/",
+        "http://localhost:5174/products",
+        "http://localhost:5174/support",
+        "http://localhost:5174/cart",
+        "http://localhost:5174/",
+        "http://localhost:5174/support",
+        "http://localhost:5174/cart",
+        "http://localhost:5174/products",
+        "http://localhost:5174/cart",
+        "http://localhost:5174/products",
+        "http://localhost:5174/cart",
+        "http://localhost:5174/support",
+        "http://localhost:5174/cart",
+        "http://localhost:5174/",
+        "http://localhost:5174/cart"
+      ],
+      "frustration_events": [
+        {
+          "kind": "js_error",
+          "description": "JavaScript error: Failed to load resource: the server responded with a status of 404 (Not Found) (source: http://localhost:5174/favicon.ico)",
+          "url": "http://localhost:5174/",
+          "timestamp": 1777198040.878613,
+          "severity": "high",
+          "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "source": "http://localhost:5174/favicon.ico",
+          "line": 0
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5174",
+          "timestamp": 1777198041.1024508,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "button.btn"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5174/",
+          "timestamp": 1777198042.839624,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "button.btn"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://picsum.photos/seed/headphones/400/300'",
+          "url": "http://localhost:5174/products",
+          "timestamp": 1777198043.794215,
+          "severity": "medium",
+          "image_src": "https://picsum.photos/seed/headphones/400/300",
+          "selector": "img[alt=\"Wireless Headphones\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://picsum.photos/seed/watch/400/300'",
+          "url": "http://localhost:5174/products",
+          "timestamp": 1777198043.794878,
+          "severity": "medium",
+          "image_src": "https://picsum.photos/seed/watch/400/300",
+          "selector": "img[alt=\"Smart Watch\"]"
+        },
+        {
+          "kind": "broken_image",
+          "description": "Broken image: failed to load 'https://picsum.photos/seed/hub/400/300'",
+          "url": "http://localhost:5174/products",
+          "timestamp": 1777198043.7952452,
+          "severity": "medium",
+          "image_src": "https://picsum.photos/seed/hub/400/300",
+          "selector": "img[alt=\"USB-C Hub\"]"
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5174/ \u2192 http://localhost:5174/products \u2192 http://localhost:5174/",
+          "url": "http://localhost:5174/",
+          "timestamp": 1777198045.2387588,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5174/",
+            "http://localhost:5174/products",
+            "http://localhost:5174/"
+          ]
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5174/",
+          "timestamp": 1777198045.244441,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "button.btn"
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5174/ \u2192 http://localhost:5174/cart \u2192 http://localhost:5174/",
+          "url": "http://localhost:5174/",
+          "timestamp": 1777198048.299923,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5174/",
+            "http://localhost:5174/cart",
+            "http://localhost:5174/"
+          ]
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5174/",
+          "timestamp": 1777198048.305168,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "button.btn"
+        },
+        {
+          "kind": "cart_abandonment",
+          "description": "Cart abandonment: user left cart page without completing checkout",
+          "url": "http://localhost:5174/",
+          "timestamp": 1777198048.3076348,
+          "severity": "high"
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5174/ \u2192 http://localhost:5174/support \u2192 http://localhost:5174/",
+          "url": "http://localhost:5174/",
+          "timestamp": 1777198049.68577,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5174/",
+            "http://localhost:5174/support",
+            "http://localhost:5174/"
+          ]
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5174/",
+          "timestamp": 1777198049.6907158,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "button.btn"
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5174/support \u2192 http://localhost:5174/ \u2192 http://localhost:5174/support",
+          "url": "http://localhost:5174/support",
+          "timestamp": 1777198050.385569,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5174/support",
+            "http://localhost:5174/",
+            "http://localhost:5174/support"
+          ]
+        },
+        {
+          "kind": "cart_abandonment",
+          "description": "Cart abandonment: user left cart page without completing checkout",
+          "url": "http://localhost:5174/products",
+          "timestamp": 1777198051.8214242,
+          "severity": "high"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5174/",
+          "timestamp": 1777198052.542182,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "button.btn"
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5174/products \u2192 http://localhost:5174/ \u2192 http://localhost:5174/products",
+          "url": "http://localhost:5174/products",
+          "timestamp": 1777198054.6620831,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5174/products",
+            "http://localhost:5174/",
+            "http://localhost:5174/products"
+          ]
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5174/",
+          "timestamp": 1777198057.51902,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "button.btn"
+        },
+        {
+          "kind": "cart_abandonment",
+          "description": "Cart abandonment: user left cart page without completing checkout",
+          "url": "http://localhost:5174/",
+          "timestamp": 1777198057.5217128,
+          "severity": "high"
+        },
+        {
+          "kind": "cart_abandonment",
+          "description": "Cart abandonment: user left cart page without completing checkout",
+          "url": "http://localhost:5174/products",
+          "timestamp": 1777198060.321374,
+          "severity": "high"
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5174/cart \u2192 http://localhost:5174/products \u2192 http://localhost:5174/cart",
+          "url": "http://localhost:5174/cart",
+          "timestamp": 1777198062.371878,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5174/cart",
+            "http://localhost:5174/products",
+            "http://localhost:5174/cart"
+          ]
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5174/products \u2192 http://localhost:5174/cart \u2192 http://localhost:5174/products",
+          "url": "http://localhost:5174/products",
+          "timestamp": 1777198063.098242,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5174/products",
+            "http://localhost:5174/cart",
+            "http://localhost:5174/products"
+          ]
+        },
+        {
+          "kind": "cart_abandonment",
+          "description": "Cart abandonment: user left cart page without completing checkout",
+          "url": "http://localhost:5174/products",
+          "timestamp": 1777198063.106445,
+          "severity": "high"
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5174/cart \u2192 http://localhost:5174/products \u2192 http://localhost:5174/cart",
+          "url": "http://localhost:5174/cart",
+          "timestamp": 1777198063.866111,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5174/cart",
+            "http://localhost:5174/products",
+            "http://localhost:5174/cart"
+          ]
+        },
+        {
+          "kind": "cart_abandonment",
+          "description": "Cart abandonment: user left cart page without completing checkout",
+          "url": "http://localhost:5174/support",
+          "timestamp": 1777198064.60247,
+          "severity": "high"
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5174/cart \u2192 http://localhost:5174/support \u2192 http://localhost:5174/cart",
+          "url": "http://localhost:5174/cart",
+          "timestamp": 1777198065.315393,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5174/cart",
+            "http://localhost:5174/support",
+            "http://localhost:5174/cart"
+          ]
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_accessible_name",
+          "url": "http://localhost:5174/",
+          "timestamp": 1777198067.373961,
+          "severity": "high",
+          "issue_type": "missing_accessible_name",
+          "selector": "button.btn"
+        },
+        {
+          "kind": "cart_abandonment",
+          "description": "Cart abandonment: user left cart page without completing checkout",
+          "url": "http://localhost:5174/",
+          "timestamp": 1777198067.3764758,
+          "severity": "high"
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5174/cart \u2192 http://localhost:5174/ \u2192 http://localhost:5174/cart",
+          "url": "http://localhost:5174/cart",
+          "timestamp": 1777198068.7507122,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5174/cart",
+            "http://localhost:5174/",
+            "http://localhost:5174/cart"
+          ]
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (timeout): Navigate all features and check edge cases",
+          "url": "http://localhost:5174/cart",
+          "timestamp": 1777198068.7589178,
+          "severity": "critical",
+          "goal": "Navigate all features and check edge cases",
+          "reason": "timeout"
+        }
+      ],
+      "elapsed_seconds": 30.677757875062525,
+      "error": null,
+      "llm_mode": false,
+      "llm_calls": 0,
+      "llm_tokens": 0,
+      "action_history": []
+    }
+  ],
+  "created_at": "2026-04-26T10:07:18.141787+00:00",
+  "updated_at": "2026-04-26T10:07:48.846346+00:00"
+}

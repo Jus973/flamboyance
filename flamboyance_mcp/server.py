@@ -55,6 +55,46 @@ mcp = create_mcp()
 _tasks: dict[str, asyncio.Task[RunState]] = {}
 
 
+def _cleanup_on_startup() -> int:
+    """Kill zombie browser processes at import time.
+
+    Only kills orphaned browsers, NOT other flamboyance processes
+    (Windsurf may run multiple MCP instances for different windows).
+    """
+    killed = 0
+
+    # Only kill orphaned browsers, not flamboyance processes
+    # (multiple Windsurf windows = multiple valid MCP servers)
+    patterns = [
+        "chromium.*--headless",
+        "chromium.*playwright",
+    ]
+
+    for pattern in patterns:
+        try:
+            result = subprocess.run(
+                ["pgrep", "-f", pattern],
+                capture_output=True,
+                text=True,
+            )
+            if result.returncode == 0:
+                pids = [int(p.strip()) for p in result.stdout.strip().split("\n") if p.strip()]
+                for pid in pids:
+                    try:
+                        os.kill(pid, signal.SIGKILL)
+                        killed += 1
+                    except (ProcessLookupError, PermissionError):
+                        pass
+        except Exception:
+            pass
+
+    return killed
+
+
+# Kill orphaned browsers at import time
+_cleanup_on_startup()
+
+
 async def _safe_run_local(run_id: str, **kwargs: Any) -> RunState:
     """Wrapper around run_local with error handling for browser/agent failures."""
     from agents.runner_local import _runs
