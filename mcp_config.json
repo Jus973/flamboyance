@@ -3,7 +3,7 @@
   "mcpServers": {
     "flamboyance": {
       "command": "python3",
-      "args": ["-m", "mcp.server"],
+      "args": ["-m", "flamboyance_mcp"],
       "cwd": "${workspaceFolder}",
       "env": {}
     }

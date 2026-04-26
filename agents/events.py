@@ -361,9 +361,15 @@ class EventDetector:
         return None
 
     def record_click(
-        self, selector: str, *, is_interactive: bool = True
+        self, selector: str, *, is_interactive: bool = True, url: str = ""
     ) -> FrustrationEvent | None:
-        """Record a click; returns a FrustrationEvent if rage-click detected."""
+        """Record a click; returns a FrustrationEvent if rage-click detected.
+        
+        Args:
+            selector: CSS selector or description of clicked element.
+            is_interactive: Whether the element is actually interactive.
+            url: Current page URL for context in reports.
+        """
         now = time.time()
         self.click_log.append((now, selector))
 
@@ -380,6 +386,7 @@ class EventDetector:
                     f"Rage click: {len(recent)} clicks on '{selector}' "
                     f"within {self.RAGE_CLICK_WINDOW_S}s"
                 ),
+                url=url,
                 details={"selector": selector, "count": len(recent)},
             )
             self.events.append(evt)
@@ -389,9 +396,16 @@ class EventDetector:
         return None
 
     def check_unmet_goal(
-        self, goal: str, *, reached: bool, timed_out: bool
+        self, goal: str, *, reached: bool, timed_out: bool, url: str = ""
     ) -> FrustrationEvent | None:
-        """Call at end of agent run. Returns event if goal was not reached."""
+        """Call at end of agent run. Returns event if goal was not reached.
+        
+        Args:
+            goal: Description of the goal that was not met.
+            reached: Whether the goal was reached.
+            timed_out: Whether the agent timed out.
+            url: Final page URL for context in reports.
+        """
         if reached:
             return None
         reason = "timeout" if timed_out else "gave up"
@@ -399,6 +413,7 @@ class EventDetector:
             kind="unmet_goal",
             timestamp=time.time(),
             description=f"Unmet goal ({reason}): {goal}",
+            url=url,
             details={"goal": goal, "reason": reason},
         )
         self.events.append(evt)

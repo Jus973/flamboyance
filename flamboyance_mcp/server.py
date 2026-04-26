@@ -1,11 +1,16 @@
-"""FastMCP server exposing four tools for Cascade / extension integration.
+"""FastMCP server exposing tools for Cascade / extension integration.
 
-Tools
------
-1. ``run_simulation(url, personas, mode, timeout)`` → run_id
-2. ``get_live_feed(run_id)`` → [AgentStatus]
-3. ``get_report(run_id)`` → markdown
-4. ``stop_simulation(run_id)`` → bool
+Primary Tools (recommended)
+---------------------------
+1. ``run_flamboyance(url, ...)`` → Start a UX friction test with sensible defaults
+2. ``get_status(run_id)`` → Poll for progress/completion with concise summary
+
+Legacy Tools
+------------
+3. ``run_simulation(url, personas, mode, timeout)`` → run_id
+4. ``get_live_feed(run_id)`` → [AgentStatus]
+5. ``get_report(run_id)`` → full markdown report
+6. ``stop_simulation(run_id)`` → bool
 
 Start with::
 
@@ -22,7 +27,7 @@ import uuid
 from typing import Any
 
 from agents.mutations import COMMON_SCENARIOS, MutationScenario
-from agents.report import generate_report
+from agents.report import generate_concise_summary, generate_report
 from agents.runner_local import RunState, get_run, run_local, save_report
 from agents.runner_mutation import generate_mutation_report, run_mutation_test
 from agents.validation import ValidationError, validate_timeout, validate_url
@@ -95,6 +100,126 @@ async def run_simulation(
     _tasks[run_id] = task
 
     return {"run_id": run_id, "llm_mode": llm_mode}
+
+
+@mcp.tool()
+async def run_flamboyance(
+    url: str,
+    personas: list[str] | None = None,
+    timeout: int = 60,
+    llm_mode: bool = True,
+    batch_size: int | None = 3,
+    headless: bool = True,
+    max_llm_calls: int | None = 30,
+    personas_file: str | None = None,
+) -> dict[str, Any]:
+    """Run a UX friction test on a website.
+    
+    This is the primary tool for running Flamboyance tests. It provides
+    sensible defaults and returns a run_id for status polling.
+    
+    Args:
+        url: Target web application URL.
+        personas: List of persona names (default: all built-in personas).
+        timeout: Per-agent timeout in seconds (default: 60).
+        llm_mode: If True (default), use LLM vision model for intelligent
+            navigation. Set to False for fast heuristic-only mode (no API costs).
+        batch_size: Run agents in parallel batches of N (default: 3).
+            Set to None or 1 for sequential execution.
+        headless: If True (default), run browser without visible UI.
+            Set to False to show browser windows for debugging.
+        max_llm_calls: Maximum LLM API calls per agent (default: 30).
+            Only applies when llm_mode=True.
+        personas_file: Optional path to JSON file with custom persona definitions.
+    
+    Returns:
+        ``{"run_id": "<uuid>", "status": "running", "config": {...}}`` on success,
+        or ``{"error": "message"}`` on validation failure.
+    
+    Examples:
+        - Default (LLM mode, batched): run_flamboyance(url="http://localhost:5173")
+        - Fast heuristic mode: run_flamboyance(url="...", llm_mode=False, batch_size=4)
+        - Debug mode: run_flamboyance(url="...", headless=False)
+    """
+    try:
+        validated_url = validate_url(url, allow_localhost=True)
+        validated_timeout = validate_timeout(timeout)
+    except ValidationError as e:
+        log.warning("Validation failed: %s", e)
+        return {"error": str(e)}
+
+    run_id = str(uuid.uuid4())
+
+    task = asyncio.create_task(
+        run_local(
+            validated_url,
+            personas,
+            timeout_s=validated_timeout,
+            run_id=run_id,
+            personas_file=personas_file,
+            llm_mode=llm_mode,
+            max_llm_calls=max_llm_calls,
+            headless=headless,
+            batch_size=batch_size,
+        )
+    )
+    _tasks[run_id] = task
+
+    config = {
+        "llm_mode": llm_mode,
+        "batch_size": batch_size,
+        "headless": headless,
+        "timeout": validated_timeout,
+    }
+    if llm_mode:
+        config["max_llm_calls"] = max_llm_calls
+
+    return {"run_id": run_id, "status": "running", "config": config}
+
+
+@mcp.tool()
+async def get_status(run_id: str) -> dict[str, Any]:
+    """Get the status of a running or completed simulation.
+    
+    Returns progress while running, or a concise summary when done.
+    Use this to poll for completion after calling run_flamboyance.
+    
+    Args:
+        run_id: The simulation run ID returned by run_flamboyance or run_simulation.
+    
+    Returns:
+        While running: ``{"run_id": "...", "status": "running", "progress": "3/8 agents complete"}``
+        On completion: ``{"run_id": "...", "status": "done", "summary": "<concise markdown>"}``
+        If not found: ``{"run_id": "...", "status": "not_found"}``
+    """
+    state = get_run(run_id)
+    if state is None:
+        return {"run_id": run_id, "status": "not_found"}
+
+    if state.status == "running":
+        completed = len(state.results)
+        total = len(state.personas)
+        return {
+            "run_id": run_id,
+            "status": "running",
+            "progress": f"{completed}/{total} agents complete",
+        }
+
+    # Done or stopped - generate concise summary
+    summary = generate_concise_summary(state)
+    
+    # Also save the full report
+    try:
+        path = save_report(state)
+        log.info("report saved to %s", path)
+    except Exception as exc:
+        log.warning("could not save report: %s", exc)
+
+    return {
+        "run_id": run_id,
+        "status": state.status,
+        "summary": summary,
+    }
 
 
 @mcp.tool()

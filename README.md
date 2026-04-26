@@ -1,4 +1,5 @@
-# Flamboyance
+# flamboyance
+noun: a group of flamingos
 
 ![Flamboyance Banner](banner%20picture.png)
 

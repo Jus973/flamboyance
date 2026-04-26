@@ -332,12 +332,12 @@ async def run_agent(
                 try:
                     await page.click(selector, timeout=5000)
                 except Exception:
-                    detector.record_click(selector, is_interactive=False)
+                    detector.record_click(selector, is_interactive=False, url=page.url)
                     actions_taken += 1
                     continue
 
                 detector.touch()
-                evt = detector.record_click(selector, is_interactive=is_interactive)
+                evt = detector.record_click(selector, is_interactive=is_interactive, url=page.url)
                 if evt:
                     log.info("event: %s", evt.description)
 
@@ -393,7 +393,8 @@ async def run_agent(
 
             timed_out = (time.monotonic() - start) >= timeout_s
             if not goal_complete:
-                detector.check_unmet_goal(persona.goal, reached=False, timed_out=timed_out)
+                final_url = visited[-1] if visited else url
+                detector.check_unmet_goal(persona.goal, reached=False, timed_out=timed_out, url=final_url)
 
             if llm_driver:
                 stats = llm_driver.get_usage_stats()
