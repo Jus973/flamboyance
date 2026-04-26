@@ -1,0 +1,31 @@
+{
+  "timestamp": 1777174646,
+  "results": [
+    {
+      "app": "buggy-checkout",
+      "tool": "flamboyance",
+      "run_id": "benchmark-1777174275",
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "true_positives": 0,
+      "false_positives": 341,
+      "false_negatives": 8,
+      "detected_count": 341,
+      "ground_truth_count": 8
+    },
+    {
+      "app": "confusing-signup",
+      "tool": "flamboyance",
+      "run_id": "benchmark-1777174464",
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "true_positives": 0,
+      "false_positives": 89,
+      "false_negatives": 12,
+      "detected_count": 89,
+      "ground_truth_count": 12
+    }
+  ]
+}

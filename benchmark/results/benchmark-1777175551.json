@@ -1,0 +1,18 @@
+{
+  "timestamp": 1777175551,
+  "results": [
+    {
+      "app": "buggy-checkout",
+      "tool": "flamboyance",
+      "run_id": "benchmark-1777175364",
+      "precision": 0.006430868167202572,
+      "recall": 0.25,
+      "f1": 0.012539184952978056,
+      "true_positives": 2,
+      "false_positives": 309,
+      "false_negatives": 6,
+      "detected_count": 311,
+      "ground_truth_count": 8
+    }
+  ]
+}

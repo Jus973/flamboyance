@@ -254,8 +254,20 @@ async def run_agent(
                         result.status = "gave_up"
                         break
 
+                    # Apply render_delay_ms cognitive limitation (capture before JS finishes)
+                    if persona.render_delay_ms > 0:
+                        await asyncio.sleep(persona.render_delay_ms / 1000.0)
+
+                    # Apply blind_patterns: hide elements before screenshot
+                    if persona.blind_patterns:
+                        await _hide_blind_patterns(page, persona.blind_patterns)
+
                     screenshot = await page.screenshot(type="png")
                     screenshot_b64 = base64.b64encode(screenshot).decode()
+
+                    # Restore hidden elements after screenshot
+                    if persona.blind_patterns:
+                        await _restore_blind_patterns(page, persona.blind_patterns)
 
                     decision = await llm_driver.decide_action(
                         screenshot_b64,
@@ -276,6 +288,12 @@ async def run_agent(
                         )
                     )
                     detector.touch()
+
+                    # Apply scroll_amnesia: clear page_screenshots after scroll
+                    if decision.action_type == "scroll" and persona.scroll_amnesia:
+                        # Clear all stored screenshots - agent "forgets" previous views
+                        page_screenshots.clear()
+                        log.debug("Scroll amnesia: cleared %d stored screenshots", len(page_screenshots))
 
                     if decision.action_type == "done":
                         goal_complete = True
@@ -524,6 +542,46 @@ async def _execute_llm_action(page: object, decision: ActionDecision) -> str:
         return f"action failed: {e}"
 
 
+async def _hide_blind_patterns(page: object, patterns: tuple[str, ...]) -> None:
+    """Hide elements matching blind_patterns before screenshot capture.
+
+    Injects CSS to set visibility: hidden on elements the persona cannot see.
+    """
+    from playwright.async_api import Page
+
+    assert isinstance(page, Page)
+
+    try:
+        await page.evaluate(
+            """(patterns) => {
+                const style = document.createElement('style');
+                style.id = 'flamboyance-blind-patterns';
+                style.textContent = patterns.map(p => `${p} { visibility: hidden !important; }`).join('\\n');
+                document.head.appendChild(style);
+            }""",
+            list(patterns),
+        )
+    except Exception as e:
+        log.debug("Failed to hide blind patterns: %s", e)
+
+
+async def _restore_blind_patterns(page: object, patterns: tuple[str, ...]) -> None:
+    """Restore elements hidden by _hide_blind_patterns."""
+    from playwright.async_api import Page
+
+    assert isinstance(page, Page)
+
+    try:
+        await page.evaluate(
+            """() => {
+                const style = document.getElementById('flamboyance-blind-patterns');
+                if (style) style.remove();
+            }"""
+        )
+    except Exception as e:
+        log.debug("Failed to restore blind patterns: %s", e)
+
+
 async def _check_goal_completion(page: object, persona: Persona, current_url: str) -> bool:
     """Check if the current page indicates goal completion using heuristic patterns.
 
@@ -567,6 +625,10 @@ async def _check_goal_completion(page: object, persona: Persona, current_url: st
 async def _find_clickables(page: object, persona: Persona) -> list[dict[str, object]]:
     """Discover clickable elements on the page, respecting persona limitations.
 
+    Cognitive limitations applied:
+    - dom_filter: Only elements matching these selectors are visible (empty = all)
+    - blind_patterns: Elements matching these selectors are invisible to the persona
+
     Returns empty list if page context is destroyed (e.g., during navigation).
     """
     # Import types inline to keep the function signature simple when playwright
@@ -578,10 +640,18 @@ async def _find_clickables(page: object, persona: Persona) -> list[dict[str, obj
     elements: list[dict[str, object]] = []
 
     try:
-        locator = page.locator(
-            "a, button, input[type='submit'], input[type='button'], "
-            "[role='button'], [role='link'], [role='menuitem'], [role='tab']"
-        )
+        # Build selector based on dom_filter cognitive limitation
+        if persona.dom_filter:
+            # Only see elements matching the filter patterns
+            base_selector = ", ".join(persona.dom_filter)
+        else:
+            # Default: see all interactive elements
+            base_selector = (
+                "a, button, input[type='submit'], input[type='button'], "
+                "[role='button'], [role='link'], [role='menuitem'], [role='tab']"
+            )
+
+        locator = page.locator(base_selector)
         count = await locator.count()
 
         for i in range(min(count, 30)):
@@ -597,6 +667,25 @@ async def _find_clickables(page: object, persona: Persona) -> list[dict[str, obj
                 role = await el.evaluate("el => el.getAttribute('role') || ''")
             except Exception:
                 continue
+
+            # Apply blind_patterns cognitive limitation - skip elements the persona can't see
+            if persona.blind_patterns:
+                try:
+                    is_blind = await el.evaluate(
+                        """(el, patterns) => {
+                            for (const pattern of patterns) {
+                                if (el.matches(pattern) || el.closest(pattern)) {
+                                    return true;
+                                }
+                            }
+                            return false;
+                        }""",
+                        list(persona.blind_patterns),
+                    )
+                    if is_blind:
+                        continue
+                except Exception:
+                    pass
 
             interactive = tag in INTERACTIVE_TAGS or role in INTERACTIVE_ROLES
 

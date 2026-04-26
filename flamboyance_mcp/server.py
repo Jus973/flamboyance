@@ -28,7 +28,7 @@ from typing import Any
 
 from agents.mutations import COMMON_SCENARIOS, MutationScenario
 from agents.report import generate_concise_summary, generate_report
-from agents.runner_local import RunState, get_run, run_local, save_report
+from agents.runner_local import RunState, cleanup_old_state_files, get_run, run_local, save_report
 from agents.runner_mutation import generate_mutation_report, run_mutation_test
 from agents.validation import ValidationError, validate_timeout, validate_url
 from mcp.server.fastmcp import FastMCP
@@ -239,6 +239,17 @@ async def get_status(run_id: str) -> dict[str, Any]:
             "details": "The simulation encountered an error. Check server logs for details.",
         }
 
+    # Handle interrupted state (server restarted mid-run)
+    if state.status == "interrupted":
+        completed = len(state.results)
+        total = len(state.personas)
+        return {
+            "run_id": run_id,
+            "status": "interrupted",
+            "progress": f"{completed}/{total} agents completed before interruption",
+            "details": "The simulation was interrupted (server restarted). Partial results may be available via get_report().",
+        }
+
     # Done or stopped - generate concise summary
     summary = generate_concise_summary(state)
     
@@ -441,6 +452,11 @@ def main() -> None:
     parser.add_argument("--port", type=int, default=8765)
     parser.add_argument("--host", type=str, default="0.0.0.0")
     args = parser.parse_args()
+
+    # Clean up old state files and mark orphaned runs as interrupted
+    cleaned = cleanup_old_state_files(max_age_hours=24)
+    if cleaned > 0:
+        log.info("Cleaned up %d old state files", cleaned)
 
     if args.http:
         # Reconfigure the module-level mcp instance for HTTP

@@ -64,6 +64,13 @@ class Persona:
     # Success indicators: URL patterns or page content that indicate goal completion
     success_url_patterns: tuple[str, ...] = field(default_factory=tuple)
     success_text_patterns: tuple[str, ...] = field(default_factory=tuple)
+    # Cognitive limitations (Phase C): Make agents behave more like real humans
+    memory_depth: int = 5  # Max pages/actions retained in working memory
+    dom_filter: tuple[str, ...] = field(default_factory=tuple)  # CSS selectors agent CAN see (empty=all)
+    scroll_amnesia: bool = True  # Forget off-screen content after scroll
+    tunnel_vision_ratio: float = 1.0  # Viewport crop ratio (1.0=full, 0.6=center 60%)
+    render_delay_ms: int = 0  # Screenshot delay after navigation (0=immediate)
+    blind_patterns: tuple[str, ...] = field(default_factory=tuple)  # CSS selectors agent cannot see
 
     def __post_init__(self) -> None:
         if not 0.0 <= self.patience <= 1.0:
@@ -80,6 +87,15 @@ class Persona:
             raise ValueError(
                 f"viewport must be (width, height) with positive ints, got {self.viewport}"
             )
+        # Cognitive limitation validations
+        if self.memory_depth < 1:
+            raise ValueError(f"memory_depth must be >= 1, got {self.memory_depth}")
+        if not 0.0 < self.tunnel_vision_ratio <= 1.0:
+            raise ValueError(
+                f"tunnel_vision_ratio must be in (0, 1], got {self.tunnel_vision_ratio}"
+            )
+        if self.render_delay_ms < 0:
+            raise ValueError(f"render_delay_ms must be >= 0, got {self.render_delay_ms}")
 
     def get_thresholds(self) -> EventThresholds:
         """Get event detection thresholds, applying any persona-specific overrides.
@@ -160,6 +176,13 @@ class Persona:
             "focus_areas": list(self.focus_areas),
             "frustration_triggers": list(self.frustration_triggers),
             "detection_weights": dict(self.detection_weights),
+            # Cognitive limitations
+            "memory_depth": self.memory_depth,
+            "dom_filter": list(self.dom_filter),
+            "scroll_amnesia": self.scroll_amnesia,
+            "tunnel_vision_ratio": self.tunnel_vision_ratio,
+            "render_delay_ms": self.render_delay_ms,
+            "blind_patterns": list(self.blind_patterns),
             "derived": {
                 "page_load_timeout_ms": self.page_load_timeout_ms,
                 "click_hesitation_ms": self.click_hesitation_ms,
@@ -201,6 +224,15 @@ class Persona:
             focus_areas=tuple(data.get("focus_areas", [])),
             frustration_triggers=tuple(data.get("frustration_triggers", [])),
             detection_weights=detection_weights,
+            success_url_patterns=tuple(data.get("success_url_patterns", [])),
+            success_text_patterns=tuple(data.get("success_text_patterns", [])),
+            # Cognitive limitations
+            memory_depth=data.get("memory_depth", 5),
+            dom_filter=tuple(data.get("dom_filter", [])),
+            scroll_amnesia=data.get("scroll_amnesia", True),
+            tunnel_vision_ratio=data.get("tunnel_vision_ratio", 1.0),
+            render_delay_ms=data.get("render_delay_ms", 0),
+            blind_patterns=tuple(data.get("blind_patterns", [])),
         )
 
     def to_llm_prompt(self) -> str:
@@ -253,6 +285,16 @@ class Persona:
         if self.skips_hidden_menus:
             lines.append("Behavior: Avoids collapsed menus and hidden UI")
 
+        # Cognitive limitations
+        if self.memory_depth < 5:
+            lines.append(f"Memory: Can only remember the last {self.memory_depth} pages/actions")
+        if self.scroll_amnesia:
+            lines.append("Memory: Forgets what was above/below after scrolling")
+        if self.tunnel_vision_ratio < 1.0:
+            lines.append(f"Vision: Only sees center {self.tunnel_vision_ratio:.0%} of the screen")
+        if self.blind_patterns:
+            lines.append(f"Blind to: {', '.join(self.blind_patterns[:3])}...")
+
         return "\n".join(lines)
 
 
@@ -281,6 +323,9 @@ FRUSTRATED_EXEC = Persona(
     ),
     success_url_patterns=("/checkout/confirmation", "/order/confirm", "/thank-you"),
     success_text_patterns=("order confirmed", "thank you for your order", "order #"),
+    # Cognitive limitations: Very forgetful under stress, captures before spinners finish
+    memory_depth=2,
+    render_delay_ms=0,  # Captures immediately, may miss late-loading content
 )
 
 NON_TECH_SENIOR = Persona(
@@ -298,6 +343,11 @@ NON_TECH_SENIOR = Persona(
     ),
     success_url_patterns=("/account/settings/", "/settings/", "/profile/settings/"),
     success_text_patterns=("account settings page", "your preferences", "notification preferences"),
+    # Cognitive limitations: Limited working memory, can't see hamburger menus, ignores complex widgets
+    memory_depth=2,
+    dom_filter=("button", "a", "[role=button]"),  # Only sees simple interactive elements
+    blind_patterns=(".hamburger", "[aria-label*=menu]", ".dropdown-toggle", ".nav-toggle"),
+    render_delay_ms=500,  # Waits a bit, but not for slow animations
 )
 
 POWER_USER = Persona(
@@ -312,6 +362,10 @@ POWER_USER = Persona(
         ("copy_paste_failure", 1.5),
         ("js_error", 1.5),
     ),
+    # Cognitive limitations: Excellent recall, sees everything, no tunnel vision
+    memory_depth=10,
+    scroll_amnesia=False,  # Remembers what was above/below
+    tunnel_vision_ratio=1.0,  # Full viewport visibility
 )
 
 CASUAL_BROWSER = Persona(
@@ -350,6 +404,9 @@ ANXIOUS_NEWBIE = Persona(
     ),
     success_url_patterns=("/welcome", "/dashboard", "/account"),
     success_text_patterns=("account created", "welcome", "registration successful", "signup complete"),
+    # Cognitive limitations: Moderate memory, ignores popups/modals (closes them reflexively)
+    memory_depth=3,
+    blind_patterns=(".newsletter", ".popup", ".modal", "[role=dialog]"),
 )
 
 METHODICAL_TESTER = Persona(
@@ -390,6 +447,9 @@ MOBILE_COMMUTER = Persona(
     ),
     success_url_patterns=("/order-status/", "/orders/", "/track/"),
     success_text_patterns=("order status:", "tracking number", "order #", "delivery status"),
+    # Cognitive limitations: Touch-friendly only, tunnel vision on small screen
+    dom_filter=("button", "a", "input"),  # Touch-friendly elements only
+    tunnel_vision_ratio=0.8,  # Focuses on center of small screen
 )
 
 ACCESSIBILITY_USER = Persona(
@@ -410,6 +470,9 @@ ACCESSIBILITY_USER = Persona(
         ("accessibility_failure", 2.0),
         ("copy_paste_failure", 1.5),
     ),
+    # Cognitive limitations: Needs labeled elements, can't see aria-hidden content
+    dom_filter=("[aria-label]", "button", "a"),  # Needs labeled elements
+    blind_patterns=("[aria-hidden=true]",),
 )
 
 # ── New personas for expanded friction coverage ────────────────────────

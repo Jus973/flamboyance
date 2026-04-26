@@ -1,0 +1,573 @@
+{
+  "run_id": "32cc77ff-81fc-4907-b650-5465c69c6821",
+  "url": "http://localhost:3000",
+  "status": "running",
+  "llm_mode": true,
+  "personas": [
+    {
+      "name": "frustrated_exec",
+      "patience": 0.2,
+      "tech_literacy": 0.8,
+      "goal": "Complete a purchase flow quickly",
+      "tags": [
+        "executive",
+        "impatient"
+      ],
+      "early_exit_fraction": 0.3,
+      "max_actions": 15,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "speed",
+        "checkout",
+        "forms"
+      ],
+      "frustration_triggers": [
+        "slow loading",
+        "unnecessary steps",
+        "loading spinners",
+        "required fields"
+      ],
+      "detection_weights": [
+        [
+          "slow_interaction",
+          2.0
+        ],
+        [
+          "session_timeout",
+          1.5
+        ],
+        [
+          "slow_load",
+          1.5
+        ],
+        [
+          "modal_frustration",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [
+        "/checkout/confirmation",
+        "/order/confirm",
+        "/thank-you"
+      ],
+      "success_text_patterns": [
+        "order confirmed",
+        "thank you for your order",
+        "order #"
+      ]
+    },
+    {
+      "name": "non_tech_senior",
+      "patience": 0.5,
+      "tech_literacy": 0.2,
+      "goal": "Find and read account settings",
+      "tags": [
+        "senior",
+        "low-tech"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "labels",
+        "text size",
+        "navigation"
+      ],
+      "frustration_triggers": [
+        "small text",
+        "confusing labels",
+        "icon-only buttons",
+        "jargon"
+      ],
+      "detection_weights": [
+        [
+          "confusing_navigation",
+          2.0
+        ],
+        [
+          "scroll_rage",
+          1.5
+        ],
+        [
+          "back_button_abuse",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [
+        "/account/settings/",
+        "/settings/",
+        "/profile/settings/"
+      ],
+      "success_text_patterns": [
+        "account settings page",
+        "your preferences",
+        "notification preferences"
+      ]
+    },
+    {
+      "name": "power_user",
+      "patience": 0.9,
+      "tech_literacy": 0.9,
+      "goal": "Navigate all features and check edge cases",
+      "tags": [
+        "expert",
+        "thorough"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "keyboard shortcuts",
+        "advanced features",
+        "edge cases"
+      ],
+      "frustration_triggers": [
+        "missing features",
+        "inconsistent behavior",
+        "no keyboard navigation"
+      ],
+      "detection_weights": [
+        [
+          "copy_paste_failure",
+          1.5
+        ],
+        [
+          "js_error",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [],
+      "success_text_patterns": []
+    },
+    {
+      "name": "casual_browser",
+      "patience": 0.5,
+      "tech_literacy": 0.5,
+      "goal": "Browse around and see what's available",
+      "tags": [
+        "casual",
+        "explorer"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 25,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "content",
+        "navigation",
+        "visual appeal"
+      ],
+      "frustration_triggers": [
+        "popups",
+        "aggressive CTAs",
+        "cluttered layout"
+      ],
+      "detection_weights": [
+        [
+          "modal_frustration",
+          2.0
+        ],
+        [
+          "scroll_rage",
+          1.5
+        ],
+        [
+          "infinite_scroll_trap",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [],
+      "success_text_patterns": []
+    },
+    {
+      "name": "anxious_newbie",
+      "patience": 0.3,
+      "tech_literacy": 0.3,
+      "goal": "Sign up for an account without getting confused",
+      "tags": [
+        "newbie",
+        "anxious",
+        "low-tech"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "signup",
+        "forms",
+        "error messages"
+      ],
+      "frustration_triggers": [
+        "unclear errors",
+        "too many fields",
+        "no progress indicator",
+        "unexpected behavior"
+      ],
+      "detection_weights": [
+        [
+          "form_abandonment",
+          2.0
+        ],
+        [
+          "error_message_visible",
+          2.0
+        ],
+        [
+          "back_button_abuse",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [
+        "/welcome",
+        "/dashboard",
+        "/account"
+      ],
+      "success_text_patterns": [
+        "account created",
+        "welcome",
+        "registration successful",
+        "signup complete"
+      ]
+    },
+    {
+      "name": "methodical_tester",
+      "patience": 0.95,
+      "tech_literacy": 0.6,
+      "goal": "Systematically check every link and form",
+      "tags": [
+        "qa",
+        "thorough",
+        "slow"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 100,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "links",
+        "forms",
+        "validation",
+        "error states"
+      ],
+      "frustration_triggers": [
+        "broken links",
+        "missing validation",
+        "inconsistent states"
+      ],
+      "detection_weights": [
+        [
+          "error_message_visible",
+          1.5
+        ],
+        [
+          "infinite_scroll_trap",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [],
+      "success_text_patterns": []
+    },
+    {
+      "name": "mobile_commuter",
+      "patience": 0.25,
+      "tech_literacy": 0.85,
+      "goal": "Quickly check order status while on the go",
+      "tags": [
+        "mobile",
+        "rushed",
+        "tech-savvy"
+      ],
+      "early_exit_fraction": 0.3,
+      "max_actions": 20,
+      "viewport": [
+        375,
+        667
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "mobile layout",
+        "touch targets",
+        "quick actions"
+      ],
+      "frustration_triggers": [
+        "small tap targets",
+        "horizontal scroll",
+        "desktop-only features",
+        "slow mobile load"
+      ],
+      "detection_weights": [
+        [
+          "mobile_tap_target",
+          2.0
+        ],
+        [
+          "slow_interaction",
+          1.5
+        ],
+        [
+          "slow_load",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [
+        "/order-status/",
+        "/orders/",
+        "/track/"
+      ],
+      "success_text_patterns": [
+        "order status:",
+        "tracking number",
+        "order #",
+        "delivery status"
+      ]
+    },
+    {
+      "name": "accessibility_user",
+      "patience": 0.7,
+      "tech_literacy": 0.35,
+      "goal": "Navigate using visible labels and clear affordances",
+      "tags": [
+        "a11y",
+        "needs-clarity"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": true,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "labels",
+        "contrast",
+        "focus indicators",
+        "screen reader"
+      ],
+      "frustration_triggers": [
+        "missing labels",
+        "icon-only buttons",
+        "poor contrast",
+        "no focus visible"
+      ],
+      "detection_weights": [
+        [
+          "accessibility_failure",
+          2.0
+        ],
+        [
+          "copy_paste_failure",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [],
+      "success_text_patterns": []
+    },
+    {
+      "name": "form_filler",
+      "patience": 0.4,
+      "tech_literacy": 0.5,
+      "goal": "Complete a multi-step form without errors",
+      "tags": [
+        "forms",
+        "data-entry"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "form validation",
+        "error messages",
+        "field labels",
+        "progress indicators"
+      ],
+      "frustration_triggers": [
+        "unclear errors",
+        "lost form data",
+        "confusing field labels",
+        "no progress indicator"
+      ],
+      "detection_weights": [
+        [
+          "form_abandonment",
+          2.0
+        ],
+        [
+          "error_message_visible",
+          2.0
+        ],
+        [
+          "session_timeout",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [],
+      "success_text_patterns": []
+    },
+    {
+      "name": "search_user",
+      "patience": 0.35,
+      "tech_literacy": 0.6,
+      "goal": "Find a specific product or information using search",
+      "tags": [
+        "search",
+        "goal-oriented"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "search functionality",
+        "filters",
+        "results relevance"
+      ],
+      "frustration_triggers": [
+        "zero results",
+        "irrelevant results",
+        "no search feedback",
+        "broken filters"
+      ],
+      "detection_weights": [
+        [
+          "search_frustration",
+          2.0
+        ],
+        [
+          "confusing_navigation",
+          1.5
+        ],
+        [
+          "infinite_scroll_trap",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [],
+      "success_text_patterns": []
+    },
+    {
+      "name": "checkout_user",
+      "patience": 0.3,
+      "tech_literacy": 0.7,
+      "goal": "Complete a purchase from cart to confirmation",
+      "tags": [
+        "checkout",
+        "purchase",
+        "goal-oriented"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "cart",
+        "checkout flow",
+        "payment forms",
+        "order confirmation"
+      ],
+      "frustration_triggers": [
+        "cart issues",
+        "payment errors",
+        "session timeout",
+        "unclear totals"
+      ],
+      "detection_weights": [
+        [
+          "cart_abandonment",
+          2.0
+        ],
+        [
+          "form_abandonment",
+          1.5
+        ],
+        [
+          "slow_interaction",
+          1.5
+        ],
+        [
+          "session_timeout",
+          2.0
+        ]
+      ],
+      "success_url_patterns": [
+        "/checkout/confirmation",
+        "/order/confirm",
+        "/thank-you",
+        "/checkout/"
+      ],
+      "success_text_patterns": [
+        "order confirmed",
+        "thank you",
+        "order #",
+        "confirmation"
+      ]
+    }
+  ],
+  "results": [],
+  "created_at": "2026-04-26T04:02:44.961683+00:00",
+  "updated_at": "2026-04-26T04:02:44.961929+00:00"
+}

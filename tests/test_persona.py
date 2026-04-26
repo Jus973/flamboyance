@@ -214,3 +214,138 @@ class TestResolvePersonas:
     def test_resolve_unknown_raises(self) -> None:
         with pytest.raises(ValueError, match="Unknown persona"):
             resolve_personas(["nonexistent"])
+
+
+class TestCognitiveLimitations:
+    """Phase C: Cognitive limitation fields to make agents more human-like."""
+
+    def test_default_values(self) -> None:
+        p = Persona(name="t", patience=0.5, tech_literacy=0.5, goal="test")
+        assert p.memory_depth == 5
+        assert p.dom_filter == ()
+        assert p.scroll_amnesia is True
+        assert p.tunnel_vision_ratio == 1.0
+        assert p.render_delay_ms == 0
+        assert p.blind_patterns == ()
+
+    def test_custom_values(self) -> None:
+        p = Persona(
+            name="custom",
+            patience=0.5,
+            tech_literacy=0.5,
+            goal="test",
+            memory_depth=2,
+            dom_filter=("button", "a"),
+            scroll_amnesia=False,
+            tunnel_vision_ratio=0.6,
+            render_delay_ms=500,
+            blind_patterns=(".hamburger", ".popup"),
+        )
+        assert p.memory_depth == 2
+        assert p.dom_filter == ("button", "a")
+        assert p.scroll_amnesia is False
+        assert p.tunnel_vision_ratio == 0.6
+        assert p.render_delay_ms == 500
+        assert p.blind_patterns == (".hamburger", ".popup")
+
+    def test_frustrated_exec_cognitive_limitations(self) -> None:
+        p = FRUSTRATED_EXEC
+        assert p.memory_depth == 2  # Very forgetful under stress
+        assert p.render_delay_ms == 0  # Captures before spinners finish
+
+    def test_non_tech_senior_cognitive_limitations(self) -> None:
+        p = NON_TECH_SENIOR
+        assert p.memory_depth == 2  # Limited working memory
+        assert p.dom_filter == ("button", "a", "[role=button]")  # Simple elements only
+        assert ".hamburger" in p.blind_patterns  # Can't see hamburger menus
+        assert p.render_delay_ms == 500  # Waits a bit
+
+    def test_power_user_cognitive_limitations(self) -> None:
+        p = POWER_USER
+        assert p.memory_depth == 10  # Excellent recall
+        assert p.scroll_amnesia is False  # Remembers what was above/below
+        assert p.tunnel_vision_ratio == 1.0  # Full viewport visibility
+
+    def test_anxious_newbie_cognitive_limitations(self) -> None:
+        p = ANXIOUS_NEWBIE
+        assert p.memory_depth == 3  # Moderate memory
+        assert ".popup" in p.blind_patterns  # Ignores popups
+
+    def test_mobile_commuter_cognitive_limitations(self) -> None:
+        p = MOBILE_COMMUTER
+        assert p.dom_filter == ("button", "a", "input")  # Touch-friendly only
+        assert p.tunnel_vision_ratio == 0.8  # Focuses on center of small screen
+
+    def test_accessibility_user_cognitive_limitations(self) -> None:
+        p = ACCESSIBILITY_USER
+        assert "[aria-label]" in p.dom_filter  # Needs labeled elements
+        assert "[aria-hidden=true]" in p.blind_patterns  # Can't see aria-hidden
+
+    def test_validation_memory_depth_invalid(self) -> None:
+        with pytest.raises(ValueError, match="memory_depth"):
+            Persona(name="bad", patience=0.5, tech_literacy=0.5, goal="x", memory_depth=0)
+
+    def test_validation_tunnel_vision_ratio_invalid(self) -> None:
+        with pytest.raises(ValueError, match="tunnel_vision_ratio"):
+            Persona(name="bad", patience=0.5, tech_literacy=0.5, goal="x", tunnel_vision_ratio=0.0)
+        with pytest.raises(ValueError, match="tunnel_vision_ratio"):
+            Persona(name="bad", patience=0.5, tech_literacy=0.5, goal="x", tunnel_vision_ratio=1.5)
+
+    def test_validation_render_delay_ms_invalid(self) -> None:
+        with pytest.raises(ValueError, match="render_delay_ms"):
+            Persona(name="bad", patience=0.5, tech_literacy=0.5, goal="x", render_delay_ms=-1)
+
+    def test_round_trip_dict_with_cognitive_fields(self) -> None:
+        p = Persona(
+            name="test",
+            patience=0.5,
+            tech_literacy=0.5,
+            goal="test",
+            memory_depth=3,
+            dom_filter=("button",),
+            scroll_amnesia=False,
+            tunnel_vision_ratio=0.7,
+            render_delay_ms=100,
+            blind_patterns=(".modal",),
+        )
+        d = p.to_dict()
+        p2 = Persona.from_dict(d)
+        assert p.memory_depth == p2.memory_depth
+        assert p.dom_filter == p2.dom_filter
+        assert p.scroll_amnesia == p2.scroll_amnesia
+        assert p.tunnel_vision_ratio == p2.tunnel_vision_ratio
+        assert p.render_delay_ms == p2.render_delay_ms
+        assert p.blind_patterns == p2.blind_patterns
+
+    def test_from_dict_with_missing_cognitive_fields(self) -> None:
+        # Older dict formats should still work with defaults
+        d = {
+            "name": "legacy",
+            "patience": 0.5,
+            "tech_literacy": 0.5,
+            "goal": "test",
+        }
+        p = Persona.from_dict(d)
+        assert p.memory_depth == 5
+        assert p.dom_filter == ()
+        assert p.scroll_amnesia is True
+        assert p.tunnel_vision_ratio == 1.0
+        assert p.render_delay_ms == 0
+        assert p.blind_patterns == ()
+
+    def test_to_llm_prompt_includes_cognitive_limitations(self) -> None:
+        p = Persona(
+            name="test",
+            patience=0.5,
+            tech_literacy=0.5,
+            goal="test",
+            memory_depth=2,
+            tunnel_vision_ratio=0.6,
+            blind_patterns=(".hamburger", ".popup"),
+        )
+        prompt = p.to_llm_prompt()
+        assert "Memory:" in prompt
+        assert "2" in prompt
+        assert "Vision:" in prompt
+        assert "60%" in prompt
+        assert "Blind to:" in prompt

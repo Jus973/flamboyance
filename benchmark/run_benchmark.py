@@ -75,7 +75,7 @@ def stop_app(proc: subprocess.Popen) -> None:
         proc.kill()
 
 
-async def run_flamboyance(url: str, timeout: int = 60) -> dict:
+async def run_flamboyance(url: str, timeout: int = 60, llm_mode: bool = False) -> dict:
     """Run Flamboyance against a URL and return results."""
     from agents.runner_local import run_local
     
@@ -86,8 +86,8 @@ async def run_flamboyance(url: str, timeout: int = 60) -> dict:
         persona_names=None,  # Use all personas
         timeout_s=timeout,
         run_id=run_id,
-        llm_mode=True,
-        max_llm_calls=20,
+        llm_mode=llm_mode,
+        max_llm_calls=20 if llm_mode else None,
         headless=True,
         batch_size=3,
     )
@@ -98,20 +98,26 @@ async def run_flamboyance(url: str, timeout: int = 60) -> dict:
     }
 
 
-def extract_issues_from_flamboyance(state) -> list[DetectedIssue]:
+def extract_issues_from_flamboyance(state, debug: bool = False) -> list[DetectedIssue]:
     """Extract detected issues from Flamboyance run state."""
     issues = []
     
     for result in state.results:
         for event in result.frustration_events:
+            # Events use "kind" not "type"
             issues.append(DetectedIssue(
-                type=event.get("type", "unknown"),
+                type=event.get("kind", "unknown"),
                 url=event.get("url", ""),
                 description=event.get("description", ""),
                 severity=event.get("severity", "medium"),
                 persona=result.persona,
                 raw=event,
             ))
+    
+    if debug:
+        # Print unique types detected
+        types = set(i.type for i in issues)
+        log.info(f"Detected issue types: {sorted(types)}")
     
     return issues
 
@@ -155,6 +161,7 @@ async def run_benchmark_for_app(
     app_name: str,
     tool: str = "flamboyance",
     skip_start: bool = False,
+    llm_mode: bool = False,
 ) -> BenchmarkResult:
     """Run benchmark for a single app."""
     
@@ -171,8 +178,8 @@ async def run_benchmark_for_app(
     
     try:
         if tool == "flamboyance":
-            result = await run_flamboyance(url)
-            detected = extract_issues_from_flamboyance(result["state"])
+            result = await run_flamboyance(url, llm_mode=llm_mode)
+            detected = extract_issues_from_flamboyance(result["state"], debug=True)
             run_id = result["run_id"]
         elif tool == "devin":
             detected = parse_devin_output(app_name)
@@ -287,6 +294,11 @@ async def main() -> None:
         action="store_true",
         help="List available apps",
     )
+    parser.add_argument(
+        "--llm",
+        action="store_true",
+        help="Use LLM mode (requires Ollama running). Default is heuristic mode.",
+    )
     
     args = parser.parse_args()
     
@@ -313,6 +325,9 @@ async def main() -> None:
         return
     
     # Run benchmarks
+    mode_str = "LLM" if args.llm else "heuristic"
+    log.info(f"Running in {mode_str} mode")
+    
     results = []
     for app in apps:
         log.info(f"Running benchmark for {app}...")
@@ -321,6 +336,7 @@ async def main() -> None:
                 app,
                 tool=args.tool,
                 skip_start=args.skip_start,
+                llm_mode=args.llm,
             )
             results.append(result)
         except Exception as e:

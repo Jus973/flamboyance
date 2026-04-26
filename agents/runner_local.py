@@ -19,10 +19,14 @@ import argparse
 import asyncio
 import json
 import logging
+import os
 import sys
+import tempfile
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 from .agent import AgentResult, run_agent
 from .persona import DEFAULT_PERSONAS, Persona
@@ -53,13 +57,233 @@ class RunState:
 # Global registry so the MCP server can track active/completed runs.
 _runs: dict[str, RunState] = {}
 
+# Directory for persisting run state to disk
+_STATE_DIR = Path("results/.runs")
+
+
+def _get_state_path(run_id: str) -> Path:
+    """Get the path to the state file for a run."""
+    return _STATE_DIR / f"{run_id}.json"
+
+
+def _serialize_persona(persona: "Persona") -> dict[str, Any]:
+    """Serialize a Persona to a JSON-compatible dict."""
+    return {
+        "name": persona.name,
+        "patience": persona.patience,
+        "tech_literacy": persona.tech_literacy,
+        "goal": persona.goal,
+        "tags": list(persona.tags),
+        "early_exit_fraction": persona.early_exit_fraction,
+        "max_actions": persona.max_actions,
+        "viewport": list(persona.viewport),
+        "prefers_visible_text": persona.prefers_visible_text,
+        "slow_load_threshold_ms": persona.slow_load_threshold_ms,
+        "long_dwell_threshold_s": persona.long_dwell_threshold_s,
+        "rage_click_threshold": persona.rage_click_threshold,
+        "focus_areas": list(persona.focus_areas),
+        "frustration_triggers": list(persona.frustration_triggers),
+        "detection_weights": list(persona.detection_weights),
+        "success_url_patterns": list(persona.success_url_patterns),
+        "success_text_patterns": list(persona.success_text_patterns),
+    }
+
+
+def _deserialize_persona(data: dict[str, Any]) -> "Persona":
+    """Deserialize a Persona from a JSON-compatible dict."""
+    return Persona(
+        name=data["name"],
+        patience=data["patience"],
+        tech_literacy=data["tech_literacy"],
+        goal=data["goal"],
+        tags=tuple(data.get("tags", [])),
+        early_exit_fraction=data.get("early_exit_fraction", 0.4),
+        max_actions=data.get("max_actions", 50),
+        viewport=tuple(data.get("viewport", [1280, 720])),
+        prefers_visible_text=data.get("prefers_visible_text", False),
+        slow_load_threshold_ms=data.get("slow_load_threshold_ms"),
+        long_dwell_threshold_s=data.get("long_dwell_threshold_s"),
+        rage_click_threshold=data.get("rage_click_threshold"),
+        focus_areas=tuple(data.get("focus_areas", [])),
+        frustration_triggers=tuple(data.get("frustration_triggers", [])),
+        detection_weights=tuple(tuple(x) for x in data.get("detection_weights", [])),
+        success_url_patterns=tuple(data.get("success_url_patterns", [])),
+        success_text_patterns=tuple(data.get("success_text_patterns", [])),
+    )
+
+
+def _serialize_result(result: AgentResult) -> dict[str, Any]:
+    """Serialize an AgentResult to a JSON-compatible dict."""
+    return {
+        "persona": result.persona,
+        "status": result.status,
+        "visited_urls": result.visited_urls,
+        "frustration_events": result.frustration_events,
+        "elapsed_seconds": result.elapsed_seconds,
+        "error": result.error,
+        "llm_mode": result.llm_mode,
+        "llm_calls": result.llm_calls,
+        "llm_tokens": result.llm_tokens,
+        "action_history": result.action_history,
+        # Skip page_screenshots to keep state files small
+    }
+
+
+def _deserialize_result(data: dict[str, Any]) -> AgentResult:
+    """Deserialize an AgentResult from a JSON-compatible dict."""
+    return AgentResult(
+        persona=data["persona"],
+        status=data["status"],
+        visited_urls=data.get("visited_urls", []),
+        frustration_events=data.get("frustration_events", []),
+        elapsed_seconds=data.get("elapsed_seconds", 0.0),
+        error=data.get("error"),
+        llm_mode=data.get("llm_mode", False),
+        llm_calls=data.get("llm_calls", 0),
+        llm_tokens=data.get("llm_tokens", 0),
+        action_history=data.get("action_history", []),
+        page_screenshots={},  # Not persisted
+    )
+
+
+def _save_state(state: RunState, created_at: str | None = None) -> None:
+    """Persist run state to disk using atomic write."""
+    _STATE_DIR.mkdir(parents=True, exist_ok=True)
+    
+    data = {
+        "run_id": state.run_id,
+        "url": state.url,
+        "status": state.status,
+        "llm_mode": state.llm_mode,
+        "personas": [_serialize_persona(p) for p in state.personas],
+        "results": [_serialize_result(r) for r in state.results],
+        "created_at": created_at or datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    
+    # Check for error attribute
+    if hasattr(state, "_error"):
+        data["error"] = state._error
+    
+    state_path = _get_state_path(state.run_id)
+    
+    # Atomic write: write to temp file, then rename
+    fd, tmp_path = tempfile.mkstemp(dir=_STATE_DIR, suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+        os.replace(tmp_path, state_path)
+    except Exception:
+        # Clean up temp file on error
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+        raise
+
+
+def _load_state(run_id: str) -> RunState | None:
+    """Load run state from disk."""
+    state_path = _get_state_path(run_id)
+    if not state_path.exists():
+        return None
+    
+    try:
+        with open(state_path, encoding="utf-8") as f:
+            data = json.load(f)
+        
+        personas = [_deserialize_persona(p) for p in data.get("personas", [])]
+        results = [_deserialize_result(r) for r in data.get("results", [])]
+        
+        state = RunState(
+            run_id=data["run_id"],
+            url=data["url"],
+            personas=personas,
+            results=results,
+            status=data.get("status", "done"),
+            llm_mode=data.get("llm_mode", False),
+        )
+        
+        # Restore error attribute if present
+        if "error" in data:
+            state._error = data["error"]
+        
+        return state
+    except (json.JSONDecodeError, KeyError, TypeError) as e:
+        log.warning("Failed to load state for %s: %s", run_id, e)
+        return None
+
 
 def get_run(run_id: str) -> RunState | None:
-    return _runs.get(run_id)
+    """Get run state, checking memory first then disk."""
+    # Check in-memory cache first
+    if run_id in _runs:
+        return _runs[run_id]
+    
+    # Try loading from disk
+    state = _load_state(run_id)
+    if state is not None:
+        # Cache in memory for future lookups
+        _runs[run_id] = state
+    return state
 
 
 def all_runs() -> dict[str, RunState]:
     return dict(_runs)
+
+
+def cleanup_old_state_files(max_age_hours: int = 24) -> int:
+    """Remove state files older than max_age_hours.
+    
+    Also marks any 'running' state files as 'interrupted' since they
+    represent orphaned runs from a previous server instance.
+    
+    Returns:
+        Number of files cleaned up.
+    """
+    if not _STATE_DIR.exists():
+        return 0
+    
+    cleaned = 0
+    cutoff = datetime.now(timezone.utc).timestamp() - (max_age_hours * 3600)
+    
+    for state_file in _STATE_DIR.glob("*.json"):
+        try:
+            # Check file modification time
+            mtime = state_file.stat().st_mtime
+            if mtime < cutoff:
+                state_file.unlink()
+                cleaned += 1
+                log.info("Cleaned up old state file: %s", state_file.name)
+                continue
+            
+            # Check for orphaned running states
+            with open(state_file, encoding="utf-8") as f:
+                data = json.load(f)
+            
+            if data.get("status") == "running":
+                # Mark as interrupted since server restarted
+                data["status"] = "interrupted"
+                data["updated_at"] = datetime.now(timezone.utc).isoformat()
+                
+                # Atomic write
+                fd, tmp_path = tempfile.mkstemp(dir=_STATE_DIR, suffix=".tmp")
+                try:
+                    with os.fdopen(fd, "w", encoding="utf-8") as f:
+                        json.dump(data, f, indent=2)
+                    os.replace(tmp_path, state_file)
+                    log.info("Marked orphaned run as interrupted: %s", data.get("run_id"))
+                except Exception:
+                    try:
+                        os.unlink(tmp_path)
+                    except OSError:
+                        pass
+                    raise
+                    
+        except (json.JSONDecodeError, OSError) as e:
+            log.warning("Error processing state file %s: %s", state_file.name, e)
+    
+    return cleaned
 
 
 async def run_local(
@@ -105,6 +329,8 @@ async def run_local(
     rid = run_id or str(uuid.uuid4())
     state = RunState(run_id=rid, url=url, personas=personas, status="running", llm_mode=llm_mode)
     _runs[rid] = state
+    created_at = datetime.now(timezone.utc).isoformat()
+    _save_state(state, created_at=created_at)
 
     if batch_size and batch_size > 1:
         # Run agents in batches (parallel within each batch)
@@ -144,6 +370,8 @@ async def run_local(
                         len(result.frustration_events),
                         f" llm_calls={result.llm_calls}" if llm_mode else "",
                     )
+            # Save state after each batch
+            _save_state(state, created_at=created_at)
     elif parallel and not llm_mode:
         # Run heuristic agents in parallel for speed
         log.info("running %d agents in parallel (heuristic mode)", len(personas))
@@ -167,6 +395,8 @@ async def run_local(
                     result.status,
                     len(result.frustration_events),
                 )
+        # Save state after parallel execution
+        _save_state(state, created_at=created_at)
     else:
         # Sequential execution (required for LLM mode due to rate limits)
         for persona in personas:
@@ -189,8 +419,11 @@ async def run_local(
                 len(result.frustration_events),
                 f" llm_calls={result.llm_calls}" if llm_mode else "",
             )
+            # Save state after each agent in sequential mode
+            _save_state(state, created_at=created_at)
 
     state.status = "stopped" if state.stopped else "done"
+    _save_state(state, created_at=created_at)
     return state
 
 

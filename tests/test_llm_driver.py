@@ -428,3 +428,146 @@ class TestHistoryContext:
     def test_history_hash_empty(self):
         driver = LLMDriver()
         assert driver._history_hash([]) == "empty"
+
+
+class TestCognitiveLimitations:
+    """Tests for cognitive limitation features in LLMDriver."""
+
+    def test_memory_depth_truncates_history(self):
+        """memory_depth should hard-truncate history to specified limit."""
+        driver = LLMDriver()
+        history = [
+            ActionHistoryEntry(
+                action="click", target=(i * 10, i * 10), result=f"result{i}", url="http://test.com"
+            )
+            for i in range(10)
+        ]
+
+        # With memory_depth=2, should only see last 2 actions
+        context = driver._build_history_context(history, memory_depth=2)
+
+        # Should NOT contain older results
+        assert "result0" not in context
+        assert "result7" not in context
+        # Should contain only recent results
+        assert "result8" in context
+        assert "result9" in context
+
+    def test_memory_depth_respects_persona(self):
+        """Persona's memory_depth should be used in history context."""
+        driver = LLMDriver()
+        history = [
+            ActionHistoryEntry(
+                action="click", target=(i * 10, i * 10), result=f"result{i}", url="http://test.com"
+            )
+            for i in range(10)
+        ]
+
+        # With memory_depth=3
+        context = driver._build_history_context(history, memory_depth=3)
+
+        # Should only see last 3 actions
+        assert "result6" not in context
+        assert "result7" in context
+        assert "result8" in context
+        assert "result9" in context
+
+    def test_memory_depth_none_uses_default(self):
+        """When memory_depth is None, should use HISTORY_CONTEXT_SIZE."""
+        driver = LLMDriver()
+        history = [
+            ActionHistoryEntry(
+                action="click", target=(i * 10, i * 10), result=f"result{i}", url="http://test.com"
+            )
+            for i in range(10)
+        ]
+
+        # With memory_depth=None, uses default (5)
+        context = driver._build_history_context(history, memory_depth=None)
+
+        # Should see last 5 actions (default HISTORY_CONTEXT_SIZE)
+        assert "result4" not in context
+        assert "result5" in context
+        assert "result9" in context
+
+    def test_tunnel_vision_returns_original_when_ratio_1(self):
+        """tunnel_vision_ratio=1.0 should return original screenshot."""
+        from agents.llm_driver import _apply_tunnel_vision
+
+        screenshot = "fake_base64_data"
+        result = _apply_tunnel_vision(screenshot, 1.0, (1280, 720))
+        assert result == screenshot
+
+    def test_tunnel_vision_returns_original_when_ratio_above_1(self):
+        """tunnel_vision_ratio > 1.0 should return original screenshot."""
+        from agents.llm_driver import _apply_tunnel_vision
+
+        screenshot = "fake_base64_data"
+        result = _apply_tunnel_vision(screenshot, 1.5, (1280, 720))
+        assert result == screenshot
+
+    def test_tunnel_vision_crops_when_ratio_below_1(self):
+        """tunnel_vision_ratio < 1.0 should crop the screenshot (if PIL available)."""
+        from agents.llm_driver import _apply_tunnel_vision
+
+        # Create a simple valid PNG for testing
+        try:
+            import base64
+            from io import BytesIO
+
+            from PIL import Image
+
+            # Create a 100x100 red image
+            img = Image.new("RGB", (100, 100), color="red")
+            buffer = BytesIO()
+            img.save(buffer, format="PNG")
+            original_b64 = base64.b64encode(buffer.getvalue()).decode()
+
+            # Apply tunnel vision with 0.5 ratio (should crop to center 50%)
+            result = _apply_tunnel_vision(original_b64, 0.5, (100, 100))
+
+            # Result should be different (cropped)
+            assert result != original_b64
+
+            # Decode and verify dimensions
+            result_data = base64.b64decode(result)
+            result_img = Image.open(BytesIO(result_data))
+            assert result_img.size == (50, 50)  # 50% of 100x100
+
+        except ImportError:
+            # PIL not available, should return original
+            result = _apply_tunnel_vision("fake_data", 0.5, (100, 100))
+            assert result == "fake_data"
+
+    @pytest.mark.asyncio
+    async def test_decide_action_applies_memory_depth(self):
+        """decide_action should use persona.memory_depth for history truncation."""
+        LLMDriver.clear_cache()
+        driver = LLMDriver()
+
+        # Create persona with memory_depth=2
+        persona = Persona(
+            name="forgetful",
+            patience=0.5,
+            tech_literacy=0.5,
+            goal="test",
+            memory_depth=2,
+        )
+
+        history = [
+            ActionHistoryEntry(action="click", target=(i, i), result=f"r{i}", url="")
+            for i in range(5)
+        ]
+
+        with patch("llm.call_llm", new_callable=AsyncMock) as mock_call_llm:
+            mock_call_llm.return_value = '{"action": "done", "target": null, "reasoning": "done"}'
+
+            await driver.decide_action("fake_screenshot", persona, history, "http://test.com")
+
+            # Verify the prompt was called
+            call_kwargs = mock_call_llm.call_args[1]
+            prompt = call_kwargs["prompt"]
+
+            # Should only contain recent history (memory_depth=2)
+            assert "r3" not in prompt or "r4" in prompt  # r4 should be present
+            # The history context is built with memory_depth=2

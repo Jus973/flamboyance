@@ -17,6 +17,53 @@ from .persona import Persona
 
 log = logging.getLogger(__name__)
 
+
+def _apply_tunnel_vision(screenshot_b64: str, ratio: float, viewport: tuple[int, int]) -> str:
+    """Crop screenshot to center region to simulate tunnel vision.
+
+    Args:
+        screenshot_b64: Base64-encoded PNG screenshot.
+        ratio: Crop ratio (0.6 = center 60% of viewport).
+        viewport: (width, height) of the viewport.
+
+    Returns:
+        Base64-encoded cropped PNG, or original if ratio >= 1.0 or PIL unavailable.
+    """
+    if ratio >= 1.0:
+        return screenshot_b64
+
+    try:
+        import base64
+        from io import BytesIO
+
+        from PIL import Image
+
+        # Decode the screenshot
+        img_data = base64.b64decode(screenshot_b64)
+        img = Image.open(BytesIO(img_data))
+
+        # Calculate crop box (center region)
+        width, height = img.size
+        crop_width = int(width * ratio)
+        crop_height = int(height * ratio)
+        left = (width - crop_width) // 2
+        top = (height - crop_height) // 2
+        right = left + crop_width
+        bottom = top + crop_height
+
+        # Crop and re-encode
+        cropped = img.crop((left, top, right, bottom))
+        buffer = BytesIO()
+        cropped.save(buffer, format="PNG")
+        return base64.b64encode(buffer.getvalue()).decode()
+
+    except ImportError:
+        log.debug("PIL not available, skipping tunnel vision crop")
+        return screenshot_b64
+    except Exception as e:
+        log.warning("Failed to apply tunnel vision: %s", e)
+        return screenshot_b64
+
 ActionType = Literal["click", "type", "scroll", "back", "done", "give_up"]
 
 HISTORY_CONTEXT_SIZE = 5
@@ -279,16 +326,25 @@ Respond with ONLY a JSON object (no markdown, no explanation).
 Coordinates must be PIXEL values (e.g., [640, 360]), NOT normalized (0-1) values.
 {{"action": "...", "target": ..., "reasoning": "brief explanation"}}"""
 
-    def _build_history_context(self, history: list[ActionHistoryEntry]) -> str:
+    def _build_history_context(
+        self, history: list[ActionHistoryEntry], memory_depth: int | None = None
+    ) -> str:
         """Format recent action history for context.
 
-        Uses last HISTORY_CONTEXT_SIZE actions to provide better context for decisions.
-        Summarizes older actions if history is longer.
+        Uses last memory_depth actions (or HISTORY_CONTEXT_SIZE if not specified)
+        to provide better context for decisions. Older actions are discarded.
+
+        Args:
+            history: Full action history.
+            memory_depth: Persona's memory depth limit. If specified, hard-truncates
+                history to this many entries (simulating limited working memory).
         """
         if not history:
             return "This is your first action on this page."
 
-        recent = history[-HISTORY_CONTEXT_SIZE:]
+        # Apply memory_depth limit if specified (cognitive limitation)
+        effective_limit = memory_depth if memory_depth is not None else HISTORY_CONTEXT_SIZE
+        recent = history[-effective_limit:]
 
         parts = []
         for i, entry in enumerate(recent, 1):
@@ -351,7 +407,14 @@ Coordinates must be PIXEL values (e.g., [640, 360]), NOT normalized (0-1) values
         from llm import call_llm
 
         system_prompt = self._build_system_prompt(persona)
-        history_context = self._build_history_context(history)
+        # Apply memory_depth cognitive limitation
+        history_context = self._build_history_context(history, persona.memory_depth)
+
+        # Apply tunnel_vision_ratio cognitive limitation (crop screenshot to center region)
+        processed_screenshot = _apply_tunnel_vision(
+            screenshot_b64, persona.tunnel_vision_ratio, self.viewport
+        )
+
         user_content = f"Current URL: {current_url}\nViewport: {self.viewport[0]}x{self.viewport[1]}\n\n{history_context}\n\nAnalyze the screenshot and decide the next action:"
 
         try:
@@ -359,7 +422,7 @@ Coordinates must be PIXEL values (e.g., [640, 360]), NOT normalized (0-1) values
                 task_type="decision",
                 prompt=user_content,
                 max_tokens=LLM_MAX_TOKENS,
-                image_b64=screenshot_b64,
+                image_b64=processed_screenshot,
                 system_prompt=system_prompt,
                 temperature=0.3,
             )

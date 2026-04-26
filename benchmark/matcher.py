@@ -14,21 +14,36 @@ from benchmark.schema import (
 )
 
 
-# Map Flamboyance event types to ground truth types
+# Map Flamboyance event types (kind) to ground truth types
 TYPE_ALIASES = {
-    # Flamboyance types -> ground truth types
+    # Navigation issues
     "dead_end": ["dead_end", "hidden_element"],
+    "circular_navigation": ["dead_end"],
+    "unmet_goal": ["dead_end", "random_failure", "hidden_element"],
+    
+    # Visual/content issues
     "broken_image": ["broken_image"],
     "slow_load": ["slow_load"],
+    
+    # Interaction issues
     "rage_click": ["dead_end", "hidden_element", "random_failure"],
+    "cart_abandonment": ["dead_end", "form_error"],
     "form_abandonment": ["form_error", "random_failure"],
-    "unmet_goal": ["dead_end", "random_failure", "hidden_element"],
+    
+    # Mobile issues
     "mobile_tap_target": ["mobile_tap_target"],
     "horizontal_scroll": ["mobile_tap_target"],
+    "small_tap_target": ["mobile_tap_target"],
+    
+    # Accessibility issues
+    "accessibility_failure": ["form_error", "misleading_affordance"],
+    "missing_label": ["form_error", "misleading_affordance"],
+    "missing_accessible_name": ["form_error", "misleading_affordance"],
+    "low_contrast": ["form_error"],
+    
+    # Error issues
     "js_error": ["random_failure"],
     "network_error": ["random_failure"],
-    "low_contrast": ["form_error"],
-    "missing_label": ["misleading_affordance"],
 }
 
 
