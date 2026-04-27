@@ -1,0 +1,237 @@
+{
+  "run_id": "ddb3d086-41c0-4c65-ba9c-08758a1e90c7",
+  "url": "http://localhost:5173",
+  "status": "done",
+  "llm_mode": false,
+  "personas": [
+    {
+      "name": "non_tech_senior",
+      "patience": 0.5,
+      "tech_literacy": 0.2,
+      "goal": "Find and read account settings",
+      "tags": [
+        "senior",
+        "low-tech"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "labels",
+        "text size",
+        "navigation"
+      ],
+      "frustration_triggers": [
+        "small text",
+        "confusing labels",
+        "icon-only buttons",
+        "jargon"
+      ],
+      "detection_weights": [
+        [
+          "confusing_navigation",
+          2.0
+        ],
+        [
+          "scroll_rage",
+          1.5
+        ],
+        [
+          "back_button_abuse",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [
+        "/account/settings/",
+        "/settings/",
+        "/profile/settings/"
+      ],
+      "success_text_patterns": [
+        "account settings page",
+        "your preferences",
+        "notification preferences"
+      ]
+    }
+  ],
+  "results": [
+    {
+      "persona": "non_tech_senior",
+      "status": "done",
+      "visited_urls": [
+        "http://localhost:5173",
+        "http://localhost:5173/stress/rage-decoy/",
+        "http://localhost:5173/",
+        "http://localhost:5173/stress/rage-decoy/",
+        "http://localhost:5173/",
+        "http://localhost:5173/stress/many-links/",
+        "http://localhost:5173/stress/many-links/#item-8",
+        "http://localhost:5173/stress/many-links/#item-19",
+        "http://localhost:5173/stress/many-links/#item-14",
+        "http://localhost:5173/stress/many-links/#item-12",
+        "http://localhost:5173/stress/many-links/#item-18",
+        "http://localhost:5173/stress/many-links/#item-11",
+        "http://localhost:5173/stress/many-links/#item-20",
+        "http://localhost:5173/stress/many-links/#item-19",
+        "http://localhost:5173/stress/many-links/#item-13",
+        "http://localhost:5173/stress/many-links/#item-5",
+        "http://localhost:5173/stress/many-links/#item-1",
+        "http://localhost:5173/stress/many-links/#item-13",
+        "http://localhost:5173/stress/many-links/#item-18",
+        "http://localhost:5173/stress/many-links/#item-15",
+        "http://localhost:5173/stress/many-links/#item-8",
+        "http://localhost:5173/",
+        "http://localhost:5173/signup/",
+        "http://localhost:5173/signup/#",
+        "http://localhost:5173/"
+      ],
+      "frustration_events": [
+        {
+          "kind": "js_error",
+          "description": "JavaScript error: Failed to load resource: the server responded with a status of 404 (Not Found) (source: http://localhost:5173/favicon.ico)",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777222856.910539,
+          "severity": "high",
+          "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "source": "http://localhost:5173/favicon.ico",
+          "line": 0
+        },
+        {
+          "kind": "rage_decoy",
+          "description": "Rage decoy: element 'div:has-text('Click to Continue')' looks clickable (cursor:pointer, box-shadow with pointer, interactive transition) but is not interactive",
+          "url": "http://localhost:5173/stress/rage-decoy/",
+          "timestamp": 1777222859.4608462,
+          "severity": "medium",
+          "selector": "div:has-text('Click to Continue')",
+          "reason": "cursor:pointer, box-shadow with pointer, interactive transition",
+          "x": 260,
+          "y": 411
+        },
+        {
+          "kind": "rage_decoy",
+          "description": "Rage decoy: element 'div:has-text('Submit Order')' looks clickable (cursor:pointer, box-shadow with pointer, interactive transition) but is not interactive",
+          "url": "http://localhost:5173/stress/rage-decoy/",
+          "timestamp": 1777222859.461545,
+          "severity": "medium",
+          "selector": "div:has-text('Submit Order')",
+          "reason": "cursor:pointer, box-shadow with pointer, interactive transition",
+          "x": 468,
+          "y": 411
+        },
+        {
+          "kind": "rage_decoy",
+          "description": "Rage decoy: element 'div:has-text('Delete Item')' looks clickable (cursor:pointer, box-shadow with pointer, interactive transition) but is not interactive",
+          "url": "http://localhost:5173/stress/rage-decoy/",
+          "timestamp": 1777222859.462008,
+          "severity": "medium",
+          "selector": "div:has-text('Delete Item')",
+          "reason": "cursor:pointer, box-shadow with pointer, interactive transition",
+          "x": 652,
+          "y": 411
+        },
+        {
+          "kind": "rage_decoy",
+          "description": "Rage decoy: element 'div:has-text('Special Offer!\n\nClick here to ')' looks clickable (cursor:pointer, button-like styling) but is not interactive",
+          "url": "http://localhost:5173/stress/rage-decoy/",
+          "timestamp": 1777222859.46243,
+          "severity": "medium",
+          "selector": "div:has-text('Special Offer!\n\nClick here to ')",
+          "reason": "cursor:pointer, button-like styling",
+          "x": 306,
+          "y": 530
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5173/stress/rage-decoy/ \u2192 http://localhost:5173/ \u2192 http://localhost:5173/stress/rage-decoy/",
+          "url": "http://localhost:5173/stress/rage-decoy/",
+          "timestamp": 1777222864.002557,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5173/stress/rage-decoy/",
+            "http://localhost:5173/",
+            "http://localhost:5173/stress/rage-decoy/"
+          ]
+        },
+        {
+          "kind": "rage_decoy",
+          "description": "Rage decoy: element 'div:has-text('Click to Continue')' looks clickable (cursor:pointer, box-shadow with pointer, interactive transition) but is not interactive",
+          "url": "http://localhost:5173/stress/rage-decoy/",
+          "timestamp": 1777222864.011095,
+          "severity": "medium",
+          "selector": "div:has-text('Click to Continue')",
+          "reason": "cursor:pointer, box-shadow with pointer, interactive transition",
+          "x": 260,
+          "y": 411
+        },
+        {
+          "kind": "rage_decoy",
+          "description": "Rage decoy: element 'div:has-text('Submit Order')' looks clickable (cursor:pointer, box-shadow with pointer, interactive transition) but is not interactive",
+          "url": "http://localhost:5173/stress/rage-decoy/",
+          "timestamp": 1777222864.01183,
+          "severity": "medium",
+          "selector": "div:has-text('Submit Order')",
+          "reason": "cursor:pointer, box-shadow with pointer, interactive transition",
+          "x": 468,
+          "y": 411
+        },
+        {
+          "kind": "rage_decoy",
+          "description": "Rage decoy: element 'div:has-text('Delete Item')' looks clickable (cursor:pointer, box-shadow with pointer, interactive transition) but is not interactive",
+          "url": "http://localhost:5173/stress/rage-decoy/",
+          "timestamp": 1777222864.012309,
+          "severity": "medium",
+          "selector": "div:has-text('Delete Item')",
+          "reason": "cursor:pointer, box-shadow with pointer, interactive transition",
+          "x": 652,
+          "y": 411
+        },
+        {
+          "kind": "rage_decoy",
+          "description": "Rage decoy: element 'div:has-text('Special Offer!\n\nClick here to ')' looks clickable (cursor:pointer, button-like styling) but is not interactive",
+          "url": "http://localhost:5173/stress/rage-decoy/",
+          "timestamp": 1777222864.012747,
+          "severity": "medium",
+          "selector": "div:has-text('Special Offer!\n\nClick here to ')",
+          "reason": "cursor:pointer, button-like styling",
+          "x": 306,
+          "y": 530
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5173/ \u2192 http://localhost:5173/stress/rage-decoy/ \u2192 http://localhost:5173/",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777222865.100506,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5173/",
+            "http://localhost:5173/stress/rage-decoy/",
+            "http://localhost:5173/"
+          ]
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (timeout): Find and read account settings",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777222915.365428,
+          "severity": "critical",
+          "goal": "Find and read account settings",
+          "reason": "timeout"
+        }
+      ],
+      "elapsed_seconds": 60.93660062504932,
+      "error": null,
+      "llm_mode": false,
+      "llm_calls": 0,
+      "llm_tokens": 0,
+      "action_history": []
+    }
+  ],
+  "created_at": "2026-04-26T17:00:54.504786+00:00",
+  "updated_at": "2026-04-26T17:01:55.478440+00:00"
+}

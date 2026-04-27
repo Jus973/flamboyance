@@ -1,0 +1,215 @@
+{
+  "run_id": "7231fb67-3981-4952-9e68-d1c059bb4ea6",
+  "url": "http://localhost:5173",
+  "status": "done",
+  "llm_mode": false,
+  "personas": [
+    {
+      "name": "non_tech_senior",
+      "patience": 0.5,
+      "tech_literacy": 0.2,
+      "goal": "Find and read account settings",
+      "tags": [
+        "senior",
+        "low-tech"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "labels",
+        "text size",
+        "navigation"
+      ],
+      "frustration_triggers": [
+        "small text",
+        "confusing labels",
+        "icon-only buttons",
+        "jargon"
+      ],
+      "detection_weights": [
+        [
+          "confusing_navigation",
+          2.0
+        ],
+        [
+          "scroll_rage",
+          1.5
+        ],
+        [
+          "back_button_abuse",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [
+        "/account/settings/",
+        "/settings/",
+        "/profile/settings/"
+      ],
+      "success_text_patterns": [
+        "account settings page",
+        "your preferences",
+        "notification preferences"
+      ]
+    }
+  ],
+  "results": [
+    {
+      "persona": "non_tech_senior",
+      "status": "done",
+      "visited_urls": [
+        "http://localhost:5173",
+        "http://localhost:5173/stress/edge-cases/",
+        "http://localhost:5173/features/premium-dashboard/",
+        "http://localhost:5173/checkout/shipping/",
+        "http://localhost:5173/",
+        "http://localhost:5173/checkout/shipping/",
+        "http://localhost:5173/cart/",
+        "http://localhost:5173/",
+        "http://localhost:5173/cart/",
+        "http://localhost:5173/shop/",
+        "http://localhost:5173/",
+        "http://localhost:5173/stress/rage-decoy/",
+        "http://localhost:5173/",
+        "http://localhost:5173/stress/slow/"
+      ],
+      "frustration_events": [
+        {
+          "kind": "js_error",
+          "description": "JavaScript error: Failed to load resource: the server responded with a status of 404 (Not Found) (source: http://localhost:5173/favicon.ico)",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777225157.604016,
+          "severity": "high",
+          "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "source": "http://localhost:5173/favicon.ico",
+          "line": 0
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5173/checkout/shipping/ \u2192 http://localhost:5173/ \u2192 http://localhost:5173/checkout/shipping/",
+          "url": "http://localhost:5173/checkout/shipping/",
+          "timestamp": 1777225166.1833248,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5173/checkout/shipping/",
+            "http://localhost:5173/",
+            "http://localhost:5173/checkout/shipping/"
+          ]
+        },
+        {
+          "kind": "cart_abandonment",
+          "description": "Cart abandonment: user left cart page without completing checkout",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777225168.6158988,
+          "severity": "high"
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5173/cart/ \u2192 http://localhost:5173/ \u2192 http://localhost:5173/cart/",
+          "url": "http://localhost:5173/cart/",
+          "timestamp": 1777225169.9563708,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5173/cart/",
+            "http://localhost:5173/",
+            "http://localhost:5173/cart/"
+          ]
+        },
+        {
+          "kind": "cart_abandonment",
+          "description": "Cart abandonment: user left cart page without completing checkout",
+          "url": "http://localhost:5173/shop/",
+          "timestamp": 1777225171.468459,
+          "severity": "high"
+        },
+        {
+          "kind": "rage_decoy",
+          "description": "Rage decoy: element 'div:has-text('Click to Continue')' looks clickable (cursor:pointer, box-shadow with pointer, interactive transition) but is not interactive",
+          "url": "http://localhost:5173/stress/rage-decoy/",
+          "timestamp": 1777225200.3212311,
+          "severity": "medium",
+          "selector": "div:has-text('Click to Continue')",
+          "reason": "cursor:pointer, box-shadow with pointer, interactive transition",
+          "x": 260,
+          "y": 411
+        },
+        {
+          "kind": "rage_decoy",
+          "description": "Rage decoy: element 'div:has-text('Submit Order')' looks clickable (cursor:pointer, box-shadow with pointer, interactive transition) but is not interactive",
+          "url": "http://localhost:5173/stress/rage-decoy/",
+          "timestamp": 1777225200.321882,
+          "severity": "medium",
+          "selector": "div:has-text('Submit Order')",
+          "reason": "cursor:pointer, box-shadow with pointer, interactive transition",
+          "x": 468,
+          "y": 411
+        },
+        {
+          "kind": "rage_decoy",
+          "description": "Rage decoy: element 'div:has-text('Delete Item')' looks clickable (cursor:pointer, box-shadow with pointer, interactive transition) but is not interactive",
+          "url": "http://localhost:5173/stress/rage-decoy/",
+          "timestamp": 1777225200.322348,
+          "severity": "medium",
+          "selector": "div:has-text('Delete Item')",
+          "reason": "cursor:pointer, box-shadow with pointer, interactive transition",
+          "x": 652,
+          "y": 411
+        },
+        {
+          "kind": "rage_decoy",
+          "description": "Rage decoy: element 'div:has-text('Special Offer!\n\nClick here to ')' looks clickable (cursor:pointer, button-like styling) but is not interactive",
+          "url": "http://localhost:5173/stress/rage-decoy/",
+          "timestamp": 1777225200.322779,
+          "severity": "medium",
+          "selector": "div:has-text('Special Offer!\n\nClick here to ')",
+          "reason": "cursor:pointer, button-like styling",
+          "x": 306,
+          "y": 530
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5173/ \u2192 http://localhost:5173/stress/rage-decoy/ \u2192 http://localhost:5173/",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777225201.438137,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5173/",
+            "http://localhost:5173/stress/rage-decoy/",
+            "http://localhost:5173/"
+          ]
+        },
+        {
+          "kind": "dead_end",
+          "description": "Dead end: no clickable elements found on page",
+          "url": "http://localhost:5173/stress/slow/",
+          "timestamp": 1777225203.805304,
+          "severity": "high"
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (gave up): Find and read account settings",
+          "url": "http://localhost:5173/stress/slow/",
+          "timestamp": 1777225203.805902,
+          "severity": "critical",
+          "goal": "Find and read account settings",
+          "reason": "gave up"
+        }
+      ],
+      "elapsed_seconds": 48.609689333010465,
+      "error": null,
+      "llm_mode": false,
+      "llm_calls": 0,
+      "llm_tokens": 0,
+      "action_history": []
+    }
+  ],
+  "created_at": "2026-04-26T17:39:15.303727+00:00",
+  "updated_at": "2026-04-26T17:40:03.919494+00:00"
+}

@@ -1,0 +1,260 @@
+{
+  "run_id": "890b4ab8-7b31-440a-a4bc-5555d1bda561",
+  "url": "http://localhost:5173",
+  "status": "done",
+  "llm_mode": false,
+  "personas": [
+    {
+      "name": "non_tech_senior",
+      "patience": 0.5,
+      "tech_literacy": 0.2,
+      "goal": "Find and read account settings",
+      "tags": [
+        "senior",
+        "low-tech"
+      ],
+      "early_exit_fraction": 0.4,
+      "max_actions": 50,
+      "viewport": [
+        1280,
+        720
+      ],
+      "prefers_visible_text": false,
+      "slow_load_threshold_ms": null,
+      "long_dwell_threshold_s": null,
+      "rage_click_threshold": null,
+      "focus_areas": [
+        "labels",
+        "text size",
+        "navigation"
+      ],
+      "frustration_triggers": [
+        "small text",
+        "confusing labels",
+        "icon-only buttons",
+        "jargon"
+      ],
+      "detection_weights": [
+        [
+          "confusing_navigation",
+          2.0
+        ],
+        [
+          "scroll_rage",
+          1.5
+        ],
+        [
+          "back_button_abuse",
+          1.5
+        ]
+      ],
+      "success_url_patterns": [
+        "/account/settings/",
+        "/settings/",
+        "/profile/settings/"
+      ],
+      "success_text_patterns": [
+        "account settings page",
+        "your preferences",
+        "notification preferences"
+      ]
+    }
+  ],
+  "results": [
+    {
+      "persona": "non_tech_senior",
+      "status": "done",
+      "visited_urls": [
+        "http://localhost:5173",
+        "http://localhost:5173/stress/circular/",
+        "http://localhost:5173/stress/circular/a/",
+        "http://localhost:5173/stress/circular/",
+        "http://localhost:5173/stress/circular/b/",
+        "http://localhost:5173/",
+        "http://localhost:5173/stress/icon-bar/",
+        "http://localhost:5173/",
+        "http://localhost:5173/stress/icon-bar/",
+        "http://localhost:5173/",
+        "http://localhost:5173/account/",
+        "http://localhost:5173/account/settings/",
+        "http://localhost:5173/",
+        "http://localhost:5173/cart/",
+        "http://localhost:5173/checkout/shipping/",
+        "http://localhost:5173/cart/",
+        "http://localhost:5173/",
+        "http://localhost:5173/stress/edge-cases/",
+        "http://localhost:5173/",
+        "http://localhost:5173/stress/broken-forms/",
+        "http://localhost:5173/",
+        "http://localhost:5173/checkout/shipping/",
+        "http://localhost:5173/cart/",
+        "http://localhost:5173/",
+        "http://localhost:5173/order-status/"
+      ],
+      "frustration_events": [
+        {
+          "kind": "js_error",
+          "description": "JavaScript error: Failed to load resource: the server responded with a status of 404 (Not Found) (source: http://localhost:5173/favicon.ico)",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777228067.625408,
+          "severity": "high",
+          "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "source": "http://localhost:5173/favicon.ico",
+          "line": 0
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5173/stress/circular/ \u2192 http://localhost:5173/stress/circular/a/ \u2192 http://localhost:5173/stress/circular/",
+          "url": "http://localhost:5173/stress/circular/",
+          "timestamp": 1777228071.639117,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5173/stress/circular/",
+            "http://localhost:5173/stress/circular/a/",
+            "http://localhost:5173/stress/circular/"
+          ]
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5173/ \u2192 http://localhost:5173/stress/icon-bar/ \u2192 http://localhost:5173/",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777228076.922376,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5173/",
+            "http://localhost:5173/stress/icon-bar/",
+            "http://localhost:5173/"
+          ]
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5173/stress/icon-bar/ \u2192 http://localhost:5173/ \u2192 http://localhost:5173/stress/icon-bar/",
+          "url": "http://localhost:5173/stress/icon-bar/",
+          "timestamp": 1777228078.277579,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5173/stress/icon-bar/",
+            "http://localhost:5173/",
+            "http://localhost:5173/stress/icon-bar/"
+          ]
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5173/ \u2192 http://localhost:5173/stress/icon-bar/ \u2192 http://localhost:5173/",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777228079.7029839,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5173/",
+            "http://localhost:5173/stress/icon-bar/",
+            "http://localhost:5173/"
+          ]
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5173/cart/ \u2192 http://localhost:5173/checkout/shipping/ \u2192 http://localhost:5173/cart/",
+          "url": "http://localhost:5173/cart/",
+          "timestamp": 1777228091.065815,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5173/cart/",
+            "http://localhost:5173/checkout/shipping/",
+            "http://localhost:5173/cart/"
+          ]
+        },
+        {
+          "kind": "cart_abandonment",
+          "description": "Cart abandonment: user left cart page without completing checkout",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777228092.1812658,
+          "severity": "high"
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5173/ \u2192 http://localhost:5173/stress/edge-cases/ \u2192 http://localhost:5173/",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777228099.138997,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5173/",
+            "http://localhost:5173/stress/edge-cases/",
+            "http://localhost:5173/"
+          ]
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173/stress/broken-forms/",
+          "timestamp": 1777228100.611131,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "#contact-name",
+          "placeholder": "Enter your name"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173/stress/broken-forms/",
+          "timestamp": 1777228100.611624,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "#contact-email",
+          "placeholder": "Enter your email"
+        },
+        {
+          "kind": "accessibility_failure",
+          "description": "Accessibility issue: missing_label",
+          "url": "http://localhost:5173/stress/broken-forms/",
+          "timestamp": 1777228100.6120021,
+          "severity": "high",
+          "issue_type": "missing_label",
+          "selector": "#contact-message",
+          "placeholder": "Enter your message"
+        },
+        {
+          "kind": "circular_navigation",
+          "description": "Circular navigation detected: http://localhost:5173/ \u2192 http://localhost:5173/stress/broken-forms/ \u2192 http://localhost:5173/",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777228103.985505,
+          "severity": "medium",
+          "sequence": [
+            "http://localhost:5173/",
+            "http://localhost:5173/stress/broken-forms/",
+            "http://localhost:5173/"
+          ]
+        },
+        {
+          "kind": "cart_abandonment",
+          "description": "Cart abandonment: user left cart page without completing checkout",
+          "url": "http://localhost:5173/",
+          "timestamp": 1777228107.504012,
+          "severity": "high"
+        },
+        {
+          "kind": "dead_end",
+          "description": "Dead end: no clickable elements found on page",
+          "url": "http://localhost:5173/order-status/",
+          "timestamp": 1777228109.788878,
+          "severity": "high"
+        },
+        {
+          "kind": "unmet_goal",
+          "description": "Unmet goal (gave up): Find and read account settings",
+          "url": "http://localhost:5173/order-status/",
+          "timestamp": 1777228109.789509,
+          "severity": "critical",
+          "goal": "Find and read account settings",
+          "reason": "gave up"
+        }
+      ],
+      "elapsed_seconds": 44.68374141608365,
+      "error": null,
+      "llm_mode": false,
+      "llm_calls": 0,
+      "llm_tokens": 0,
+      "action_history": []
+    }
+  ],
+  "created_at": "2026-04-26T18:27:45.182007+00:00",
+  "updated_at": "2026-04-26T18:28:29.869298+00:00"
+}
